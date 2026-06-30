@@ -18,6 +18,7 @@ const defaultRequest = {
   cluster_machines: 3,
   cloud_machines: 2,
   cores_per_machine: 2,
+  resource_specs: buildResourceSpecs(3, 2, 2),
   deadline: 160,
   budget: 260,
   weight_time: 0.55,
@@ -132,7 +133,34 @@ function App() {
   }
 
   function updateRequest(key, value) {
-    setRequest((current) => ({ ...current, [key]: value }));
+    setRequest((current) => {
+      const next = { ...current, [key]: value };
+      if (["cluster_machines", "cloud_machines", "cores_per_machine"].includes(key)) {
+        next.resource_specs = syncResourceSpecs(
+          current.resource_specs || [],
+          next.cluster_machines,
+          next.cloud_machines,
+          next.cores_per_machine,
+        );
+      }
+      return next;
+    });
+  }
+
+  function updateResourceSpec(id, key, value) {
+    setRequest((current) => ({
+      ...current,
+      resource_specs: (current.resource_specs || []).map((resource) => (
+        resource.id === id ? { ...resource, [key]: value } : resource
+      )),
+    }));
+  }
+
+  function resetResourceSpecs() {
+    setRequest((current) => ({
+      ...current,
+      resource_specs: buildResourceSpecs(current.cluster_machines, current.cloud_machines, current.cores_per_machine),
+    }));
   }
 
   function exportJson() {
@@ -214,6 +242,8 @@ function App() {
               status={status}
               statusMessage={statusMessage}
               onUpdateRequest={updateRequest}
+              onUpdateResourceSpec={updateResourceSpec}
+              onResetResourceSpecs={resetResourceSpecs}
               onWorkflowModeChange={setWorkflowMode}
               onImportWorkflowFile={importWorkflowFile}
               onClearWorkflowFile={clearWorkflowFile}
@@ -323,6 +353,8 @@ function WorkflowStartScreen({
   status,
   statusMessage,
   onUpdateRequest,
+  onUpdateResourceSpec,
+  onResetResourceSpecs,
   onWorkflowModeChange,
   onImportWorkflowFile,
   onClearWorkflowFile,
@@ -399,6 +431,11 @@ function WorkflowStartScreen({
             <ControlInput label="Cloud machines" value={request.cloud_machines} min={0} max={20} step={1} onChange={(value) => onUpdateRequest("cloud_machines", value)} />
             <ControlInput label="Cores per machine" value={request.cores_per_machine} min={1} max={16} step={1} onChange={(value) => onUpdateRequest("cores_per_machine", value)} />
           </div>
+          <MachinePatternEditor
+            resources={request.resource_specs || []}
+            onChange={onUpdateResourceSpec}
+            onReset={onResetResourceSpecs}
+          />
         </div>
 
         <div className="setup-section">
@@ -425,6 +462,47 @@ function WorkflowStartScreen({
         <Metric label="YAML file" value={workflowFileName || "-"} />
       </div>
     </div>
+  );
+}
+
+function MachinePatternEditor({ resources, onChange, onReset }) {
+  return (
+    <section className="machine-editor">
+      <header>
+        <div>
+          <h2>Machine pattern</h2>
+          <p>Defaults are generated from cluster/cloud counts. Edit any machine before matrices are generated.</p>
+        </div>
+        <button className="secondary-button" type="button" onClick={onReset}>
+          Reset pattern
+        </button>
+      </header>
+      <div className="resource-table-wrap">
+        <table className="resource-editor-table">
+          <thead>
+            <tr>
+              {["machine", "kind", "cores", "memory GB", "bandwidth MB/s", "boot s", "location"].map((heading) => <th key={heading}>{heading}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {resources.map((resource) => (
+              <tr key={resource.id}>
+                <td>
+                  <input value={resource.name} onChange={(event) => onChange(resource.id, "name", event.target.value)} />
+                  <span>{resource.id}</span>
+                </td>
+                <td><span className={`status-badge ${resource.kind}`}>{resource.kind}</span></td>
+                <td><input type="number" min="1" max="64" step="1" value={resource.cores} onChange={(event) => onChange(resource.id, "cores", Number(event.target.value))} /></td>
+                <td><input type="number" min="0.1" step="0.1" value={resource.memory} onChange={(event) => onChange(resource.id, "memory", Number(event.target.value))} /></td>
+                <td><input type="number" min="1" step="10" value={resource.bandwidth} onChange={(event) => onChange(resource.id, "bandwidth", Number(event.target.value))} /></td>
+                <td><input type="number" min="0" step="0.1" value={resource.boot_overhead} disabled={resource.kind === "cluster"} onChange={(event) => onChange(resource.id, "boot_overhead", Number(event.target.value))} /></td>
+                <td><input value={resource.location} onChange={(event) => onChange(resource.id, "location", event.target.value)} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 
@@ -560,7 +638,7 @@ function EditableMatricesView({ generated, onChange }) {
           <label className="control compact-control">
             <span>Interference dimension</span>
             <select value={interferenceDimension} onChange={(event) => setInterferenceDimension(event.target.value)}>
-              {interferenceDimensionOptions.map((dimension) => <option key={dimension} value={dimension}>{dimension}</option>)}
+              {interferenceDimensionOptions.map((dimension) => <option key={dimension} value={dimension}>{dimensionLabel(dimension)}</option>)}
             </select>
           </label>
         </div>
@@ -573,7 +651,7 @@ function EditableMatricesView({ generated, onChange }) {
       />
 
       <EditableMatrixTable
-        title={`Interference I_n / ${interferenceResourceId} / ${interferenceDimension}`}
+        title={`Interference I_n / ${interferenceResourceId} / ${dimensionLabel(interferenceDimension)}`}
         matrix={interferenceMatrix}
         onChange={updateInterferenceCell}
         readOnly={isAggregateInterference}
@@ -667,19 +745,72 @@ function GanttView({ result, selectedTaskId, onSelect }) {
     boot: false,
     transfer: false,
   });
+  const [showDependencies, setShowDependencies] = useState(true);
   const maxVisibleFinish = result.assignments.reduce((maxValue, item) => {
     const baseRuntime = result.matrices.et_0[item.task_id]?.[item.resource_id] ?? item.effective_runtime;
     const interferenceRuntime = Math.max(0, item.effective_runtime - baseRuntime);
-    const visibleRuntime = baseRuntime
-      + (visibleTiming.interference ? interferenceRuntime : 0)
-      + (visibleTiming.container ? item.container_overhead : 0)
-      + (visibleTiming.boot ? item.boot_overhead : 0)
-      + (visibleTiming.transfer ? item.transfer_delay : 0);
-    return Math.max(maxValue, item.start_time + visibleRuntime);
+    const executionRuntime = baseRuntime + (visibleTiming.interference ? interferenceRuntime : 0);
+    const transferRuntime = visibleTiming.transfer ? item.transfer_delay : 0;
+    return Math.max(maxValue, item.start_time + executionRuntime + transferRuntime);
   }, result.scheduler_variables.makespan);
-  const timelineWidth = Math.max(760, maxVisibleFinish * 7);
-  const scale = timelineWidth / Math.max(maxVisibleFinish, 1);
+  const minVisibleStart = result.assignments.reduce((minValue, item) => {
+    const preRuntime = (visibleTiming.boot ? item.boot_overhead : 0) + (visibleTiming.container ? item.container_overhead : 0);
+    return Math.min(minValue, item.start_time - preRuntime);
+  }, 0);
+  const timelineOrigin = Math.min(0, minVisibleStart);
+  const timelineSpan = Math.max(1, maxVisibleFinish - timelineOrigin);
+  const timelineWidth = Math.max(760, timelineSpan * 7);
+  const scale = timelineWidth / timelineSpan;
   const colorByResource = resourceColors(result.resources);
+  const ganttContextByTask = buildGanttContextByTask(result);
+  const laneTrackHeight = 38;
+  const barTop = 5;
+  const barHeight = 26;
+  const machineBorder = 1;
+  const machineHeaderHeight = 49;
+  const machineGap = 12;
+  const coreGap = 8;
+  const coresPaddingTop = 12;
+  const coresPaddingBottom = 14;
+  const trackOffsetX = machineBorder + 14 + 78 + 10 + machineBorder;
+  const machinePositions = [];
+  const lanePositions = {};
+  let currentY = 0;
+  for (const resource of result.resources) {
+    machinePositions.push({ resource, y: currentY });
+    for (const core of resource.cores) {
+      lanePositions[core.id] = {
+        y: currentY + machineBorder + machineHeaderHeight + coresPaddingTop + core.index * (laneTrackHeight + coreGap),
+        resourceId: resource.id,
+      };
+    }
+    currentY += (
+      machineBorder * 2
+      + machineHeaderHeight
+      + coresPaddingTop
+      + coresPaddingBottom
+      + resource.cores.length * laneTrackHeight
+      + Math.max(0, resource.cores.length - 1) * coreGap
+      + machineGap
+    );
+  }
+  const ganttBodyHeight = Math.max(1, currentY - machineGap);
+  function assignmentLayout(item) {
+    const baseRuntime = result.matrices.et_0[item.task_id]?.[item.resource_id] ?? item.effective_runtime;
+    const interferenceRuntime = Math.max(0, item.effective_runtime - baseRuntime);
+    const preRuntime = (visibleTiming.boot ? item.boot_overhead : 0) + (visibleTiming.container ? item.container_overhead : 0);
+    const executionRuntime = baseRuntime + (visibleTiming.interference ? interferenceRuntime : 0);
+    const postRuntime = visibleTiming.transfer ? item.transfer_delay : 0;
+    const x = (item.start_time - preRuntime - timelineOrigin) * scale;
+    return {
+      x,
+      width: Math.max(34, (preRuntime + executionRuntime + postRuntime) * scale),
+      endX: x + Math.max(34, (preRuntime + executionRuntime + postRuntime) * scale),
+      centerY: (lanePositions[item.core_id]?.y || 0) + machineBorder + barTop + barHeight / 2,
+      y: lanePositions[item.core_id]?.y || 0,
+    };
+  }
+  const assignmentLayoutByTask = Object.fromEntries(result.assignments.map((assignment) => [assignment.task_id, assignmentLayout(assignment)]));
   function toggleTiming(key) {
     setVisibleTiming((current) => ({ ...current, [key]: !current[key] }));
   }
@@ -687,10 +818,10 @@ function GanttView({ result, selectedTaskId, onSelect }) {
     <div className="gantt-wrap">
       <div className="gantt-toolbar">
         <div className="gantt-checks">
-          <label className="checkbox-control">
-            <input type="checkbox" checked={visibleTiming.interference} onChange={() => toggleTiming("interference")} />
-            <span>Interference</span>
-          </label>
+	          <label className="checkbox-control">
+	            <input type="checkbox" checked={visibleTiming.interference} onChange={() => toggleTiming("interference")} />
+	            <span>Interference overhead</span>
+	          </label>
           <label className="checkbox-control">
             <input type="checkbox" checked={visibleTiming.container} onChange={() => toggleTiming("container")} />
             <span>Container overhead</span>
@@ -699,22 +830,59 @@ function GanttView({ result, selectedTaskId, onSelect }) {
             <input type="checkbox" checked={visibleTiming.boot} onChange={() => toggleTiming("boot")} />
             <span>Boot overhead</span>
           </label>
+	          <label className="checkbox-control">
+	            <input type="checkbox" checked={visibleTiming.transfer} onChange={() => toggleTiming("transfer")} />
+	            <span>Transfer delay after execution</span>
+	          </label>
           <label className="checkbox-control">
-            <input type="checkbox" checked={visibleTiming.transfer} onChange={() => toggleTiming("transfer")} />
-            <span>Transfer delay</span>
+            <input type="checkbox" checked={showDependencies} onChange={() => setShowDependencies((current) => !current)} />
+            <span>Dependency lines</span>
           </label>
         </div>
         <div className="gantt-legend">
-          <span><i className="legend-swatch base" />Base execution</span>
-          <span><i className="legend-swatch interference" />Interference increase</span>
-          <span><i className="legend-swatch container" />Container</span>
-          <span><i className="legend-swatch boot" />Boot</span>
-          <span><i className="legend-swatch transfer" />Transfer</span>
+	          <span><i className="legend-swatch base" />Execution (solid)</span>
+	          <span><i className="legend-swatch interference" />Interference overhead (checker)</span>
+	          <span><i className="legend-swatch container" />Container overhead before execution (checker)</span>
+	          <span><i className="legend-swatch boot" />Boot overhead before execution (checker)</span>
+	          <span><i className="legend-swatch transfer" />Transfer delay after execution (checker)</span>
         </div>
       </div>
-      <div className="gantt" style={{ "--timeline-width": `${timelineWidth}px` }}>
-        {result.resources.map((resource) => (
-          <section className="gantt-machine" key={resource.id}>
+      <div
+        className="gantt"
+        style={{
+          "--timeline-width": `${timelineWidth}px`,
+          "--gantt-body-height": `${ganttBodyHeight}px`,
+          "--gantt-track-offset": `${trackOffsetX}px`,
+        }}
+      >
+        {showDependencies && (
+          <svg className="gantt-dependencies" width={timelineWidth} height={ganttBodyHeight}>
+            <defs>
+              <marker id="gantt-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L0,8 L8,4 z" />
+              </marker>
+            </defs>
+            {result.workflow.dependencies.map((dependency) => {
+              const source = assignmentLayoutByTask[dependency.source];
+              const target = assignmentLayoutByTask[dependency.target];
+              if (!source || !target) return null;
+              const x1 = source.endX;
+              const y1 = source.centerY;
+              const x2 = target.x;
+              const y2 = target.centerY;
+              const midX = x2 >= x1 ? (x1 + x2) / 2 : x1 + 24;
+              return (
+                <path
+                  key={`${dependency.source}-${dependency.target}`}
+                  d={`M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`}
+                  markerEnd="url(#gantt-arrow)"
+                />
+              );
+            })}
+          </svg>
+        )}
+        {machinePositions.map(({ resource, y }) => (
+          <section className="gantt-machine" key={resource.id} style={{ top: y }}>
             <header className="gantt-machine-header">
               <div>
                 <strong>{resource.name}</strong>
@@ -733,35 +901,46 @@ function GanttView({ result, selectedTaskId, onSelect }) {
 	                    {result.assignments.filter((item) => item.core_id === core.id).map((item) => {
 	                      const baseRuntime = result.matrices.et_0[item.task_id]?.[item.resource_id] ?? item.effective_runtime;
 	                      const interferenceRuntime = Math.max(0, item.effective_runtime - baseRuntime);
-	                      const timingSegments = [
-	                        { key: "interference", className: "bar-interference", duration: interferenceRuntime, visible: visibleTiming.interference && interferenceRuntime > 0 },
-	                        { key: "container", className: "bar-container", duration: item.container_overhead, visible: visibleTiming.container && item.container_overhead > 0 },
+	                      const preSegments = [
 	                        { key: "boot", className: "bar-boot", duration: item.boot_overhead, visible: visibleTiming.boot && item.boot_overhead > 0 },
+	                        { key: "container", className: "bar-container", duration: item.container_overhead, visible: visibleTiming.container && item.container_overhead > 0 },
+	                      ];
+	                      const executionSegments = [
+	                        { key: "interference", className: "bar-interference", duration: interferenceRuntime, visible: visibleTiming.interference && interferenceRuntime > 0 },
+	                      ];
+	                      const postSegments = [
 	                        { key: "transfer", className: "bar-transfer", duration: item.transfer_delay, visible: visibleTiming.transfer && item.transfer_delay > 0 },
 	                      ];
-	                      const visualRuntime = baseRuntime + timingSegments.reduce((sum, segment) => sum + (segment.visible ? segment.duration : 0), 0);
+	                      const preRuntime = preSegments.reduce((sum, segment) => sum + (segment.visible ? segment.duration : 0), 0);
+	                      const executionRuntime = baseRuntime + executionSegments.reduce((sum, segment) => sum + (segment.visible ? segment.duration : 0), 0);
+	                      const postRuntime = postSegments.reduce((sum, segment) => sum + (segment.visible ? segment.duration : 0), 0);
+	                      const visualRuntime = preRuntime + executionRuntime + postRuntime;
 	                      const visualWidth = Math.max(34, visualRuntime * scale);
-	                      let segmentOffset = baseRuntime;
+	                      let segmentOffset = 0;
 	                      const hasInterference = item.phi_n > 0 && interferenceRuntime > 0;
+	                      const layout = assignmentLayoutByTask[item.task_id];
 	                      return (
 	                        <button
-                          key={item.task_id}
-                          className={`bar ${hasInterference ? "has-interference" : ""} ${selectedTaskId === item.task_id ? "selected" : ""}`}
-                          style={{
-                            left: item.start_time * scale,
-                            width: visualWidth,
-                            "--bar-color": colorByResource[item.resource_id],
-                          }}
+	                          key={item.task_id}
+	                          className={`bar ${hasInterference ? "has-interference" : ""} ${selectedTaskId === item.task_id ? "selected" : ""}`}
+	                          style={{
+	                            left: layout.x,
+	                            width: visualWidth,
+	                            "--bar-color": colorByResource[item.resource_id],
+	                          }}
                           onClick={() => onSelect(item.task_id)}
-	                          title={`${item.task_id}: base ${fmt(baseRuntime)}s / interference +${fmt(interferenceRuntime)}s / container +${fmt(item.container_overhead)}s / boot +${fmt(item.boot_overhead)}s / transfer +${fmt(item.transfer_delay)}s`}
+	                          title={ganttContextByTask[item.task_id]?.title || item.task_id}
 	                        >
-	                          <span className="bar-base">{item.task_id}</span>
-	                          {timingSegments.map((segment) => {
+	                          {[...preSegments, { key: "base", className: "bar-execution", duration: baseRuntime, visible: true }, ...executionSegments, ...postSegments].map((segment) => {
 	                            if (!segment.visible) return null;
 	                            const left = segmentOffset * scale;
 	                            const width = Math.max(6, segment.duration * scale);
 	                            segmentOffset += segment.duration;
-	                            return <span key={segment.key} className={segment.className} style={{ left, width }} />;
+	                            return (
+	                              <span key={segment.key} className={segment.className} style={{ left, width }}>
+	                                {segment.key === "base" ? item.task_id : ""}
+	                              </span>
+	                            );
 	                          })}
 	                        </button>
 	                      );
@@ -861,7 +1040,7 @@ function StepsView({ result, onSelect }) {
           <table>
             <thead>
               <tr>
-                {["other activity", "pair value", "cpu", "memory", "io", "network"].map((heading) => <th key={heading}>{heading}</th>)}
+                {["other activity", "pair value", "core", "memory", "io", "network"].map((heading) => <th key={heading}>{heading}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -1022,7 +1201,7 @@ function PairwiseInterferenceView({ result, onSelect }) {
           <table>
             <thead>
               <tr>
-                {["machine", "kind", "activity A", "activity B", "average", "cpu", "memory", "io", "network"].map((heading) => <th key={heading}>{heading}</th>)}
+                {["machine", "kind", "activity A", "activity B", "average", "core", "memory", "io", "network"].map((heading) => <th key={heading}>{heading}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -1057,8 +1236,10 @@ function MachineView({ result, selectedTaskId, onSelect }) {
             <span>{resource.kind} / {resource.status}</span>
           </header>
           <div className="machine-specs">
-            <span>CPU {resource.cpu}</span>
+            <span>Cores {resource.cores.length}</span>
             <span>Mem {resource.memory} GB</span>
+            <span>BW {fmt(resource.bandwidth)} MB/s</span>
+            <span>Boot {fmt(resource.boot_overhead)}s</span>
             <span>{resource.location}</span>
           </div>
           {resource.cores.map((core) => (
@@ -1112,13 +1293,13 @@ function MatricesView({ result }) {
           <label className="control compact-control">
             <span>Dimension</span>
             <select value={interferenceDimension} onChange={(event) => setInterferenceDimension(event.target.value)}>
-              {interferenceDimensionOptions.map((dimension) => <option key={dimension} value={dimension}>{dimension}</option>)}
+              {interferenceDimensionOptions.map((dimension) => <option key={dimension} value={dimension}>{dimensionLabel(dimension)}</option>)}
             </select>
           </label>
         </div>
       </section>
       <MatrixTable
-        title={`Interference I_n / ${interferenceResourceId} / ${interferenceDimension}`}
+        title={`Interference I_n / ${interferenceResourceId} / ${dimensionLabel(interferenceDimension)}`}
         matrix={interferenceMatrix}
       />
     </div>
@@ -1210,6 +1391,7 @@ function DetailsPanel({ result, assignment, taskId }) {
   }
   const task = result.workflow.tasks.find((item) => item.id === taskId);
   const resource = result.resources.find((item) => item.id === assignment.resource_id);
+  const ganttContext = buildGanttContextByTask(result)[taskId];
   return (
     <div className="details">
       <h2>{task.label}</h2>
@@ -1223,7 +1405,7 @@ function DetailsPanel({ result, assignment, taskId }) {
       <Metric label="Boot overhead" value={fmt(assignment.boot_overhead)} />
       <Metric label="Container overhead" value={fmt(assignment.container_overhead)} />
       <Metric label="Phi_n" value={fmt(assignment.phi_n)} />
-      <Metric label="C_cpu" value={fmt(result.cost_variables.c_cpu[task.id])} />
+      <Metric label="C_core" value={fmt(result.cost_variables.c_cpu[task.id])} />
       <Metric label="C_mem" value={fmt(result.cost_variables.c_mem[task.id])} />
       <Metric label="C_fin" value={fmt(result.cost_variables.c_fin[task.id])} />
       <Metric label="FC" value={fmt(result.cost_variables.fc[task.id])} />
@@ -1241,6 +1423,13 @@ function DetailsPanel({ result, assignment, taskId }) {
         <strong>Predecessors</strong>
         {(task.predecessors.length ? task.predecessors : ["none"]).map((item) => <span key={item}>{item}</span>)}
       </section>
+      <section className="score-box">
+        <strong>Gantt timing context</strong>
+        <span>{ganttContext?.interferenceText || "Interference: none"}</span>
+        <span>{ganttContext?.transferText || "Transfer: none"}</span>
+        <span>{ganttContext?.containerText || "Container: none"}</span>
+        <span>{ganttContext?.bootText || "Boot: none"}</span>
+      </section>
       {task.run && (
         <section className="score-box">
           <strong>Command</strong>
@@ -1248,6 +1437,57 @@ function DetailsPanel({ result, assignment, taskId }) {
         </section>
       )}
     </div>
+  );
+}
+
+function buildGanttContextByTask(result) {
+  const assignmentsByTask = Object.fromEntries(result.assignments.map((assignment) => [assignment.task_id, assignment]));
+  const resourcesById = Object.fromEntries(result.resources.map((resource) => [resource.id, resource]));
+  const selectedCandidateByTask = Object.fromEntries(
+    (result.scheduler_steps || []).map((step) => [step.task_id, step.candidates.find((candidate) => candidate.selected)]),
+  );
+  return Object.fromEntries(
+    result.assignments.map((assignment) => {
+      const baseRuntime = result.matrices.et_0[assignment.task_id]?.[assignment.resource_id] ?? assignment.effective_runtime;
+      const interferenceRuntime = Math.max(0, assignment.effective_runtime - baseRuntime);
+      const selectedCandidate = selectedCandidateByTask[assignment.task_id];
+      const pairText = selectedCandidate?.pairwise_interference?.length
+        ? selectedCandidate.pairwise_interference
+          .map((pair) => `${pair.other_task_id} (${fmt(pair.value)})`)
+          .join(", ")
+        : "none";
+      const transfers = result.workflow.dependencies
+        .filter((dependency) => dependency.target === assignment.task_id)
+        .map((dependency) => {
+          const predecessor = assignmentsByTask[dependency.source];
+          if (!predecessor) return null;
+          const fromResource = resourcesById[predecessor.resource_id]?.name || predecessor.resource_id;
+          const toResource = resourcesById[assignment.resource_id]?.name || assignment.resource_id;
+          const bandwidth = result.matrices.bandwidth_bw[predecessor.resource_id]?.[assignment.resource_id];
+          const transfer = predecessor.resource_id === assignment.resource_id || !bandwidth ? 0 : dependency.data_mb / bandwidth;
+          return `${dependency.source}: ${fromResource} -> ${toResource}, ${fmt(dependency.data_mb)} MB, ${fmt(transfer)}s`;
+        })
+        .filter(Boolean);
+      const resource = resourcesById[assignment.resource_id];
+      const lines = [
+        `${assignment.task_id}`,
+        `Base ET_0: ${fmt(baseRuntime)}s`,
+        `Interference: +${fmt(interferenceRuntime)}s with ${pairText}`,
+        `Container overhead: +${fmt(assignment.container_overhead)}s on ${resource?.name || assignment.resource_id}`,
+        `Boot overhead: +${fmt(assignment.boot_overhead)}s (${resource?.status || "unknown"} ${resource?.kind || "machine"}, node boot ${fmt(resource?.boot_overhead)}s)`,
+        `Transfer delay: +${fmt(assignment.transfer_delay)}s${transfers.length ? ` from ${transfers.join("; ")}` : " (no cross-machine predecessor transfer)"}`,
+      ];
+      return [
+        assignment.task_id,
+        {
+          title: lines.join("\n"),
+          interferenceText: `Interference: +${fmt(interferenceRuntime)}s with ${pairText}`,
+          transferText: `Transfer: +${fmt(assignment.transfer_delay)}s${transfers.length ? ` from ${transfers.join("; ")}` : " (none)"}`,
+          containerText: `Container: +${fmt(assignment.container_overhead)}s on ${resource?.name || assignment.resource_id}`,
+          bootText: `Boot: +${fmt(assignment.boot_overhead)}s for ${resource?.status || "unknown"} ${resource?.kind || "machine"} (node boot ${fmt(resource?.boot_overhead)}s)`,
+        },
+      ];
+    }),
   );
 }
 
@@ -1263,6 +1503,39 @@ function resourceColors(resources) {
       return [resource.id, palette[index % palette.length]];
     }),
   );
+}
+
+function buildResourceSpecs(clusterCount, cloudCount, coresPerMachine) {
+  const resources = [];
+  for (let index = 1; index <= clusterCount; index += 1) {
+    resources.push(defaultResourceSpec("cluster", index, coresPerMachine));
+  }
+  for (let index = 1; index <= cloudCount; index += 1) {
+    resources.push(defaultResourceSpec("cloud", index, coresPerMachine));
+  }
+  return resources;
+}
+
+function syncResourceSpecs(currentSpecs, clusterCount, cloudCount, coresPerMachine) {
+  const currentById = Object.fromEntries(currentSpecs.map((resource) => [resource.id, resource]));
+  return buildResourceSpecs(clusterCount, cloudCount, coresPerMachine).map((resource) => ({
+    ...resource,
+    ...(currentById[resource.id] || {}),
+  }));
+}
+
+function defaultResourceSpec(kind, index, coresPerMachine) {
+  const isCluster = kind === "cluster";
+  return {
+    id: `${isCluster ? "c" : "v"}${index}`,
+    name: `${kind}-${index}`,
+    kind,
+    cores: coresPerMachine,
+    memory: isCluster ? 16 + index * 4 : 24 + index * 8,
+    bandwidth: isCluster ? 900 : 350,
+    boot_overhead: isCluster ? 0 : 10 + index,
+    location: isCluster ? "on-prem" : index % 2 === 0 ? "us-east" : "eu-west",
+  };
 }
 
 function buildAggregatedInterferenceMatrix(interferenceMatrixByResource, resourceId) {
@@ -1298,6 +1571,10 @@ function fmt(value) {
   if (value === undefined || value === null) return "-";
   if (typeof value !== "number") return value;
   return Number.isInteger(value) ? String(value) : value.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+function dimensionLabel(value) {
+  return value === "cpu" ? "core" : value;
 }
 
 function compactLabel(value, maxLength) {

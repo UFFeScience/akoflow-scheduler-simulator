@@ -9,6 +9,17 @@ ResourceKind = Literal["cluster", "cloud"]
 ResourceStatus = Literal["warm", "cold"]
 
 
+class ResourceSpec(BaseModel):
+    id: str
+    name: str
+    kind: ResourceKind
+    cores: int = Field(default=2, ge=1, le=64)
+    memory: float = Field(default=16.0, gt=0)
+    bandwidth: float = Field(default=500.0, gt=0)
+    boot_overhead: float = Field(default=0.0, ge=0.0)
+    location: str = "on-prem"
+
+
 class SimulationRequest(BaseModel):
     preset: str = "Montage"
     seed: int = 42
@@ -25,6 +36,7 @@ class SimulationRequest(BaseModel):
     penalty_deadline: float = Field(default=3.0, ge=0.0)
     penalty_budget: float = Field(default=2.0, ge=0.0)
     workflow_yaml: Optional[str] = None
+    resource_specs: Optional[List[ResourceSpec]] = None
 
 
 class Core(BaseModel):
@@ -43,8 +55,10 @@ class Resource(BaseModel):
     price_per_cpu_second: float
     price_per_gb_second: float
     financial_network_price: float
+    bandwidth: float
     location: str
     status: ResourceStatus
+    boot_overhead: float
     image_cache: List[str]
 
 

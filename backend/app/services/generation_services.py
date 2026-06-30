@@ -35,6 +35,7 @@ class GenerateWorkflowService:
         preset = next((p for p in PRESETS if p["id"] == request.preset), PRESETS[0])
         tasks: List[Task] = []
         dependencies: List[Dependency] = []
+        max_task_cores = max((spec.cores for spec in request.resource_specs or []), default=request.cores_per_machine)
 
         for index in range(request.task_count):
             stage = preset["stages"][index % len(preset["stages"])]
@@ -43,7 +44,7 @@ class GenerateWorkflowService:
                     id=f"t{index + 1}",
                     label=f"{stage}-{index + 1}",
                     workflow_stage=stage,
-                    cpu=round(rng.uniform(0.7, 3.4), 2),
+                    cpu=float(rng.randint(1, max(1, max_task_cores))),
                     memory=round(rng.uniform(1.0, 8.0), 2),
                     base_runtime=round(rng.uniform(8.0, 35.0), 2),
                     image=f"{stage.lower()}:latest",
@@ -215,36 +216,71 @@ class GenerateResourcesService:
 
         def make_resource(kind: str, index: int) -> Resource:
             node_id = f"{'c' if kind == 'cluster' else 'v'}{index}"
-            cpu_base = 4.0 if kind == "cluster" else 5.5
             mem_base = 16.0 if kind == "cluster" else 24.0
             price_multiplier = 0.0 if kind == "cluster" else 1.0
             stages = PRESETS[index % len(PRESETS)]["stages"]
+            status = "warm" if kind == "cluster" else "cold"
             return Resource(
                 id=node_id,
                 name=f"{kind}-{index}",
                 kind=kind,  # type: ignore[arg-type]
                 cores=[Core(id=f"{node_id}-core-{core + 1}", index=core) for core in range(request.cores_per_machine)],
-                cpu=round(cpu_base + rng.uniform(0, 5), 2),
+                cpu=float(request.cores_per_machine),
                 memory=round(mem_base + rng.uniform(0, 32), 2),
                 price_per_cpu_second=round(rng.uniform(0.006, 0.025) * price_multiplier, 5),
                 price_per_gb_second=round(rng.uniform(0.001, 0.006) * price_multiplier, 5),
                 financial_network_price=0.0 if kind == "cluster" else round(rng.uniform(0.0008, 0.006), 5),
+                bandwidth=round(rng.uniform(650, 1200) if kind == "cluster" else rng.uniform(120, 850), 2),
                 location=locations[(index + (0 if kind == "cluster" else 1)) % len(locations)],
-                status="warm" if kind == "cluster" or rng.random() > 0.4 else "cold",
+                status=status,
+                boot_overhead=0.0 if status == "warm" else round(rng.uniform(6.0, 18.0) if kind == "cloud" else rng.uniform(2.0, 6.0), 3),
                 image_cache=[f"{stage.lower()}:latest" for stage in stages[: rng.randint(1, len(stages))]],
             )
 
-        for index in range(1, request.cluster_machines + 1):
-            resources.append(make_resource("cluster", index))
-        for index in range(1, request.cloud_machines + 1):
-            resources.append(make_resource("cloud", index))
+        if request.resource_specs:
+            seen_ids: set[str] = set()
+            for index, spec in enumerate(request.resource_specs, start=1):
+                if spec.id in seen_ids:
+                    raise ValueError(f"Duplicate resource id: {spec.id}")
+                seen_ids.add(spec.id)
+                price_multiplier = 0.0 if spec.kind == "cluster" else 1.0
+                status = "warm" if spec.kind == "cluster" else "cold"
+                stages = PRESETS[index % len(PRESETS)]["stages"]
+                resources.append(
+                    Resource(
+                        id=spec.id,
+                        name=spec.name,
+                        kind=spec.kind,
+                        cores=[Core(id=f"{spec.id}-core-{core + 1}", index=core) for core in range(spec.cores)],
+                        cpu=float(spec.cores),
+                        memory=round(spec.memory, 2),
+                        price_per_cpu_second=round(rng.uniform(0.006, 0.025) * price_multiplier, 5),
+                        price_per_gb_second=round(rng.uniform(0.001, 0.006) * price_multiplier, 5),
+                        financial_network_price=0.0 if spec.kind == "cluster" else round(rng.uniform(0.0008, 0.006), 5),
+                        bandwidth=round(spec.bandwidth, 2),
+                        location=spec.location,
+                        status=status,
+                        boot_overhead=0.0 if spec.kind == "cluster" else round(spec.boot_overhead, 3),
+                        image_cache=[f"{stage.lower()}:latest" for stage in stages[: rng.randint(1, len(stages))]],
+                    )
+                )
+        else:
+            for index in range(1, request.cluster_machines + 1):
+                resources.append(make_resource("cluster", index))
+            for index in range(1, request.cloud_machines + 1):
+                resources.append(make_resource("cloud", index))
 
         bandwidth: Dict[str, Dict[str, float]] = {}
         for left in resources:
             bandwidth[left.id] = {}
             for right in resources:
                 same_location = left.location == right.location
-                bandwidth[left.id][right.id] = 10_000.0 if left.id == right.id else round(rng.uniform(80, 950) * (2 if same_location else 1), 2)
+                if left.id == right.id:
+                    bandwidth[left.id][right.id] = 10_000.0
+                elif request.resource_specs:
+                    bandwidth[left.id][right.id] = round(min(left.bandwidth, right.bandwidth) * (1.5 if same_location else 1.0), 2)
+                else:
+                    bandwidth[left.id][right.id] = round(rng.uniform(80, 950) * (2 if same_location else 1), 2)
         return resources, bandwidth
 
 
@@ -316,8 +352,10 @@ class GenerateSimulationService:
             penalty_deadline=request.penalty_deadline,
             penalty_budget=request.penalty_budget,
         )
+        cluster_count = sum(1 for resource in resources if resource.kind == "cluster")
+        cloud_count = sum(1 for resource in resources if resource.kind == "cloud")
         return GeneratedSimulation(
-            id=f"sim-{request.seed}-{len(workflow.tasks)}-{request.cluster_machines}-{request.cloud_machines}",
+            id=f"sim-{request.seed}-{len(workflow.tasks)}-{cluster_count}-{cloud_count}",
             seed=request.seed,
             workflow=workflow,
             resources=resources,

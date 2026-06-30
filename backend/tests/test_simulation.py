@@ -104,6 +104,62 @@ def test_cluster_resources_are_owned_capacity() -> None:
             assert generated.matrices.financial_network_cost[left][right] == 0
 
 
+def test_custom_resource_specs_define_core_capacity_and_bandwidth() -> None:
+    request = SimulationRequest(
+        seed=7,
+        resource_specs=[
+            {
+                "id": "c1",
+                "name": "cluster-large",
+                "kind": "cluster",
+                "cores": 3,
+                "memory": 64,
+                "bandwidth": 1200,
+                "boot_overhead": 0,
+                "location": "on-prem",
+            },
+            {
+                "id": "v1",
+                "name": "cloud-fast",
+                "kind": "cloud",
+                "cores": 4,
+                "memory": 96,
+                "bandwidth": 500,
+                "boot_overhead": 15,
+                "location": "eu-west",
+            },
+        ],
+    )
+
+    generated = GenerateSimulationService().execute(request)
+    resources = {resource.id: resource for resource in generated.resources}
+
+    assert resources["c1"].name == "cluster-large"
+    assert len(resources["c1"].cores) == 3
+    assert resources["c1"].cpu == 3
+    assert resources["c1"].memory == 64
+    assert resources["c1"].bandwidth == 1200
+    assert resources["c1"].boot_overhead == 0
+    assert resources["v1"].status == "cold"
+    assert len(resources["v1"].cores) == 4
+    assert resources["v1"].cpu == 4
+    assert resources["v1"].boot_overhead == 15
+    assert generated.matrices.bandwidth_bw["c1"]["v1"] == 500
+
+
+def test_cloud_resources_start_cold_with_node_boot_overhead() -> None:
+    request = SimulationRequest(seed=17, task_count=8, cluster_machines=2, cloud_machines=3)
+    generated = GenerateSimulationService().execute(request)
+
+    for resource in generated.resources:
+        if resource.kind == "cloud":
+            assert resource.status == "cold"
+            assert resource.boot_overhead > 0
+        else:
+            assert resource.status == "warm"
+            assert resource.boot_overhead == 0
+
+
 def test_zero_budget_filters_cloud_assignments_and_keeps_costs_zero() -> None:
     request = SimulationRequest(seed=17, task_count=8, budget=0, cluster_machines=3, cloud_machines=3)
     generated = GenerateSimulationService().execute(request)
@@ -131,6 +187,52 @@ def test_positive_budget_keeps_cloud_resources_eligible() -> None:
     resources = {resource.id: resource for resource in result.resources}
 
     assert any(resources[assignment.resource_id].kind == "cloud" for assignment in result.assignments)
+
+
+def test_cold_node_uses_resource_boot_overhead() -> None:
+    request = SimulationRequest(seed=17, task_count=4, budget=260, cluster_machines=1, cloud_machines=1)
+    generated = GenerateSimulationService().execute(request)
+    for resource in generated.resources:
+        if resource.kind == "cluster":
+            resource.cpu = 0.1
+            resource.memory = 0.1
+        else:
+            resource.status = "cold"
+            resource.boot_overhead = 13.5
+
+    result = ScheduleWorkflowService().execute(generated)
+    first_cloud_assignment = next(assignment for assignment in result.assignments if assignment.resource_id.startswith("v"))
+
+    assert first_cloud_assignment.boot_overhead == 13.5
+
+
+def test_cold_node_blocks_all_cores_until_boot_completes() -> None:
+    request = SimulationRequest(seed=19, task_count=4, budget=260, cluster_machines=1, cloud_machines=1, cores_per_machine=2)
+    generated = GenerateSimulationService().execute(request)
+    generated.workflow.dependencies = []
+    generated.workflow.predecessor_sets = {task.id: [] for task in generated.workflow.tasks}
+    for task in generated.workflow.tasks:
+        task.predecessors = []
+        task.successors = []
+    for resource in generated.resources:
+        if resource.kind == "cluster":
+            resource.cpu = 0.1
+            resource.memory = 0.1
+            continue
+        resource.status = "cold"
+        resource.boot_overhead = 11.0
+        for task in generated.workflow.tasks:
+            generated.matrices.et_0[task.id][resource.id] = 5.0
+            generated.matrices.et_star[task.id][resource.id] = 5.0
+            generated.matrices.container_overhead[task.id][resource.id] = 0.0
+
+    result = ScheduleWorkflowService().execute(generated)
+    cloud_assignments = [assignment for assignment in result.assignments if assignment.resource_id.startswith("v")]
+    first_booted = next(assignment for assignment in cloud_assignments if assignment.boot_overhead == 11.0)
+
+    assert first_booted.start_time == 11.0
+    assert all(assignment.start_time >= 11.0 for assignment in cloud_assignments)
+    assert sum(1 for assignment in cloud_assignments if assignment.boot_overhead == 11.0) == 1
 
 
 def test_every_task_receives_exactly_one_assignment() -> None:
@@ -173,7 +275,7 @@ def test_start_time_respects_predecessors_and_resource_availability() -> None:
             assert assignment.start_time >= predecessor.finish_time + transfer
 
 
-def test_cpu_and_memory_infeasible_assignments_are_filtered() -> None:
+def test_core_and_memory_infeasible_assignments_are_filtered() -> None:
     generated, result = run_default()
     resources = {resource.id: resource for resource in generated.resources}
     tasks = {task.id: task for task in generated.workflow.tasks}

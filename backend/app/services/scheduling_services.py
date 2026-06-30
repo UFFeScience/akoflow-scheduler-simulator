@@ -27,6 +27,7 @@ class ScheduleWorkflowService:
 
         core_avail = {core.id: 0.0 for resource in generated.resources for core in resource.cores}
         node_has_booted = {resource.id: resource.status == "warm" for resource in generated.resources}
+        node_ready_time = {resource.id: 0.0 for resource in generated.resources}
         assignments: List[Assignment] = []
         assignment_by_task: Dict[str, Assignment] = {}
         scheduler_steps: List[ScheduleStep] = []
@@ -52,9 +53,11 @@ class ScheduleWorkflowService:
                     predecessor_floor = max(predecessor_floor, predecessor.finish_time + transfer)
 
                 for core in resource.cores:
-                    boot = 0.0 if node_has_booted[resource.id] else (8.0 if resource.kind == "cloud" else 3.0)
+                    boot = 0.0 if node_has_booted[resource.id] else resource.boot_overhead
                     container = generated.matrices.container_overhead[task.id][resource.id]
-                    tentative_start = round(max(predecessor_floor, core_avail[core.id]) + boot + container, 3)
+                    ready_floor = max(predecessor_floor, core_avail[core.id], node_ready_time[resource.id])
+                    boot_ready_time = ready_floor + boot
+                    tentative_start = round(boot_ready_time + container, 3)
                     base_runtime = generated.matrices.et_0[task.id][resource.id]
                     phi, pairwise_interference = self.interference_service.candidate_pairwise_interference(
                         generated,
@@ -144,6 +147,11 @@ class ScheduleWorkflowService:
             assignments.append(selected)
             assignment_by_task[selected.task_id] = selected
             core_avail[selected.core_id] = selected.finish_time
+            if selected.boot_overhead > 0:
+                node_ready_time[selected.resource_id] = max(
+                    node_ready_time[selected.resource_id],
+                    round(selected.start_time - selected.container_overhead, 3),
+                )
             node_has_booted[selected.resource_id] = True
             generated.matrices.et_star[selected.task_id][selected.resource_id] = selected.effective_runtime
 
