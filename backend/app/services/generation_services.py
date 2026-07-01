@@ -349,8 +349,6 @@ class GenerateSimulationService:
             weight_time=request.weight_time,
             weight_cost=request.weight_cost,
             weight_interference=request.weight_interference,
-            penalty_deadline=request.penalty_deadline,
-            penalty_budget=request.penalty_budget,
         )
         cluster_count = sum(1 for resource in resources if resource.kind == "cluster")
         cloud_count = sum(1 for resource in resources if resource.kind == "cloud")

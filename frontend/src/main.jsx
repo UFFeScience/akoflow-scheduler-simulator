@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ChevronLeft, ChevronRight, Download, Moon, Play, RefreshCw, Sun, Upload } from "lucide-react";
+import { normalizeWeights } from "./slaControls.js";
 import "./styles.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -24,8 +25,6 @@ const defaultRequest = {
   weight_time: 0.55,
   weight_cost: 0.3,
   weight_interference: 0.15,
-  penalty_deadline: 3,
-  penalty_budget: 2,
 };
 
 function App() {
@@ -156,6 +155,10 @@ function App() {
     }));
   }
 
+  function updateWeights(nextWeights) {
+    setRequest((current) => ({ ...current, ...nextWeights }));
+  }
+
   function resetResourceSpecs() {
     setRequest((current) => ({
       ...current,
@@ -242,6 +245,7 @@ function App() {
               status={status}
               statusMessage={statusMessage}
               onUpdateRequest={updateRequest}
+              onUpdateWeights={updateWeights}
               onUpdateResourceSpec={updateResourceSpec}
               onResetResourceSpecs={resetResourceSpecs}
               onWorkflowModeChange={setWorkflowMode}
@@ -289,6 +293,45 @@ function ControlSelect({ label, value, onChange, children }) {
       <select value={value} onChange={(event) => onChange(event.target.value)}>
         {children}
       </select>
+    </label>
+  );
+}
+
+function SliderNumberControl({ label, value, min, max, step, onChange, suffix = "", help }) {
+  const numericValue = Number(value) || 0;
+  const sliderMax = Math.max(max, numericValue);
+  return (
+    <label className="slider-control">
+      <span>{label}</span>
+      <div className="slider-row">
+        <input
+          type="range"
+          value={numericValue}
+          min={min}
+          max={sliderMax}
+          step={step}
+          onChange={(event) => onChange(Number(event.target.value))}
+        />
+        <div className="number-with-suffix">
+          <input type="number" value={numericValue} min={min} step={step} onChange={(event) => onChange(Number(event.target.value))} />
+          {suffix && <em>{suffix}</em>}
+        </div>
+      </div>
+      {help && <small>{help}</small>}
+    </label>
+  );
+}
+
+function WeightSliderControl({ label, value, onChange, help }) {
+  const percent = Math.round((Number(value) || 0) * 100);
+  return (
+    <label className="slider-control weight-control">
+      <span>{label}</span>
+      <div className="slider-row">
+        <input type="range" value={value} min={0} max={1} step={0.01} onChange={(event) => onChange(Number(event.target.value))} />
+        <strong>{percent}%</strong>
+      </div>
+      {help && <small>{help}</small>}
     </label>
   );
 }
@@ -353,6 +396,7 @@ function WorkflowStartScreen({
   status,
   statusMessage,
   onUpdateRequest,
+  onUpdateWeights,
   onUpdateResourceSpec,
   onResetResourceSpecs,
   onWorkflowModeChange,
@@ -360,6 +404,12 @@ function WorkflowStartScreen({
   onClearWorkflowFile,
   onGenerate,
 }) {
+  function updateWeight(key, value) {
+    onUpdateWeights(normalizeWeights(request, key, value));
+  }
+
+  const weightTotal = request.weight_time + request.weight_cost + request.weight_interference;
+
   return (
     <div className="steps-view">
       <section className="data-section start-screen">
@@ -439,15 +489,62 @@ function WorkflowStartScreen({
         </div>
 
         <div className="setup-section">
-          <h2>SLA and weights</h2>
-          <div className="setup-grid">
-            <ControlInput label="SLA deadline" value={request.deadline} min={1} step={1} onChange={(value) => onUpdateRequest("deadline", value)} />
-            <ControlInput label="Budget" value={request.budget} min={0} step={1} onChange={(value) => onUpdateRequest("budget", value)} />
-            <ControlInput label="Weight time" value={request.weight_time} min={0} max={1} step={0.01} onChange={(value) => onUpdateRequest("weight_time", value)} />
-            <ControlInput label="Weight cost" value={request.weight_cost} min={0} max={1} step={0.01} onChange={(value) => onUpdateRequest("weight_cost", value)} />
-            <ControlInput label="Weight interference" value={request.weight_interference} min={0} max={1} step={0.01} onChange={(value) => onUpdateRequest("weight_interference", value)} />
-            <ControlInput label="Deadline penalty" value={request.penalty_deadline} min={0} step={0.1} onChange={(value) => onUpdateRequest("penalty_deadline", value)} />
-            <ControlInput label="Budget penalty" value={request.penalty_budget} min={0} step={0.1} onChange={(value) => onUpdateRequest("penalty_budget", value)} />
+          <h2>SLA policy</h2>
+          <div className="sla-sections">
+            <section className="sla-subsection">
+              <header>
+                <strong>Scheduling targets</strong>
+                <span>Used while ranking candidate machines.</span>
+              </header>
+              <div className="setup-grid">
+                <SliderNumberControl
+                  label="Deadline"
+                  value={request.deadline}
+                  min={1}
+                  max={500}
+                  step={1}
+                  suffix="s"
+                  help="Candidate time score = finish time / deadline. Lower values push the scheduler toward earlier finishes."
+                  onChange={(value) => onUpdateRequest("deadline", value)}
+                />
+                <SliderNumberControl
+                  label="Budget"
+                  value={request.budget}
+                  min={0}
+                  max={1000}
+                  step={1}
+                  help="Candidate cost score = execution cost / budget. A zero budget disables cloud machines."
+                  onChange={(value) => onUpdateRequest("budget", value)}
+                />
+              </div>
+            </section>
+
+            <section className="sla-subsection">
+              <header>
+                <strong>Decision weights</strong>
+                <span>Total {Math.round(weightTotal * 100)}%</span>
+              </header>
+              <div className="weight-slider-stack">
+                <WeightSliderControl
+                  label="Finish earlier"
+                  value={request.weight_time}
+                  help="Multiplies the time score. Higher values prefer candidates with lower finish times."
+                  onChange={(value) => updateWeight("weight_time", value)}
+                />
+                <WeightSliderControl
+                  label="Spend less"
+                  value={request.weight_cost}
+                  help="Multiplies the cost score. Higher values prefer lower CPU and memory execution cost."
+                  onChange={(value) => updateWeight("weight_cost", value)}
+                />
+                <WeightSliderControl
+                  label="Avoid interference"
+                  value={request.weight_interference}
+                  help="Multiplies phi_n. Higher values avoid overlapping colocated tasks that inflate ET*."
+                  onChange={(value) => updateWeight("weight_interference", value)}
+                />
+              </div>
+            </section>
           </div>
         </div>
 
@@ -744,8 +841,10 @@ function GanttView({ result, selectedTaskId, onSelect }) {
     container: false,
     boot: false,
     transfer: false,
+    stopped: true,
   });
   const [showDependencies, setShowDependencies] = useState(true);
+  const stopIntervals = result.machine_stop_intervals || [];
   const maxVisibleFinish = result.assignments.reduce((maxValue, item) => {
     const baseRuntime = result.matrices.et_0[item.task_id]?.[item.resource_id] ?? item.effective_runtime;
     const interferenceRuntime = Math.max(0, item.effective_runtime - baseRuntime);
@@ -753,12 +852,18 @@ function GanttView({ result, selectedTaskId, onSelect }) {
     const transferRuntime = visibleTiming.transfer ? item.transfer_delay : 0;
     return Math.max(maxValue, item.start_time + executionRuntime + transferRuntime);
   }, result.scheduler_variables.makespan);
+  const maxVisibleStopFinish = visibleTiming.stopped
+    ? stopIntervals.reduce((maxValue, item) => Math.max(maxValue, item.boot_finish_time), maxVisibleFinish)
+    : maxVisibleFinish;
   const minVisibleStart = result.assignments.reduce((minValue, item) => {
     const preRuntime = (visibleTiming.boot ? item.boot_overhead : 0) + (visibleTiming.container ? item.container_overhead : 0);
     return Math.min(minValue, item.start_time - preRuntime);
   }, 0);
-  const timelineOrigin = Math.min(0, minVisibleStart);
-  const timelineSpan = Math.max(1, maxVisibleFinish - timelineOrigin);
+  const minVisibleStopStart = visibleTiming.stopped
+    ? stopIntervals.reduce((minValue, item) => Math.min(minValue, item.stop_time), minVisibleStart)
+    : minVisibleStart;
+  const timelineOrigin = Math.min(0, minVisibleStopStart);
+  const timelineSpan = Math.max(1, maxVisibleStopFinish - timelineOrigin);
   const timelineWidth = Math.max(760, timelineSpan * 7);
   const scale = timelineWidth / timelineSpan;
   const colorByResource = resourceColors(result.resources);
@@ -830,6 +935,10 @@ function GanttView({ result, selectedTaskId, onSelect }) {
             <input type="checkbox" checked={visibleTiming.boot} onChange={() => toggleTiming("boot")} />
             <span>Boot overhead</span>
           </label>
+          <label className="checkbox-control">
+            <input type="checkbox" checked={visibleTiming.stopped} onChange={() => toggleTiming("stopped")} />
+            <span>Stopped machines</span>
+          </label>
 	          <label className="checkbox-control">
 	            <input type="checkbox" checked={visibleTiming.transfer} onChange={() => toggleTiming("transfer")} />
 	            <span>Transfer delay after execution</span>
@@ -844,6 +953,7 @@ function GanttView({ result, selectedTaskId, onSelect }) {
 	          <span><i className="legend-swatch interference" />Interference overhead (checker)</span>
 	          <span><i className="legend-swatch container" />Container overhead before execution (checker)</span>
 	          <span><i className="legend-swatch boot" />Boot overhead before execution (checker)</span>
+	          <span><i className="legend-swatch stopped" />Machine stopped</span>
 	          <span><i className="legend-swatch transfer" />Transfer delay after execution (checker)</span>
         </div>
       </div>
@@ -898,6 +1008,18 @@ function GanttView({ result, selectedTaskId, onSelect }) {
                 <div className="gantt-row" key={core.id}>
                   <div className="lane-label">Core {core.index + 1}</div>
                   <div className="lane-track">
+                    {visibleTiming.stopped && stopIntervals.filter((item) => item.resource_id === resource.id).map((item, index) => {
+                      const left = (item.stop_time - timelineOrigin) * scale;
+                      const width = Math.max(6, (item.boot_start_time - item.stop_time) * scale);
+                      return (
+                        <span
+                          key={`${item.resource_id}-${item.stop_time}-${index}`}
+                          className="machine-stop-window"
+                          style={{ left, width }}
+                          title={`${resource.name} stopped ${fmt(item.stop_time)}-${fmt(item.boot_start_time)}s; boot ${fmt(item.boot_start_time)}-${fmt(item.boot_finish_time)}s`}
+                        />
+                      );
+                    })}
 	                    {result.assignments.filter((item) => item.core_id === core.id).map((item) => {
 	                      const baseRuntime = result.matrices.et_0[item.task_id]?.[item.resource_id] ?? item.effective_runtime;
 	                      const interferenceRuntime = Math.max(0, item.effective_runtime - baseRuntime);
@@ -1067,21 +1189,171 @@ function ActivityStatsView({ result, onSelect }) {
   const assignmentByTask = Object.fromEntries(result.assignments.map((assignment) => [assignment.task_id, assignment]));
   const machineUse = result.resources.map((resource) => ({
     resource,
-    count: result.assignments.filter((assignment) => assignment.resource_id === resource.id).length,
+    assignments: result.assignments
+      .filter((assignment) => assignment.resource_id === resource.id)
+      .sort((left, right) => left.start_time - right.start_time || left.task_id.localeCompare(right.task_id)),
   }));
+  const machineDistribution = machineUse.map(({ resource, assignments }) => {
+    const totalRuntime = assignments.reduce((sum, assignment) => sum + assignment.effective_runtime, 0);
+    return {
+      resource,
+      assignments,
+      count: assignments.length,
+      totalRuntime,
+      averageRuntime: totalRuntime / Math.max(assignments.length, 1),
+    };
+  });
   const totalInterference = result.assignments.reduce((sum, assignment) => {
     const baseRuntime = result.matrices.et_0[assignment.task_id]?.[assignment.resource_id] ?? assignment.effective_runtime;
     return sum + Math.max(0, assignment.effective_runtime - baseRuntime);
   }, 0);
+  const maxMachineRuntime = Math.max(...machineDistribution.map((item) => item.totalRuntime), 1);
+  const totalRuntime = machineDistribution.reduce((sum, item) => sum + item.totalRuntime, 0);
+  const maxActivityCount = Math.max(...machineDistribution.map((item) => item.count), 1);
+  const maxAverageRuntime = Math.max(...machineDistribution.map((item) => item.averageRuntime), 1);
+  const maxRuntimeShare = Math.max(...machineDistribution.map((item) => (totalRuntime === 0 ? 0 : item.totalRuntime / totalRuntime)), 0.001);
+  const makespan = result.scheduler_variables.makespan || 0;
+  const timeBucketSize = Math.max(1, Math.ceil(makespan / 80));
+  const timeBucketCount = Math.max(1, Math.ceil(makespan / timeBucketSize));
+  const timeBuckets = Array.from({ length: timeBucketCount }, (_, index) => ({
+    index,
+    start: index * timeBucketSize,
+    finish: Math.min((index + 1) * timeBucketSize, Math.max(makespan, timeBucketSize)),
+  }));
+  const usedMachineDistribution = machineDistribution.filter((item) => item.count > 0);
+  const nodeTimeCells = usedMachineDistribution.map((item) => ({
+    ...item,
+    buckets: timeBuckets.map((bucket) => {
+      const running = item.assignments.filter((assignment) => (
+        assignment.start_time < bucket.finish && assignment.finish_time > bucket.start
+      ));
+      return {
+        ...bucket,
+        running,
+        count: running.length,
+      };
+    }),
+  }));
+  const maxRunningInBucket = Math.max(...nodeTimeCells.flatMap((item) => item.buckets.map((bucket) => bucket.count)), 1);
+  const heatmapRows = [
+    {
+      key: "activities",
+      label: "Activities",
+      format: (item) => item.count,
+      intensity: (item) => item.count / maxActivityCount,
+    },
+    {
+      key: "total-runtime",
+      label: "Total runtime",
+      format: (item) => `${fmt(item.totalRuntime)}s`,
+      intensity: (item) => item.totalRuntime / maxMachineRuntime,
+    },
+    {
+      key: "average-runtime",
+      label: "Avg runtime",
+      format: (item) => `${fmt(item.averageRuntime)}s`,
+      intensity: (item) => item.averageRuntime / maxAverageRuntime,
+    },
+    {
+      key: "runtime-share",
+      label: "Runtime share",
+      format: (item) => `${fmt((totalRuntime === 0 ? 0 : item.totalRuntime / totalRuntime) * 100)}%`,
+      intensity: (item) => (totalRuntime === 0 ? 0 : item.totalRuntime / totalRuntime) / maxRuntimeShare,
+    },
+  ];
 
   return (
     <div className="steps-view">
       <div className="stats-grid">
         <Metric label="Activities" value={result.workflow.tasks.length} />
-        <Metric label="Machines used" value={machineUse.filter((item) => item.count > 0).length} />
+        <Metric label="Machines used" value={machineDistribution.filter((item) => item.count > 0).length} />
         <Metric label="Total interference time" value={fmt(totalInterference)} />
         <Metric label="Total candidates" value={(result.scheduler_steps || []).reduce((sum, step) => sum + step.candidates.length, 0)} />
       </div>
+
+      <section className="data-section">
+        <h2>Node distribution heatmap</h2>
+        <div className="node-heatmap-wrap">
+          <table className="node-heatmap">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                {machineDistribution.map(({ resource }) => (
+                  <th className={`node-heatmap-machine ${resource.kind}`} key={resource.id}>
+                    <strong>{resource.name}</strong>
+                    <span>{resource.kind === "cluster" ? "HPC" : "cloud"} / {resource.id}</span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {heatmapRows.map((row) => (
+                <tr key={row.key}>
+                  <th>{row.label}</th>
+                  {machineDistribution.map((item) => (
+                    <td key={`${row.key}-${item.resource.id}`}>
+                      <div
+                        className={`node-heatmap-cell ${item.resource.kind}`}
+                        style={{ "--heatmap-intensity": Math.max(0.08, row.intensity(item)) }}
+                        title={`${item.resource.name} / ${row.label}: ${row.format(item)}`}
+                      >
+                        <strong>{row.format(item)}</strong>
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="data-section">
+        <h2>Node load over time</h2>
+        <div className="time-heatmap-wrap">
+          <div
+            className="time-heatmap"
+            style={{
+              "--time-bucket-count": timeBuckets.length,
+              "--time-row-count": Math.max(usedMachineDistribution.length, 1),
+            }}
+          >
+            <div className="time-heatmap-corner">Node</div>
+            <div className="time-heatmap-axis">
+              {timeBuckets.map((bucket) => (
+                <div key={bucket.index} title={`${fmt(bucket.start)}-${fmt(bucket.finish)}s`}>
+                  {bucket.start}
+                </div>
+              ))}
+            </div>
+            {nodeTimeCells.map(({ resource, buckets }) => (
+              <React.Fragment key={resource.id}>
+                <div className="time-heatmap-node">
+                  <strong>{resource.name}</strong>
+                  <span>{resource.kind === "cluster" ? "HPC" : "cloud"} / {resource.id}</span>
+                </div>
+                <div className="time-heatmap-row">
+                  {buckets.map((bucket) => {
+                    const intensity = bucket.count / maxRunningInBucket;
+                    return (
+                      <button
+                        type="button"
+                        key={`${resource.id}-${bucket.index}`}
+                        className={`time-heatmap-cell ${resource.kind}`}
+                        style={{ "--heatmap-intensity": Math.max(0, intensity) }}
+                        title={`${resource.name}, ${fmt(bucket.start)}-${fmt(bucket.finish)}s: ${bucket.count} running${bucket.running.length ? ` (${bucket.running.map((assignment) => assignment.task_id).join(", ")})` : ""}`}
+                        onClick={() => bucket.running[0] && onSelect(bucket.running[0].task_id)}
+                      >
+                        {bucket.count > 0 ? bucket.count : ""}
+                      </button>
+                    );
+                  })}
+                </div>
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section className="data-section">
         <h2>Activity statistics</h2>
@@ -1227,6 +1499,7 @@ function PairwiseInterferenceView({ result, onSelect }) {
 }
 
 function MachineView({ result, selectedTaskId, onSelect }) {
+  const stopIntervals = result.machine_stop_intervals || [];
   return (
     <div className="machine-grid">
       {result.resources.map((resource) => (
@@ -1241,7 +1514,18 @@ function MachineView({ result, selectedTaskId, onSelect }) {
             <span>BW {fmt(resource.bandwidth)} MB/s</span>
             <span>Boot {fmt(resource.boot_overhead)}s</span>
             <span>{resource.location}</span>
+            <span>Stops {stopIntervals.filter((item) => item.resource_id === resource.id).length}</span>
           </div>
+          {stopIntervals.filter((item) => item.resource_id === resource.id).map((item, index) => (
+            <div className="core-lane stop-lane" key={`${item.resource_id}-${item.stop_time}-${index}`}>
+              <span>Stopped</span>
+              <div>
+                <span className="pill stop-pill">
+                  off {fmt(item.stop_time)}-{fmt(item.boot_start_time)} / boot {fmt(item.boot_start_time)}-{fmt(item.boot_finish_time)}
+                </span>
+              </div>
+            </div>
+          ))}
           {resource.cores.map((core) => (
             <div className="core-lane" key={core.id}>
               <span>Core {core.index + 1}</span>
@@ -1410,7 +1694,9 @@ function DetailsPanel({ result, assignment, taskId }) {
       <Metric label="C_fin" value={fmt(result.cost_variables.c_fin[task.id])} />
       <Metric label="FC" value={fmt(result.cost_variables.fc[task.id])} />
       <Metric label="ET_obs" value={fmt(result.deviation_variables.et_obs[task.id])} />
-      <Metric label="D_N" value={fmt(result.deviation_variables.d_n[task.id])} />
+      <Metric label="D_time" value={fmt(result.deviation_variables.d_time[task.id])} />
+      <Metric label="D_excess" value={fmt(result.deviation_variables.d_excess[task.id])} />
+      <Metric label="D_N" value={fmt(result.deviation_variables.d_n[assignment.resource_id])} />
       {task.runtime && <Metric label="Runtime" value={task.runtime} />}
       <section className="score-box">
         <strong>Score breakdown</strong>
@@ -1429,6 +1715,7 @@ function DetailsPanel({ result, assignment, taskId }) {
         <span>{ganttContext?.transferText || "Transfer: none"}</span>
         <span>{ganttContext?.containerText || "Container: none"}</span>
         <span>{ganttContext?.bootText || "Boot: none"}</span>
+        <span>{ganttContext?.stopText || "Machine stop: none"}</span>
       </section>
       {task.run && (
         <section className="score-box">
@@ -1469,12 +1756,21 @@ function buildGanttContextByTask(result) {
         })
         .filter(Boolean);
       const resource = resourcesById[assignment.resource_id];
+      const stopInterval = (result.machine_stop_intervals || []).find(
+        (item) => (
+          item.resource_id === assignment.resource_id
+          && Math.abs(item.boot_finish_time - (assignment.start_time - assignment.container_overhead)) < 0.001
+        ),
+      );
       const lines = [
         `${assignment.task_id}`,
         `Base ET_0: ${fmt(baseRuntime)}s`,
         `Interference: +${fmt(interferenceRuntime)}s with ${pairText}`,
         `Container overhead: +${fmt(assignment.container_overhead)}s on ${resource?.name || assignment.resource_id}`,
         `Boot overhead: +${fmt(assignment.boot_overhead)}s (${resource?.status || "unknown"} ${resource?.kind || "machine"}, node boot ${fmt(resource?.boot_overhead)}s)`,
+        stopInterval
+          ? `Machine stopped: ${fmt(stopInterval.stop_time)}-${fmt(stopInterval.boot_start_time)}s, boot ${fmt(stopInterval.boot_start_time)}-${fmt(stopInterval.boot_finish_time)}s`
+          : "Machine stopped: no",
         `Transfer delay: +${fmt(assignment.transfer_delay)}s${transfers.length ? ` from ${transfers.join("; ")}` : " (no cross-machine predecessor transfer)"}`,
       ];
       return [
@@ -1485,6 +1781,9 @@ function buildGanttContextByTask(result) {
           transferText: `Transfer: +${fmt(assignment.transfer_delay)}s${transfers.length ? ` from ${transfers.join("; ")}` : " (none)"}`,
           containerText: `Container: +${fmt(assignment.container_overhead)}s on ${resource?.name || assignment.resource_id}`,
           bootText: `Boot: +${fmt(assignment.boot_overhead)}s for ${resource?.status || "unknown"} ${resource?.kind || "machine"} (node boot ${fmt(resource?.boot_overhead)}s)`,
+          stopText: stopInterval
+            ? `Machine stop: ${fmt(stopInterval.stop_time)}-${fmt(stopInterval.boot_start_time)}s, boot paid ${fmt(stopInterval.boot_start_time)}-${fmt(stopInterval.boot_finish_time)}s`
+            : "Machine stop: none",
         },
       ];
     }),

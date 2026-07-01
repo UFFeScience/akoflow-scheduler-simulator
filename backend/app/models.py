@@ -33,8 +33,6 @@ class SimulationRequest(BaseModel):
     weight_time: float = Field(default=0.55, ge=0.0, le=1.0)
     weight_cost: float = Field(default=0.30, ge=0.0, le=1.0)
     weight_interference: float = Field(default=0.15, ge=0.0, le=1.0)
-    penalty_deadline: float = Field(default=3.0, ge=0.0)
-    penalty_budget: float = Field(default=2.0, ge=0.0)
     workflow_yaml: Optional[str] = None
     resource_specs: Optional[List[ResourceSpec]] = None
 
@@ -88,8 +86,6 @@ class SLA(BaseModel):
     weight_time: float
     weight_cost: float
     weight_interference: float
-    penalty_deadline: float
-    penalty_budget: float
 
 
 class Workflow(BaseModel):
@@ -167,6 +163,15 @@ class Assignment(BaseModel):
     predecessor_finish_floor: float
 
 
+class MachineStopInterval(BaseModel):
+    resource_id: str
+    stop_time: float
+    boot_start_time: float
+    boot_finish_time: float
+    boot_overhead: float
+    reason: str
+
+
 class CostVariables(BaseModel):
     c_cpu: Dict[str, float]
     c_mem: Dict[str, float]
@@ -175,8 +180,6 @@ class CostVariables(BaseModel):
     c_t_n: Dict[str, Dict[str, float]]
     b_used: float
     p_cc: float
-    p_dl_w: float
-    p_bud_w: float
     c_w: float
 
 
@@ -225,6 +228,7 @@ class SimulationResult(BaseModel):
     sla: SLA
     matrices: Matrices
     assignments: List[Assignment]
+    machine_stop_intervals: List[MachineStopInterval] = Field(default_factory=list)
     scheduler_steps: List[ScheduleStep]
     scheduler_variables: SchedulerVariables
     timing_variables: TimingVariables

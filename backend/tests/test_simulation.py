@@ -172,8 +172,8 @@ def test_zero_budget_filters_cloud_assignments_and_keeps_costs_zero() -> None:
     assert all(value == 0 for value in result.cost_variables.c_mem.values())
     assert all(value == 0 for value in result.cost_variables.c_fin.values())
     assert result.cost_variables.b_used == 0
-    assert result.cost_variables.p_bud_w == 0
-    assert result.cost_variables.c_w == result.cost_variables.p_dl_w
+    assert result.cost_variables.p_cc == 0
+    assert result.cost_variables.c_w == 0
 
 
 def test_positive_budget_keeps_cloud_resources_eligible() -> None:
@@ -235,6 +235,59 @@ def test_cold_node_blocks_all_cores_until_boot_completes() -> None:
     assert sum(1 for assignment in cloud_assignments if assignment.boot_overhead == 11.0) == 1
 
 
+def test_cloud_node_stops_when_idle_gap_pays_next_boot() -> None:
+    request = SimulationRequest(seed=23, task_count=3, budget=260, cluster_machines=1, cloud_machines=2, cores_per_machine=1)
+    generated = GenerateSimulationService().execute(request)
+    tasks = generated.workflow.tasks
+    generated.workflow.dependencies = [generated.workflow.dependencies[0].model_copy(update={"source": tasks[1].id, "target": tasks[2].id, "data_mb": 20.0})]
+    generated.workflow.predecessor_sets = {
+        tasks[0].id: [],
+        tasks[1].id: [],
+        tasks[2].id: [tasks[1].id],
+    }
+    tasks[0].predecessors = []
+    tasks[0].successors = []
+    tasks[1].predecessors = []
+    tasks[1].successors = [tasks[2].id]
+    tasks[2].predecessors = [tasks[1].id]
+    tasks[2].successors = []
+
+    for resource in generated.resources:
+        if resource.kind == "cluster":
+            resource.cpu = 0.1
+            resource.memory = 0.1
+            continue
+        resource.status = "cold"
+        resource.boot_overhead = 5.0
+        for task in tasks:
+            generated.matrices.container_overhead[task.id][resource.id] = 0.0
+            generated.matrices.et_0[task.id][resource.id] = 100.0
+            generated.matrices.et_star[task.id][resource.id] = 100.0
+
+    generated.matrices.et_0[tasks[0].id]["v1"] = 1.0
+    generated.matrices.et_star[tasks[0].id]["v1"] = 1.0
+    generated.matrices.et_0[tasks[1].id]["v2"] = 20.0
+    generated.matrices.et_star[tasks[1].id]["v2"] = 20.0
+    generated.matrices.et_0[tasks[2].id]["v1"] = 1.0
+    generated.matrices.et_star[tasks[2].id]["v1"] = 1.0
+    generated.matrices.bandwidth_bw["v2"]["v1"] = 10_000.0
+
+    result = ScheduleWorkflowService().execute(generated)
+    assignments = {assignment.task_id: assignment for assignment in result.assignments}
+    stopped = result.machine_stop_intervals[0]
+    transfer = generated.workflow.dependencies[0].data_mb / generated.matrices.bandwidth_bw["v2"]["v1"]
+
+    assert assignments[tasks[0].id].resource_id == "v1"
+    assert assignments[tasks[1].id].resource_id == "v2"
+    assert assignments[tasks[2].id].resource_id == "v1"
+    assert assignments[tasks[2].id].boot_overhead == 5.0
+    assert assignments[tasks[2].id].start_time == round(assignments[tasks[1].id].finish_time + transfer, 3)
+    assert stopped.resource_id == "v1"
+    assert stopped.stop_time == assignments[tasks[0].id].finish_time
+    assert stopped.boot_start_time == round(assignments[tasks[2].id].start_time - 5.0, 3)
+    assert stopped.boot_finish_time == assignments[tasks[2].id].start_time
+
+
 def test_every_task_receives_exactly_one_assignment() -> None:
     generated, result = run_default()
     assigned = [assignment.task_id for assignment in result.assignments]
@@ -286,20 +339,43 @@ def test_core_and_memory_infeasible_assignments_are_filtered() -> None:
         assert task.memory <= resource.memory
 
 
-def test_cost_budget_makespan_and_penalties_are_consistent() -> None:
+def test_cost_budget_makespan_and_objective_are_consistent() -> None:
     _, result = run_default()
     assert result.timing_variables.makespan == max(result.timing_variables.ft.values())
     assert result.cost_variables.b_used == round(sum(result.cost_variables.fc.values()), 4)
-    expected_deadline_penalty = round(
-        max(0.0, result.timing_variables.makespan - result.sla.deadline) * result.sla.penalty_deadline,
+    assert result.cost_variables.p_cc == round(sum(result.cost_variables.c_fin.values()), 4)
+    assert result.cost_variables.c_w == round(result.cost_variables.b_used + result.cost_variables.p_cc, 4)
+
+
+def test_deviation_metrics_match_paper_definitions() -> None:
+    generated, result = run_default()
+
+    for assignment in result.assignments:
+        task_id = assignment.task_id
+        resource_id = assignment.resource_id
+        et_0 = generated.matrices.et_0[task_id][resource_id]
+        et_obs = result.deviation_variables.et_obs[task_id]
+        variance = round(et_obs - et_0, 3)
+        excess = round(max(0.0, variance), 3)
+
+        assert result.deviation_variables.var[task_id] == variance
+        assert result.deviation_variables.excess[task_id] == excess
+        assert result.deviation_variables.d_time[task_id] == round(variance / et_0, 4)
+        assert result.deviation_variables.d_excess[task_id] == round(excess / et_0, 4)
+
+    for resource in result.resources:
+        values = [
+            result.deviation_variables.d_excess[assignment.task_id]
+            for assignment in result.assignments
+            if assignment.resource_id == resource.id
+        ]
+        if values:
+            assert result.deviation_variables.d_n[resource.id] == round(sum(values) / len(values), 4)
+
+    assert result.deviation_variables.d_w_time == round(
+        sum(result.deviation_variables.d_excess.values()) / len(result.deviation_variables.d_excess),
         4,
     )
-    expected_budget_penalty = round(
-        max(0.0, result.cost_variables.b_used - result.sla.budget) * result.sla.penalty_budget,
-        4,
-    )
-    assert result.cost_variables.p_dl_w == expected_deadline_penalty
-    assert result.cost_variables.p_bud_w == expected_budget_penalty
 
 
 def test_matrix_dimensions_match_task_and_resource_counts() -> None:

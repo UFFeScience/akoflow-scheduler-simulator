@@ -103,8 +103,6 @@ class CalculateCostService:
 
         b_used = round(sum(fc.values()), 4)
         p_cc = round(sum(c_fin.values()), 4)
-        p_dl_w = round(max(0.0, makespan - generated.sla.deadline) * generated.sla.penalty_deadline, 4)
-        p_bud_w = round(max(0.0, b_used - generated.sla.budget) * generated.sla.penalty_budget, 4)
         return CostVariables(
             c_cpu=c_cpu,
             c_mem=c_mem,
@@ -113,9 +111,7 @@ class CalculateCostService:
             c_t_n=c_t_n,
             b_used=b_used,
             p_cc=p_cc,
-            p_dl_w=p_dl_w,
-            p_bud_w=p_bud_w,
-            c_w=round(b_used + p_cc + p_dl_w + p_bud_w, 4),
+            c_w=round(b_used + p_cc, 4),
         )
 
 
@@ -127,18 +123,23 @@ class CalculateDeviationService:
         d_time: Dict[str, float] = {}
         d_excess: Dict[str, float] = {}
         d_n: Dict[str, float] = {}
+        resource_excess_values: Dict[str, List[float]] = {}
 
         for index, assignment in enumerate(assignments):
             drift = ((generated.seed + index * 17) % 13 - 6) / 100.0
             observed = round(assignment.effective_runtime * (1.0 + drift + assignment.phi_n * 0.2), 3)
-            variance = round(observed - assignment.effective_runtime, 3)
+            base_runtime = generated.matrices.et_0[assignment.task_id][assignment.resource_id]
+            variance = round(observed - base_runtime, 3)
             over = round(max(0.0, variance), 3)
             et_obs[assignment.task_id] = observed
             var[assignment.task_id] = variance
             excess[assignment.task_id] = over
-            d_time[assignment.task_id] = round(abs(variance) / max(assignment.effective_runtime, 0.001), 4)
-            d_excess[assignment.task_id] = round(over / max(assignment.effective_runtime, 0.001), 4)
-            d_n[assignment.task_id] = round(d_time[assignment.task_id] + d_excess[assignment.task_id], 4)
+            d_time[assignment.task_id] = round(variance / max(base_runtime, 0.001), 4)
+            d_excess[assignment.task_id] = round(over / max(base_runtime, 0.001), 4)
+            resource_excess_values.setdefault(assignment.resource_id, []).append(d_excess[assignment.task_id])
+
+        for resource_id, values in resource_excess_values.items():
+            d_n[resource_id] = round(sum(values) / max(len(values), 1), 4)
 
         return DeviationVariables(
             et_obs=et_obs,
@@ -147,5 +148,5 @@ class CalculateDeviationService:
             d_time=d_time,
             d_excess=d_excess,
             d_n=d_n,
-            d_w_time=round(sum(d_time.values()) / max(len(d_time), 1), 4),
+            d_w_time=round(sum(d_excess.values()) / max(len(d_excess), 1), 4),
         )

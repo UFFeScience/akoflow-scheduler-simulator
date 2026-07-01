@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Set
 
-from app.models import Assignment, CandidateEvaluation, GeneratedSimulation, ScheduleStep, SchedulerVariables, ScoreBreakdown, SimulationResult
+from app.models import Assignment, CandidateEvaluation, GeneratedSimulation, MachineStopInterval, ScheduleStep, SchedulerVariables, ScoreBreakdown, SimulationResult
 from app.services.calculation_services import (
     CalculateCostService,
     CalculateDeviationService,
@@ -28,6 +28,8 @@ class ScheduleWorkflowService:
         core_avail = {core.id: 0.0 for resource in generated.resources for core in resource.cores}
         node_has_booted = {resource.id: resource.status == "warm" for resource in generated.resources}
         node_ready_time = {resource.id: 0.0 for resource in generated.resources}
+        node_last_active_time = {resource.id: 0.0 for resource in generated.resources}
+        node_stop_intervals: List[MachineStopInterval] = []
         assignments: List[Assignment] = []
         assignment_by_task: Dict[str, Assignment] = {}
         scheduler_steps: List[ScheduleStep] = []
@@ -53,10 +55,18 @@ class ScheduleWorkflowService:
                     predecessor_floor = max(predecessor_floor, predecessor.finish_time + transfer)
 
                 for core in resource.cores:
-                    boot = 0.0 if node_has_booted[resource.id] else resource.boot_overhead
-                    container = generated.matrices.container_overhead[task.id][resource.id]
                     ready_floor = max(predecessor_floor, core_avail[core.id], node_ready_time[resource.id])
-                    boot_ready_time = ready_floor + boot
+                    last_active_time = node_last_active_time[resource.id]
+                    stop_boot = (
+                        resource.kind == "cloud"
+                        and node_has_booted[resource.id]
+                        and resource.boot_overhead > 0
+                        and ready_floor - last_active_time >= resource.boot_overhead
+                    )
+                    cold_boot = not node_has_booted[resource.id]
+                    boot = resource.boot_overhead if cold_boot or stop_boot else 0.0
+                    container = generated.matrices.container_overhead[task.id][resource.id]
+                    boot_ready_time = ready_floor + (boot if cold_boot else 0.0)
                     tentative_start = round(boot_ready_time + container, 3)
                     base_runtime = generated.matrices.et_0[task.id][resource.id]
                     phi, pairwise_interference = self.interference_service.candidate_pairwise_interference(
@@ -148,11 +158,31 @@ class ScheduleWorkflowService:
             assignment_by_task[selected.task_id] = selected
             core_avail[selected.core_id] = selected.finish_time
             if selected.boot_overhead > 0:
+                resource = resources[selected.resource_id]
+                previous_active_time = node_last_active_time[selected.resource_id]
+                cold_boot = not node_has_booted[selected.resource_id]
+                boot_finish_time = round(selected.start_time - selected.container_overhead, 3)
+                if (
+                    resource.kind == "cloud"
+                    and node_has_booted[selected.resource_id]
+                    and boot_finish_time - previous_active_time >= selected.boot_overhead
+                ):
+                    node_stop_intervals.append(
+                        MachineStopInterval(
+                            resource_id=selected.resource_id,
+                            stop_time=round(previous_active_time, 3),
+                            boot_start_time=round(boot_finish_time - selected.boot_overhead, 3),
+                            boot_finish_time=boot_finish_time,
+                            boot_overhead=selected.boot_overhead,
+                            reason=f"idle gap paid boot before {selected.task_id}",
+                        )
+                    )
                 node_ready_time[selected.resource_id] = max(
                     node_ready_time[selected.resource_id],
-                    round(selected.start_time - selected.container_overhead, 3),
+                    boot_finish_time,
                 )
             node_has_booted[selected.resource_id] = True
+            node_last_active_time[selected.resource_id] = max(node_last_active_time[selected.resource_id], selected.finish_time)
             generated.matrices.et_star[selected.task_id][selected.resource_id] = selected.effective_runtime
 
         timing = self.timing_service.execute(assignments)
@@ -177,6 +207,7 @@ class ScheduleWorkflowService:
             sla=generated.sla,
             matrices=generated.matrices,
             assignments=assignments,
+            machine_stop_intervals=node_stop_intervals,
             scheduler_steps=scheduler_steps,
             scheduler_variables=scheduler,
             timing_variables=timing,
