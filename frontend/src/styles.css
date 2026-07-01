@@ -531,7 +531,7 @@ h2 {
 
 .workspace {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   min-width: 0;
 }
 
@@ -601,6 +601,54 @@ h2 {
 .tabs button:hover {
   color: var(--text-primary);
   border-bottom-color: var(--accent-primary);
+}
+
+.calculate-navbar {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr) 170px;
+  gap: 14px;
+  align-items: start;
+  padding: 12px 18px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.calculate-title {
+  display: grid;
+  gap: 3px;
+  padding-top: 4px;
+}
+
+.calculate-title span {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.calculate-controls {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.calculate-navbar .slider-control {
+  min-width: 0;
+}
+
+.calculate-navbar .slider-control small {
+  display: none;
+}
+
+.calculate-navbar .slider-row {
+  grid-template-columns: minmax(80px, 1fr) 82px;
+  gap: 8px;
+}
+
+.calculate-navbar .weight-control .slider-row {
+  grid-template-columns: minmax(80px, 1fr) 42px;
+}
+
+.calculate-button {
+  margin-top: 22px;
 }
 
 .canvas {

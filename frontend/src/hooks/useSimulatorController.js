@@ -28,6 +28,21 @@ export function useSimulatorController() {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
+  function generatedWithCurrentSla() {
+    if (!generated) return null;
+    return {
+      ...generated,
+      sla: {
+        ...generated.sla,
+        deadline: request.deadline,
+        budget: request.budget,
+        weight_time: request.weight_time,
+        weight_cost: request.weight_cost,
+        weight_interference: request.weight_interference,
+      },
+    };
+  }
+
   async function generateWorkflowAndMatrices() {
     setStatus("running");
     setStatusMessage("");
@@ -51,14 +66,15 @@ export function useSimulatorController() {
     setStatus("ready");
   }
 
-  async function saveMatricesAndSchedule() {
-    if (!generated) return;
+  async function runSchedule({ preserveView = false } = {}) {
+    const schedulePayload = generatedWithCurrentSla();
+    if (!schedulePayload) return;
     setStatus("running");
     setStatusMessage("");
     const response = await fetch(`${API_URL}/api/simulations/schedule`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(generated),
+      body: JSON.stringify(schedulePayload),
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
@@ -67,11 +83,22 @@ export function useSimulatorController() {
       return;
     }
     const data = await response.json();
+    setGenerated(schedulePayload);
     setResult(data);
     setSelectedTaskId(data.workflow.tasks[0]?.id || null);
-    setPhase("results");
-    setActiveTab("DAG");
+    if (!preserveView) {
+      setPhase("results");
+      setActiveTab("DAG");
+    }
     setStatus("ready");
+  }
+
+  async function saveMatricesAndSchedule() {
+    await runSchedule();
+  }
+
+  async function calculateCurrentSchedule() {
+    await runSchedule({ preserveView: true });
   }
 
   function resetFlow() {
@@ -114,7 +141,7 @@ export function useSimulatorController() {
     request, presets, generated, result, phase, activeTab, selectedTaskId, status, statusMessage,
     workflowMode, workflowYaml, workflowFileName, theme, selectedAssignment,
     setGenerated, setPhase, setActiveTab, setSelectedTaskId, setWorkflowMode, setTheme,
-    generateWorkflowAndMatrices, saveMatricesAndSchedule, resetFlow, importWorkflowFile,
+    generateWorkflowAndMatrices, saveMatricesAndSchedule, calculateCurrentSchedule, resetFlow, importWorkflowFile,
     clearWorkflowFile: () => { setWorkflowYaml(""); setWorkflowFileName(""); setWorkflowMode("random"); },
     updateRequest,
     updateResourceSpec: (id, key, value) => setRequest((current) => ({

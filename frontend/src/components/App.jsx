@@ -1,5 +1,6 @@
 import { useSimulatorController } from '../hooks/useSimulatorController.js';
 import ActionPanel from './layout/ActionPanel.jsx';
+import CalculateNavbar from './layout/CalculateNavbar.jsx';
 import TabNav from './layout/TabNav.jsx';
 import Topbar from './layout/Topbar.jsx';
 import WorkspaceCanvas from './layout/WorkspaceCanvas.jsx';
@@ -38,6 +39,7 @@ export default function App() {
       <main className="workspace">
         <Topbar {...controller} onReset={controller.resetFlow} onThemeToggle={() => controller.setTheme((current) => (current === "light" ? "dark" : "light"))} onExport={exportJson} />
         <TabNav phase={controller.phase} activeTab={controller.activeTab} onChange={controller.setActiveTab} />
+        {controller.phase === "results" && <CalculateNavbar controller={controller} />}
         <WorkspaceCanvas controller={controller} />
       </main>
       {controller.phase === "results" && (
