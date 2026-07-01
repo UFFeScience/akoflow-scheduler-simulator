@@ -38,9 +38,8 @@ class ScheduleWorkflowService:
             task = tasks[task_id]
             candidates = []
             candidate_evaluations: List[CandidateEvaluation] = []
+            candidate_scores: List[tuple[Assignment, CandidateEvaluation, float, float, float]] = []
             for resource in generated.resources:
-                if generated.sla.budget == 0 and resource.kind == "cloud":
-                    continue
                 if task.cpu > resource.cpu or task.memory > resource.memory:
                     continue
                 predecessor_floor = 0.0
@@ -83,19 +82,11 @@ class ScheduleWorkflowService:
                     raw_cost = effective_runtime * (
                         task.cpu * resource.price_per_cpu_second + task.memory * resource.price_per_gb_second
                     )
-                    time_score = finish / max(generated.sla.deadline, 0.001)
-                    cost_score = 0.0 if generated.sla.budget == 0 else raw_cost / generated.sla.budget
-                    interference_score = phi
-                    total_score = (
-                        generated.sla.weight_time * time_score
-                        + generated.sla.weight_cost * cost_score
-                        + generated.sla.weight_interference * interference_score
-                    )
                     score = ScoreBreakdown(
-                        time_score=round(time_score, 5),
-                        cost_score=round(cost_score, 5),
-                        interference_score=round(interference_score, 5),
-                        total_score=round(total_score, 5),
+                        time_score=0.0,
+                        cost_score=0.0,
+                        interference_score=0.0,
+                        total_score=0.0,
                     )
                     assignment = Assignment(
                         task_id=task.id,
@@ -111,31 +102,50 @@ class ScheduleWorkflowService:
                         predecessor_finish_floor=round(predecessor_floor, 3),
                         score=score,
                     )
-                    candidates.append(assignment)
-                    candidate_evaluations.append(
-                        CandidateEvaluation(
-                            task_id=task.id,
-                            resource_id=resource.id,
-                            core_id=core.id,
-                            rank=0,
-                            selected=False,
-                            start_time=tentative_start,
-                            finish_time=finish,
-                            base_runtime=base_runtime,
-                            effective_runtime=effective_runtime,
-                            interference_time=interference_time,
-                            transfer_delay=round(transfer_total, 3),
-                            boot_overhead=boot,
-                            container_overhead=container,
-                            predecessor_finish_floor=round(predecessor_floor, 3),
-                            raw_cost=round(raw_cost, 4),
-                            phi_n=phi,
-                            pairwise_interference=pairwise_interference,
-                            score=score,
-                        )
+                    candidate = CandidateEvaluation(
+                        task_id=task.id,
+                        resource_id=resource.id,
+                        core_id=core.id,
+                        rank=0,
+                        selected=False,
+                        start_time=tentative_start,
+                        finish_time=finish,
+                        base_runtime=base_runtime,
+                        effective_runtime=effective_runtime,
+                        interference_time=interference_time,
+                        transfer_delay=round(transfer_total, 3),
+                        boot_overhead=boot,
+                        container_overhead=container,
+                        predecessor_finish_floor=round(predecessor_floor, 3),
+                        raw_cost=round(raw_cost, 4),
+                        phi_n=phi,
+                        pairwise_interference=pairwise_interference,
+                        score=score,
                     )
+                    candidates.append(assignment)
+                    candidate_evaluations.append(candidate)
+                    candidate_scores.append((assignment, candidate, finish, raw_cost, phi))
             if not candidates:
                 raise ValueError(f"No feasible resource for task {task.id}")
+            max_finish = max(finish for _, _, finish, _, _ in candidate_scores)
+            max_raw_cost = max(raw_cost for _, _, _, raw_cost, _ in candidate_scores)
+            for assignment, candidate, finish, raw_cost, phi in candidate_scores:
+                time_score = finish / max(max_finish, 0.001)
+                cost_score = 0.0 if max_raw_cost == 0 else raw_cost / max_raw_cost
+                interference_score = phi
+                total_score = (
+                    generated.sla.weight_time * time_score
+                    + generated.sla.weight_cost * cost_score
+                    + generated.sla.weight_interference * interference_score
+                )
+                score = ScoreBreakdown(
+                    time_score=round(time_score, 5),
+                    cost_score=round(cost_score, 5),
+                    interference_score=round(interference_score, 5),
+                    total_score=round(total_score, 5),
+                )
+                assignment.score = score
+                candidate.score = score
             selected = min(candidates, key=lambda item: (item.score.total_score, item.finish_time, item.resource_id, item.core_id))
             ranked_candidates = sorted(
                 candidate_evaluations,

@@ -53,11 +53,6 @@ def test_seeded_generation_is_deterministic() -> None:
     assert first.model_dump() == second.model_dump()
 
 
-def test_zero_budget_request_is_valid() -> None:
-    request = SimulationRequest(budget=0)
-    assert request.budget == 0
-
-
 def test_akoflow_yaml_activities_build_workflow_dag() -> None:
     request = SimulationRequest(seed=12, workflow_yaml=AKOFLOW_YAML)
     generated = GenerateSimulationService().execute(request)
@@ -81,7 +76,7 @@ def test_akoflow_yaml_activities_build_workflow_dag() -> None:
 
 
 def test_cluster_resources_are_owned_capacity() -> None:
-    request = SimulationRequest(seed=17, task_count=8, budget=0, cluster_machines=2, cloud_machines=2)
+    request = SimulationRequest(seed=17, task_count=8, cluster_machines=2, cloud_machines=2)
     generated = GenerateSimulationService().execute(request)
 
     cluster_ids = {resource.id for resource in generated.resources if resource.kind == "cluster"}
@@ -160,24 +155,8 @@ def test_cloud_resources_start_cold_with_node_boot_overhead() -> None:
             assert resource.boot_overhead == 0
 
 
-def test_zero_budget_filters_cloud_assignments_and_keeps_costs_zero() -> None:
-    request = SimulationRequest(seed=17, task_count=8, budget=0, cluster_machines=3, cloud_machines=3)
-    generated = GenerateSimulationService().execute(request)
-    result = ScheduleWorkflowService().execute(generated)
-    resources = {resource.id: resource for resource in result.resources}
-
-    assert result.assignments
-    assert all(resources[assignment.resource_id].kind == "cluster" for assignment in result.assignments)
-    assert all(value == 0 for value in result.cost_variables.c_cpu.values())
-    assert all(value == 0 for value in result.cost_variables.c_mem.values())
-    assert all(value == 0 for value in result.cost_variables.c_fin.values())
-    assert result.cost_variables.b_used == 0
-    assert result.cost_variables.p_cc == 0
-    assert result.cost_variables.c_w == 0
-
-
-def test_positive_budget_keeps_cloud_resources_eligible() -> None:
-    request = SimulationRequest(seed=17, task_count=8, budget=260, cluster_machines=2, cloud_machines=3)
+def test_cloud_resources_are_eligible_when_feasible() -> None:
+    request = SimulationRequest(seed=17, task_count=8, cluster_machines=2, cloud_machines=3)
     generated = GenerateSimulationService().execute(request)
     for resource in generated.resources:
         if resource.kind == "cluster":
@@ -190,7 +169,7 @@ def test_positive_budget_keeps_cloud_resources_eligible() -> None:
 
 
 def test_cold_node_uses_resource_boot_overhead() -> None:
-    request = SimulationRequest(seed=17, task_count=4, budget=260, cluster_machines=1, cloud_machines=1)
+    request = SimulationRequest(seed=17, task_count=4, cluster_machines=1, cloud_machines=1)
     generated = GenerateSimulationService().execute(request)
     for resource in generated.resources:
         if resource.kind == "cluster":
@@ -207,7 +186,7 @@ def test_cold_node_uses_resource_boot_overhead() -> None:
 
 
 def test_cold_node_blocks_all_cores_until_boot_completes() -> None:
-    request = SimulationRequest(seed=19, task_count=4, budget=260, cluster_machines=1, cloud_machines=1, cores_per_machine=2)
+    request = SimulationRequest(seed=19, task_count=4, cluster_machines=1, cloud_machines=1, cores_per_machine=2)
     generated = GenerateSimulationService().execute(request)
     generated.workflow.dependencies = []
     generated.workflow.predecessor_sets = {task.id: [] for task in generated.workflow.tasks}
@@ -236,7 +215,7 @@ def test_cold_node_blocks_all_cores_until_boot_completes() -> None:
 
 
 def test_cloud_node_stops_when_idle_gap_pays_next_boot() -> None:
-    request = SimulationRequest(seed=23, task_count=3, budget=260, cluster_machines=1, cloud_machines=2, cores_per_machine=1)
+    request = SimulationRequest(seed=23, task_count=3, cluster_machines=1, cloud_machines=2, cores_per_machine=1)
     generated = GenerateSimulationService().execute(request)
     tasks = generated.workflow.tasks
     generated.workflow.dependencies = [generated.workflow.dependencies[0].model_copy(update={"source": tasks[1].id, "target": tasks[2].id, "data_mb": 20.0})]
@@ -339,7 +318,7 @@ def test_core_and_memory_infeasible_assignments_are_filtered() -> None:
         assert task.memory <= resource.memory
 
 
-def test_cost_budget_makespan_and_objective_are_consistent() -> None:
+def test_cost_makespan_and_objective_are_consistent() -> None:
     _, result = run_default()
     assert result.timing_variables.makespan == max(result.timing_variables.ft.values())
     assert result.cost_variables.b_used == round(sum(result.cost_variables.fc.values()), 4)

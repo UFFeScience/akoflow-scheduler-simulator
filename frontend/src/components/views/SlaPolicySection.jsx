@@ -1,5 +1,4 @@
 import { normalizeWeights } from '../../slaControls.js';
-import SliderNumberControl from '../controls/SliderNumberControl.jsx';
 import WeightSliderControl from '../controls/WeightSliderControl.jsx';
 
 export default function SlaPolicySection({ controller }) {
@@ -11,13 +10,6 @@ export default function SlaPolicySection({ controller }) {
     <div className="setup-section">
       <h2>SLA policy</h2>
       <div className="sla-sections">
-        <section className="sla-subsection">
-          <header><strong>Scheduling targets</strong><span>Used while ranking candidate machines.</span></header>
-          <div className="setup-grid">
-            <SliderNumberControl label="Deadline" value={request.deadline} min={1} max={500} step={1} suffix="s" help="Candidate time score = finish time / deadline. Lower values push the scheduler toward earlier finishes." onChange={(value) => controller.updateRequest("deadline", value)} />
-            <SliderNumberControl label="Budget" value={request.budget} min={0} max={1000} step={1} help="Candidate cost score = execution cost / budget. A zero budget disables cloud machines." onChange={(value) => controller.updateRequest("budget", value)} />
-          </div>
-        </section>
         <section className="sla-subsection">
           <header><strong>Decision weights</strong><span>Total {Math.round(weightTotal * 100)}%</span></header>
           <div className="weight-slider-stack">

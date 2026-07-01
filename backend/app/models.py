@@ -28,8 +28,6 @@ class SimulationRequest(BaseModel):
     cluster_machines: int = Field(default=3, ge=1, le=20)
     cloud_machines: int = Field(default=2, ge=0, le=20)
     cores_per_machine: int = Field(default=2, ge=1, le=16)
-    deadline: float = Field(default=160.0, gt=1.0)
-    budget: float = Field(default=260.0, ge=0.0)
     weight_time: float = Field(default=0.55, ge=0.0, le=1.0)
     weight_cost: float = Field(default=0.30, ge=0.0, le=1.0)
     weight_interference: float = Field(default=0.15, ge=0.0, le=1.0)
@@ -81,8 +79,6 @@ class Dependency(BaseModel):
 
 
 class SLA(BaseModel):
-    deadline: float
-    budget: float
     weight_time: float
     weight_cost: float
     weight_interference: float

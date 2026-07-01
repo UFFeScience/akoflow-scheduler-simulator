@@ -34,8 +34,6 @@ export function useSimulatorController() {
       ...generated,
       sla: {
         ...generated.sla,
-        deadline: request.deadline,
-        budget: request.budget,
         weight_time: request.weight_time,
         weight_cost: request.weight_cost,
         weight_interference: request.weight_interference,
