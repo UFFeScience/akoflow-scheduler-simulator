@@ -5,6 +5,7 @@ import TabNav from './layout/TabNav.jsx';
 import Topbar from './layout/Topbar.jsx';
 import WorkspaceCanvas from './layout/WorkspaceCanvas.jsx';
 import DetailsPanel from './views/DetailsPanel.jsx';
+import ScheduleOptionsPanel from './views/ScheduleOptionsPanel.jsx';
 
 export default function App() {
   function exportJson() {
@@ -40,6 +41,9 @@ export default function App() {
         <Topbar {...controller} onReset={controller.resetFlow} onThemeToggle={() => controller.setTheme((current) => (current === "light" ? "dark" : "light"))} onExport={exportJson} />
         <TabNav phase={controller.phase} activeTab={controller.activeTab} onChange={controller.setActiveTab} />
         {controller.phase === "results" && <CalculateNavbar controller={controller} />}
+        {controller.phase === "results" && (
+          <ScheduleOptionsPanel response={controller.scheduleResponse} selectedOptionId={controller.selectedOptionId} onSelect={controller.selectScheduleOption} />
+        )}
         <WorkspaceCanvas controller={controller} />
       </main>
       {controller.phase === "results" && (

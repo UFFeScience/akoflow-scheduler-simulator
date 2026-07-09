@@ -346,7 +346,9 @@ class GenerateSimulationService:
         sla = SLA(
             weight_time=request.weight_time,
             weight_cost=request.weight_cost,
-            weight_interference=request.weight_interference,
+            budget_limit=request.budget_limit,
+            deadline_limit=request.deadline_limit,
+            option_count=request.option_count,
         )
         cluster_count = sum(1 for resource in resources if resource.kind == "cluster")
         cloud_count = sum(1 for resource in resources if resource.kind == "cloud")

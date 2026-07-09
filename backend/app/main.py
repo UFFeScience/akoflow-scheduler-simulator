@@ -5,9 +5,9 @@ from typing import Dict
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.models import GeneratedSimulation, SimulationRequest, SimulationResult
+from app.models import GeneratedSimulation, ScheduleOptimizationResponse, SimulationRequest, SimulationResult
 from app.services.generation_services import GenerateSimulationService, PRESETS
-from app.services.scheduling_services import ScheduleWorkflowService
+from app.services.scheduling_services import BeamScheduleOptimizerService, ScheduleWorkflowService
 
 app = FastAPI(title="Scheduler Simulator API", version="0.1.0")
 app.add_middleware(
@@ -21,6 +21,7 @@ app.add_middleware(
 simulations: Dict[str, SimulationResult] = {}
 generator = GenerateSimulationService()
 scheduler = ScheduleWorkflowService()
+optimizer = BeamScheduleOptimizerService()
 
 
 @app.get("/health")
@@ -53,11 +54,12 @@ def run_simulation(request: SimulationRequest) -> SimulationResult:
     return result
 
 
-@app.post("/api/simulations/schedule", response_model=SimulationResult)
-def schedule_generated_simulation(generated: GeneratedSimulation) -> SimulationResult:
+@app.post("/api/simulations/schedule", response_model=ScheduleOptimizationResponse)
+def schedule_generated_simulation(generated: GeneratedSimulation) -> ScheduleOptimizationResponse:
     try:
-        result = scheduler.execute(generated)
+        response = optimizer.execute(generated)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    simulations[result.id] = result
-    return result
+    for option in response.options:
+        simulations[option.result.id] = option.result
+    return response

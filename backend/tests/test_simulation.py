@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import pytest
+from pydantic import ValidationError
+
 from app.models import SimulationRequest
 from app.services.generation_services import GenerateSimulationService
-from app.services.scheduling_services import ScheduleWorkflowService
+from app.services.scheduling_services import BeamScheduleOptimizerService, ScheduleWorkflowService
 
 
 AKOFLOW_YAML = """
@@ -319,11 +322,35 @@ def test_core_and_memory_infeasible_assignments_are_filtered() -> None:
 
 
 def test_cost_makespan_and_objective_are_consistent() -> None:
-    _, result = run_default()
+    generated, result = run_default()
     assert result.timing_variables.makespan == max(result.timing_variables.ft.values())
     assert result.cost_variables.b_used == round(sum(result.cost_variables.fc.values()), 4)
     assert result.cost_variables.p_cc == round(sum(result.cost_variables.c_fin.values()), 4)
     assert result.cost_variables.c_w == round(result.cost_variables.b_used + result.cost_variables.p_cc, 4)
+
+    for step in result.scheduler_steps:
+        for candidate in step.candidates:
+            expected_score = round(
+                generated.sla.weight_time * candidate.score.time_score
+                + generated.sla.weight_cost * candidate.score.cost_score,
+                5,
+            )
+            assert abs(candidate.score.total_score - expected_score) <= 0.00002
+
+
+def test_interference_metrics_are_reported_separately_from_objective() -> None:
+    generated, result = run_default()
+    total_interference = 0.0
+
+    for assignment in result.assignments:
+        base_runtime = generated.matrices.et_0[assignment.task_id][assignment.resource_id]
+        total_interference += max(0.0, assignment.effective_runtime - base_runtime)
+
+    assert result.interference_variables.total_interference_time == round(total_interference, 3)
+    assert result.interference_variables.average_phi_n == round(
+        sum(assignment.phi_n for assignment in result.assignments) / len(result.assignments),
+        4,
+    )
 
 
 def test_deviation_metrics_match_paper_definitions() -> None:
@@ -369,3 +396,136 @@ def test_matrix_dimensions_match_task_and_resource_counts() -> None:
     assert set(generated.matrices.bandwidth_bw.keys()) == resource_ids
     for values in generated.matrices.bandwidth_bw.values():
         assert set(values.keys()) == resource_ids
+
+
+def test_beam_optimizer_returns_feasible_options_within_budget_and_deadline() -> None:
+    request = SimulationRequest(
+        seed=42,
+        task_count=8,
+        edge_density=0.3,
+        budget_limit=9999.0,
+        deadline_limit=9999.0,
+        option_count=5,
+    )
+    generated = GenerateSimulationService().execute(request)
+    response = BeamScheduleOptimizerService().execute(generated)
+
+    assert 1 <= len(response.options) <= request.option_count
+    assert response.selected_option_id == response.options[0].id
+    for option in response.options:
+        assert option.feasible
+        assert option.budget_used <= request.budget_limit
+        assert option.makespan <= request.deadline_limit
+        assert option.budget_violation == 0
+        assert option.deadline_violation == 0
+
+
+def test_beam_optimizer_returns_best_violations_when_no_option_is_feasible() -> None:
+    request = SimulationRequest(
+        seed=42,
+        task_count=8,
+        edge_density=0.3,
+        budget_limit=0.001,
+        deadline_limit=1.0,
+        option_count=3,
+    )
+    generated = GenerateSimulationService().execute(request)
+    response = BeamScheduleOptimizerService().execute(generated)
+
+    assert 1 <= len(response.options) <= request.option_count
+    assert all(not option.feasible for option in response.options)
+    assert all(option.budget_violation > 0 or option.deadline_violation > 0 for option in response.options)
+
+
+def test_option_count_defaults_and_rejects_values_above_maximum() -> None:
+    assert SimulationRequest().option_count == 5
+    assert SimulationRequest(option_count=100).option_count == 100
+    with pytest.raises(ValidationError):
+        SimulationRequest(option_count=101)
+
+
+def test_beam_options_do_not_share_mutable_matrices_and_are_deduplicated() -> None:
+    request = SimulationRequest(
+        seed=42,
+        task_count=8,
+        edge_density=0.3,
+        budget_limit=9999.0,
+        deadline_limit=9999.0,
+        option_count=5,
+    )
+    generated = GenerateSimulationService().execute(request)
+    response = BeamScheduleOptimizerService().execute(generated)
+
+    keys = {(round(option.budget_used, 3), round(option.makespan, 3)) for option in response.options}
+    signatures = {option.machine_signature for option in response.options}
+    assert len(signatures) == len(response.options)
+    assert all("-core-" not in option.machine_signature for option in response.options)
+    if len(response.options) < 2:
+        return
+
+    first = response.options[0].result
+    second = response.options[1].result
+    task_id = first.assignments[0].task_id
+    resource_id = first.assignments[0].resource_id
+    original_second_value = second.matrices.et_star[task_id][resource_id]
+    first.matrices.et_star[task_id][resource_id] = -999
+
+    assert second.matrices.et_star[task_id][resource_id] == original_second_value
+
+
+def test_beam_option_identity_ignores_core_but_preserves_core_for_rendering() -> None:
+    request = SimulationRequest(
+        seed=42,
+        task_count=8,
+        edge_density=0.3,
+        budget_limit=9999.0,
+        deadline_limit=9999.0,
+        option_count=20,
+    )
+    generated = GenerateSimulationService().execute(request)
+    response = BeamScheduleOptimizerService().execute(generated)
+
+    semantic_signatures = {
+        tuple((assignment.task_id, assignment.resource_id) for assignment in option.result.assignments)
+        for option in response.options
+    }
+    assert len(semantic_signatures) == len(response.options)
+    assert all("-core-" not in option.machine_signature for option in response.options)
+    assert all(assignment.core_id for option in response.options for assignment in option.result.assignments)
+
+
+def test_beam_optimizer_returns_machine_diverse_options_for_large_option_count() -> None:
+    request = SimulationRequest(
+        seed=42,
+        task_count=10,
+        edge_density=0.25,
+        budget_limit=9999.0,
+        deadline_limit=9999.0,
+        option_count=100,
+    )
+    generated = GenerateSimulationService().execute(request)
+    response = BeamScheduleOptimizerService().execute(generated)
+
+    assert len(response.options) > 5
+    assert len({option.machine_signature for option in response.options}) == len(response.options)
+    assert all(option.machine_distribution for option in response.options)
+    assert all(option.weighted_score >= 0 for option in response.options)
+
+
+def test_selected_option_is_best_weighted_option() -> None:
+    request = SimulationRequest(
+        seed=42,
+        task_count=10,
+        edge_density=0.25,
+        budget_limit=9999.0,
+        deadline_limit=9999.0,
+        option_count=30,
+        weight_time=1.0,
+        weight_cost=0.0,
+    )
+    generated = GenerateSimulationService().execute(request)
+    response = BeamScheduleOptimizerService().execute(generated)
+
+    selected = next(option for option in response.options if option.id == response.selected_option_id)
+    assert selected.recommended
+    assert selected.weighted_score == min(option.weighted_score for option in response.options)

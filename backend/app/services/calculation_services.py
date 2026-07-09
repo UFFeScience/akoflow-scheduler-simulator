@@ -36,8 +36,11 @@ class CalculateInterferenceService:
     def execute(self, generated: GeneratedSimulation, assignments: List[Assignment]) -> InterferenceVariables:
         phi = {assignment.task_id: assignment.phi_n for assignment in assignments}
         et_star = {assignment.task_id: assignment.effective_runtime for assignment in assignments}
+        total_interference_time = 0.0
         colocated: Dict[str, List[str]] = {}
         for assignment in assignments:
+            base_runtime = generated.matrices.et_0[assignment.task_id][assignment.resource_id]
+            total_interference_time += max(0.0, assignment.effective_runtime - base_runtime)
             colocated[assignment.task_id] = [
                 other.task_id
                 for other in assignments
@@ -45,7 +48,13 @@ class CalculateInterferenceService:
                 and other.resource_id == assignment.resource_id
                 and max(assignment.start_time, other.start_time) < min(assignment.finish_time, other.finish_time)
             ]
-        return InterferenceVariables(phi_n=phi, et_star_by_task=et_star, colocated_tasks=colocated)
+        return InterferenceVariables(
+            phi_n=phi,
+            et_star_by_task=et_star,
+            colocated_tasks=colocated,
+            total_interference_time=round(total_interference_time, 3),
+            average_phi_n=round(sum(phi.values()) / max(len(phi), 1), 4),
+        )
 
 
 class CalculateTimingService:

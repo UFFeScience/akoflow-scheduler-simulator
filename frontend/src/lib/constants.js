@@ -13,7 +13,9 @@ export const defaultRequest = {
   cloud_machines: 2,
   cores_per_machine: 2,
   resource_specs: buildResourceSpecs(3, 2, 2),
-  weight_time: 0.55,
-  weight_cost: 0.3,
-  weight_interference: 0.15,
+  weight_time: 0.6,
+  weight_cost: 0.4,
+  budget_limit: null,
+  deadline_limit: null,
+  option_count: 5,
 };

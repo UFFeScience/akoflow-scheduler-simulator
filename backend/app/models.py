@@ -28,9 +28,11 @@ class SimulationRequest(BaseModel):
     cluster_machines: int = Field(default=3, ge=1, le=20)
     cloud_machines: int = Field(default=2, ge=0, le=20)
     cores_per_machine: int = Field(default=2, ge=1, le=16)
-    weight_time: float = Field(default=0.55, ge=0.0, le=1.0)
-    weight_cost: float = Field(default=0.30, ge=0.0, le=1.0)
-    weight_interference: float = Field(default=0.15, ge=0.0, le=1.0)
+    weight_time: float = Field(default=0.60, ge=0.0, le=1.0)
+    weight_cost: float = Field(default=0.40, ge=0.0, le=1.0)
+    budget_limit: Optional[float] = Field(default=None, gt=0.0)
+    deadline_limit: Optional[float] = Field(default=None, gt=0.0)
+    option_count: int = Field(default=5, ge=1, le=100)
     workflow_yaml: Optional[str] = None
     resource_specs: Optional[List[ResourceSpec]] = None
 
@@ -81,7 +83,9 @@ class Dependency(BaseModel):
 class SLA(BaseModel):
     weight_time: float
     weight_cost: float
-    weight_interference: float
+    budget_limit: Optional[float] = None
+    deadline_limit: Optional[float] = None
+    option_count: int = Field(default=5, ge=1, le=100)
 
 
 class Workflow(BaseModel):
@@ -193,6 +197,8 @@ class InterferenceVariables(BaseModel):
     phi_n: Dict[str, float]
     et_star_by_task: Dict[str, float]
     colocated_tasks: Dict[str, List[str]]
+    total_interference_time: float
+    average_phi_n: float
 
 
 class DeviationVariables(BaseModel):
@@ -231,6 +237,36 @@ class SimulationResult(BaseModel):
     cost_variables: CostVariables
     interference_variables: InterferenceVariables
     deviation_variables: DeviationVariables
+
+
+class ScheduleConstraints(BaseModel):
+    budget_limit: Optional[float] = None
+    deadline_limit: Optional[float] = None
+    option_count: int
+
+
+class ScheduleOption(BaseModel):
+    id: str
+    rank: int
+    feasible: bool
+    recommended: bool = False
+    budget_used: float
+    budget_limit: Optional[float] = None
+    budget_violation: float
+    makespan: float
+    deadline_limit: Optional[float] = None
+    deadline_violation: float
+    machine_signature: str
+    machine_distribution: Dict[str, int]
+    weighted_score: float
+    diversity_score: float
+    result: SimulationResult
+
+
+class ScheduleOptimizationResponse(BaseModel):
+    selected_option_id: Optional[str]
+    constraints: ScheduleConstraints
+    options: List[ScheduleOption]
 
 
 class GeneratedSimulation(BaseModel):

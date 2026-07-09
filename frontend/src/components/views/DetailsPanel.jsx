@@ -32,10 +32,10 @@ export default function DetailsPanel({ result, assignment, taskId }) {
       <Metric label="D_N" value={fmt(result.deviation_variables.d_n[assignment.resource_id])} />
       {task.runtime && <Metric label="Runtime" value={task.runtime} />}
       <section className="score-box">
-        <strong>Score breakdown</strong>
+        <strong>Decision metrics</strong>
         <span>time {fmt(assignment.score.time_score)}</span>
         <span>cost {fmt(assignment.score.cost_score)}</span>
-        <span>interference {fmt(assignment.score.interference_score)}</span>
+        <span>observed phi {fmt(assignment.score.interference_score)}</span>
         <span>total {fmt(assignment.score.total_score)}</span>
       </section>
       <section className="score-box">

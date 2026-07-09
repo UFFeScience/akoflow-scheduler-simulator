@@ -7,6 +7,8 @@ export function useSimulatorController() {
   const [presets, setPresets] = useState([]);
   const [generated, setGenerated] = useState(null);
   const [result, setResult] = useState(null);
+  const [scheduleResponse, setScheduleResponse] = useState(null);
+  const [selectedOptionId, setSelectedOptionId] = useState(null);
   const [phase, setPhase] = useState("workflow");
   const [activeTab, setActiveTab] = useState("Workflow");
   const [selectedTaskId, setSelectedTaskId] = useState(null);
@@ -36,7 +38,9 @@ export function useSimulatorController() {
         ...generated.sla,
         weight_time: request.weight_time,
         weight_cost: request.weight_cost,
-        weight_interference: request.weight_interference,
+        budget_limit: request.budget_limit,
+        deadline_limit: request.deadline_limit,
+        option_count: request.option_count,
       },
     };
   }
@@ -58,6 +62,8 @@ export function useSimulatorController() {
     const data = await response.json();
     setGenerated(data);
     setResult(null);
+    setScheduleResponse(null);
+    setSelectedOptionId(null);
     setSelectedTaskId(data.workflow.tasks[0]?.id || null);
     setPhase("matrices");
     setActiveTab("DAG");
@@ -81,9 +87,12 @@ export function useSimulatorController() {
       return;
     }
     const data = await response.json();
+    const selectedOption = data.options?.find((option) => option.id === data.selected_option_id) || data.options?.[0] || null;
     setGenerated(schedulePayload);
-    setResult(data);
-    setSelectedTaskId(data.workflow.tasks[0]?.id || null);
+    setScheduleResponse(data);
+    setSelectedOptionId(selectedOption?.id || null);
+    setResult(selectedOption?.result || null);
+    setSelectedTaskId(selectedOption?.result?.workflow.tasks[0]?.id || null);
     if (!preserveView) {
       setPhase("results");
       setActiveTab("DAG");
@@ -106,6 +115,8 @@ export function useSimulatorController() {
     setWorkflowMode("random");
     setGenerated(null);
     setResult(null);
+    setScheduleResponse(null);
+    setSelectedOptionId(null);
     setSelectedTaskId(null);
     setPhase("workflow");
     setActiveTab("Workflow");
@@ -135,11 +146,19 @@ export function useSimulatorController() {
     [phase, result, selectedTaskId],
   );
 
+  function selectScheduleOption(optionId) {
+    const option = scheduleResponse?.options.find((item) => item.id === optionId);
+    if (!option) return;
+    setSelectedOptionId(option.id);
+    setResult(option.result);
+    setSelectedTaskId(option.result.workflow.tasks[0]?.id || null);
+  }
+
   return {
-    request, presets, generated, result, phase, activeTab, selectedTaskId, status, statusMessage,
+    request, presets, generated, result, scheduleResponse, selectedOptionId, phase, activeTab, selectedTaskId, status, statusMessage,
     workflowMode, workflowYaml, workflowFileName, theme, selectedAssignment,
     setGenerated, setPhase, setActiveTab, setSelectedTaskId, setWorkflowMode, setTheme,
-    generateWorkflowAndMatrices, saveMatricesAndSchedule, calculateCurrentSchedule, resetFlow, importWorkflowFile,
+    generateWorkflowAndMatrices, saveMatricesAndSchedule, calculateCurrentSchedule, resetFlow, importWorkflowFile, selectScheduleOption,
     clearWorkflowFile: () => { setWorkflowYaml(""); setWorkflowFileName(""); setWorkflowMode("random"); },
     updateRequest,
     updateResourceSpec: (id, key, value) => setRequest((current) => ({

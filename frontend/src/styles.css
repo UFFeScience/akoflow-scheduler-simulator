@@ -350,6 +350,12 @@ h2 {
   gap: 12px;
 }
 
+.constraint-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
 .sla-subsection {
   display: grid;
   gap: 12px;
@@ -531,7 +537,7 @@ h2 {
 
 .workspace {
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
   min-width: 0;
 }
 
@@ -630,6 +636,31 @@ h2 {
   gap: 12px;
 }
 
+.compact-control {
+  display: grid;
+  gap: 8px;
+}
+
+.compact-control span {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.compact-control input {
+  width: 100%;
+  min-height: 36px;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-base);
+  padding: 8px 10px;
+}
+
+.options-control {
+  max-width: 92px;
+}
+
 .calculate-navbar .slider-control {
   min-width: 0;
 }
@@ -649,6 +680,82 @@ h2 {
 
 .calculate-button {
   margin-top: 22px;
+}
+
+.schedule-options-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px 18px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.schedule-options-panel header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.schedule-options-panel header span {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.schedule-options-table-wrap {
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-base);
+}
+
+.schedule-options-table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+  background: var(--bg-primary);
+}
+
+.schedule-options-table th,
+.schedule-options-table td {
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+}
+
+.schedule-options-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+}
+
+.schedule-options-table tr {
+  cursor: pointer;
+}
+
+.schedule-options-table tr:hover,
+.schedule-options-table tr.selected-row {
+  background: var(--bg-secondary);
+}
+
+.schedule-options-table tr.selected-row {
+  box-shadow: inset 3px 0 0 var(--accent-primary);
+}
+
+.schedule-options-table tr.feasible td:first-child {
+  color: var(--success);
+  font-weight: var(--font-weight-bold);
+}
+
+.schedule-options-table tr.infeasible td:first-child {
+  color: var(--danger);
+  font-weight: var(--font-weight-bold);
 }
 
 .canvas {
