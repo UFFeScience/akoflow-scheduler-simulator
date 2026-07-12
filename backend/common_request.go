@@ -15,6 +15,13 @@ var presets = []map[string]any{
 	{"id": "Random", "label": "Random DAG", "stages": []string{"ingest", "transform", "analyze", "reduce", "publish"}},
 }
 
+const (
+	defaultBeamWidth   = 2000
+	minBeamWidth       = 120
+	maxBeamWidth       = 10000
+	maxScheduleOptions = 1000
+)
+
 func round(v float64, places int) float64 {
 	p := math.Pow10(places)
 	return math.Round(v*p) / p
@@ -44,7 +51,7 @@ func defaultRequest() SimulationRequest {
 	return SimulationRequest{
 		Preset: "Montage", Seed: 42, TaskCount: 12, EdgeDensity: 0.22,
 		ClusterMachines: 3, CloudMachines: 2, CoresPerMachine: 2,
-		WeightTime: 0.60, WeightCost: 0.40, OptionCount: 5,
+		WeightTime: 0.60, WeightCost: 0.40, OptionCount: 5, BeamWidth: defaultBeamWidth,
 	}
 }
 
@@ -52,8 +59,8 @@ func validateRequest(r SimulationRequest) error {
 	if r.Preset == "" {
 		return errors.New("preset is required")
 	}
-	if r.TaskCount < 3 || r.TaskCount > 80 {
-		return errors.New("task_count must be between 3 and 80")
+	if r.TaskCount < 3 || r.TaskCount > 100 {
+		return errors.New("task_count must be between 3 and 100")
 	}
 	if r.EdgeDensity < 0 || r.EdgeDensity > 0.8 {
 		return errors.New("edge_density must be between 0 and 0.8")
@@ -76,8 +83,11 @@ func validateRequest(r SimulationRequest) error {
 	if r.DeadlineLimit != nil && *r.DeadlineLimit <= 0 {
 		return errors.New("deadline_limit must be greater than 0")
 	}
-	if r.OptionCount < 1 || r.OptionCount > 100 {
-		return errors.New("option_count must be between 1 and 100")
+	if r.OptionCount < 1 || r.OptionCount > maxScheduleOptions {
+		return fmt.Errorf("option_count must be between 1 and %d", maxScheduleOptions)
+	}
+	if r.BeamWidth < minBeamWidth || r.BeamWidth > maxBeamWidth {
+		return fmt.Errorf("beam_width must be between %d and %d", minBeamWidth, maxBeamWidth)
 	}
 	for _, spec := range r.ResourceSpecs {
 		if spec.ID == "" || spec.Name == "" {

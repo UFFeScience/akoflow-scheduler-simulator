@@ -41,6 +41,7 @@ export function useSimulatorController() {
         budget_limit: request.budget_limit,
         deadline_limit: request.deadline_limit,
         option_count: request.option_count,
+        beam_width: request.beam_width,
       },
     };
   }

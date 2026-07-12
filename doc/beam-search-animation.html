@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Animacao do DAG e Beam Search</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --ink: #182033;
+      --muted: #667085;
+      --line: #cbd5e1;
+      --accent: #0f766e;
+      --accent-soft: #ccfbf1;
+      --warn: #b45309;
+      --warn-soft: #fef3c7;
+      --drop: #9ca3af;
+      --drop-soft: #f3f4f6;
+      --good: #166534;
+      --good-soft: #dcfce7;
+      --shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 32px auto;
+    }
+
+    header {
+      display: flex;
+      gap: 24px;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(28px, 4vw, 44px);
+      letter-spacing: 0;
+      line-height: 1.05;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    button {
+      min-height: 40px;
+      border: 1px solid #0f766e;
+      border-radius: 6px;
+      background: #0f766e;
+      color: white;
+      padding: 0 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: white;
+      color: #0f766e;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(360px, 1.1fr) minmax(340px, 0.9fr);
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+      border-bottom: 1px solid #eef2f7;
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #475467;
+    }
+
+    .canvas {
+      position: relative;
+      height: 500px;
+      overflow: hidden;
+    }
+
+    svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .node {
+      position: absolute;
+      width: 124px;
+      min-height: 56px;
+      border: 2px solid #94a3b8;
+      border-radius: 8px;
+      background: white;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 800;
+      color: #334155;
+      transition: transform 280ms ease, background 280ms ease, border-color 280ms ease, color 280ms ease, opacity 280ms ease;
+    }
+
+    .node small {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    .node.ready {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: #134e4a;
+      transform: translateY(-3px);
+    }
+
+    .node.done {
+      border-color: var(--good);
+      background: var(--good-soft);
+      color: var(--good);
+    }
+
+    .node.waiting {
+      opacity: 0.55;
+    }
+
+    .edge {
+      stroke: var(--line);
+      stroke-width: 3;
+      fill: none;
+      transition: stroke 280ms ease, opacity 280ms ease;
+    }
+
+    .edge.active {
+      stroke: var(--accent);
+    }
+
+    .beam {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .step-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .step-card strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #111827;
+    }
+
+    .candidate-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .candidate {
+      display: grid;
+      grid-template-columns: 78px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 10px;
+      background: #f8fafc;
+      transition: opacity 280ms ease, transform 280ms ease, background 280ms ease, border-color 280ms ease;
+    }
+
+    .candidate .label {
+      font-weight: 800;
+      color: #334155;
+    }
+
+    .candidate .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .candidate .bar span {
+      display: block;
+      height: 100%;
+      width: var(--w);
+      background: var(--accent);
+      transition: width 280ms ease;
+    }
+
+    .candidate .score {
+      font-variant-numeric: tabular-nums;
+      color: #475467;
+      font-weight: 800;
+    }
+
+    .candidate.keep {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      transform: translateX(4px);
+    }
+
+    .candidate.drop {
+      opacity: 0.45;
+      background: var(--drop-soft);
+    }
+
+    .candidate.overflow {
+      border-color: var(--warn);
+      background: var(--warn-soft);
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .tick {
+      height: 8px;
+      border-radius: 999px;
+      background: #d8dee9;
+      transition: background 280ms ease;
+    }
+
+    .tick.active {
+      background: var(--accent);
+    }
+
+    .explain {
+      padding: 18px;
+      border-top: 1px solid #eef2f7;
+      min-height: 112px;
+    }
+
+    .explain h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .explain p {
+      font-size: 15px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 860px) {
+      header {
+        display: grid;
+      }
+
+      .stage {
+        grid-template-columns: 1fr;
+      }
+
+      .canvas {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Montage N=100 + Beam Search</h1>
+        <p>Animacao local para explicar como o simulador libera 100 atividades Montage no DAG, expande candidatos e preserva os melhores estados.</p>
+      </div>
+      <div class="controls">
+        <button id="play">Reproduzir</button>
+        <button id="prev" class="secondary">Anterior</button>
+        <button id="next" class="secondary">Proximo</button>
+      </div>
+    </header>
+
+    <section class="stage" aria-label="Animacao explicativa do algoritmo">
+      <article class="panel">
+        <div class="panel-title">
+          <span>DAG Montage N=100</span>
+          <span id="step-label">Etapa 1/5</span>
+        </div>
+        <div class="canvas" id="dag">
+          <svg viewBox="0 0 620 500" aria-hidden="true">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#cbd5e1"></path>
+              </marker>
+            </defs>
+            <path class="edge e-t1-t3" d="M145 98 C220 98 240 190 300 190" marker-end="url(#arrow)"></path>
+            <path class="edge e-t2-t3" d="M145 308 C220 308 240 230 300 230" marker-end="url(#arrow)"></path>
+            <path class="edge e-t3-t4" d="M404 210 C455 210 470 210 518 210" marker-end="url(#arrow)"></path>
+            <path class="edge e-t4-t5" d="M570 238 C570 310 470 368 392 382" marker-end="url(#arrow)"></path>
+          </svg>
+          <div class="node n-t1" style="left: 42px; top: 70px;">mProject<small>20 atividades</small></div>
+          <div class="node n-t2" style="left: 42px; top: 280px;">mDiffFit<small>20 atividades</small></div>
+          <div class="node n-t3" style="left: 286px; top: 180px;">mConcatFit<small>20 atividades</small></div>
+          <div class="node n-t4" style="left: 506px; top: 180px;">mBgModel<small>20 atividades</small></div>
+          <div class="node n-t5" style="left: 286px; top: 360px;">mAdd<small>20 atividades</small></div>
+        </div>
+        <div class="explain">
+          <h2 id="title">1. Montage N=100 vira um DAG</h2>
+          <p id="copy">As 100 atividades sao vertices e as dependencias sao arestas direcionadas. A busca so pode escalonar uma atividade quando todos os predecessores ja foram escolhidos.</p>
+          <div class="timeline" aria-hidden="true">
+            <span class="tick active"></span>
+            <span class="tick"></span>
+            <span class="tick"></span>
+            <span class="tick"></span>
+            <span class="tick"></span>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-title">
+          <span>Beam search</span>
+          <span>Estados parciais</span>
+        </div>
+        <div class="beam">
+          <div class="step-card">
+            <strong>Tarefa atual</strong>
+            <p id="task-copy">Nenhuma tarefa foi escalonada ainda.</p>
+          </div>
+          <div class="step-card">
+            <strong>Candidatos avaliados</strong>
+            <div class="candidate-grid">
+              <div class="candidate c-a" style="--w: 82%">
+                <span class="label">edge-1</span>
+                <span class="bar"><span></span></span>
+                <span class="score">0.42</span>
+              </div>
+              <div class="candidate c-b" style="--w: 62%">
+                <span class="label">edge-2</span>
+                <span class="bar"><span></span></span>
+                <span class="score">0.57</span>
+              </div>
+              <div class="candidate c-c" style="--w: 45%">
+                <span class="label">cloud-1</span>
+                <span class="bar"><span></span></span>
+                <span class="score">0.73</span>
+              </div>
+              <div class="candidate c-d" style="--w: 35%">
+                <span class="label">cloud-2</span>
+                <span class="bar"><span></span></span>
+                <span class="score">1.10</span>
+              </div>
+            </div>
+          </div>
+          <div class="step-card">
+            <strong>Resultado parcial</strong>
+            <p id="beam-copy">O feixe comeca com um estado vazio. A cada tarefa, o algoritmo cria novos caminhos possiveis.</p>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const steps = [
+      {
+        title: "1. Montage N=100 vira um DAG",
+        copy: "As 100 atividades Montage sao vertices e as dependencias sao arestas direcionadas. A visualizacao agrupa 20 atividades por tipo para mostrar a estrutura sem poluir a tela.",
+        task: "Nenhuma atividade foi escalonada ainda.",
+        beam: "O feixe comeca com um estado vazio. A cada atividade, o algoritmo cria novos caminhos possiveis.",
+        ready: ["t1", "t2"],
+        done: [],
+        activeEdges: [],
+        candidates: []
+      },
+      {
+        title: "2. A ordem topologica libera mProject e mDiffFit",
+        copy: "As primeiras atividades Montage entram quando seus predecessores estao resolvidos. No preset sintetico, os estagios seguem mProject, mDiffFit, mConcatFit, mBgModel e mAdd.",
+        task: "Atividade pronta: mProject-1. O algoritmo testa cada recurso/core compativel.",
+        beam: "Cada candidato vira um novo estado parcial com start, finish, custo, boot, transferencia e interferencia.",
+        ready: ["t1", "t2"],
+        done: [],
+        activeEdges: [],
+        candidates: ["keep", "keep", "drop", "drop"]
+      },
+      {
+        title: "3. O beam preserva os melhores caminhos",
+        copy: "Depois de escolher possibilidades para atividades predecessoras, mConcatFit fica liberada porque todos os predecessores ja possuem assignment.",
+        task: "Atividade pronta: mConcatFit. O predecessorFloor inclui o fim dos predecessores mais transferencias de dados.",
+        beam: "Estados com menor score parcial continuam no beam. Estados acima do budget parcial vao para overflow.",
+        ready: ["t3"],
+        done: ["t1", "t2"],
+        activeEdges: ["e-t1-t3", "e-t2-t3"],
+        candidates: ["keep", "overflow", "keep", "drop"]
+      },
+      {
+        title: "4. A busca segue por mBgModel",
+        copy: "mBgModel so aparece depois dos ajustes anteriores. Cada decisao atualiza disponibilidade de core, estado de boot e ultimo uso do recurso.",
+        task: "Atividade pronta: mBgModel. A interferencia pairwise aumenta runtime quando ha atividades sobrepostas no mesmo recurso.",
+        beam: "A poda limita a explosao combinatoria de 100 atividades: varios caminhos existem, mas apenas os melhores estados do beam seguem vivos.",
+        ready: ["t4"],
+        done: ["t1", "t2", "t3"],
+        activeEdges: ["e-t3-t4"],
+        candidates: ["keep", "drop", "keep", "overflow"]
+      },
+      {
+        title: "5. Estados finais viram opcoes",
+        copy: "Quando as atividades mAdd terminam, cada estado final vira uma ScheduleOption com makespan, budget usado, violacoes e ranking.",
+        task: "Workflow Montage completo: 100 atividades foram alocadas em recursos e cores.",
+        beam: "A opcao 1 e recomendada. As demais sao escolhidas buscando boa pontuacao e diversidade de distribuicao entre maquinas.",
+        ready: [],
+        done: ["t1", "t2", "t3", "t4", "t5"],
+        activeEdges: ["e-t4-t5"],
+        candidates: ["keep", "keep", "keep", "drop"]
+      }
+    ];
+
+    let index = 0;
+    let timer = null;
+
+    const title = document.getElementById("title");
+    const copy = document.getElementById("copy");
+    const taskCopy = document.getElementById("task-copy");
+    const beamCopy = document.getElementById("beam-copy");
+    const stepLabel = document.getElementById("step-label");
+    const ticks = Array.from(document.querySelectorAll(".tick"));
+    const nodes = {
+      t1: document.querySelector(".n-t1"),
+      t2: document.querySelector(".n-t2"),
+      t3: document.querySelector(".n-t3"),
+      t4: document.querySelector(".n-t4"),
+      t5: document.querySelector(".n-t5")
+    };
+    const edges = Array.from(document.querySelectorAll(".edge"));
+    const candidates = Array.from(document.querySelectorAll(".candidate"));
+
+    function render() {
+      const step = steps[index];
+      title.textContent = step.title;
+      copy.textContent = step.copy;
+      taskCopy.textContent = step.task;
+      beamCopy.textContent = step.beam;
+      stepLabel.textContent = `Etapa ${index + 1}/5`;
+
+      Object.entries(nodes).forEach(([key, node]) => {
+        node.classList.toggle("done", step.done.includes(key));
+        node.classList.toggle("ready", step.ready.includes(key));
+        node.classList.toggle("waiting", !step.done.includes(key) && !step.ready.includes(key));
+      });
+
+      edges.forEach((edge) => {
+        step.activeEdges.some((name) => edge.classList.contains(name))
+          ? edge.classList.add("active")
+          : edge.classList.remove("active");
+      });
+
+      candidates.forEach((candidate, candidateIndex) => {
+        candidate.classList.remove("keep", "drop", "overflow");
+        if (step.candidates[candidateIndex]) {
+          candidate.classList.add(step.candidates[candidateIndex]);
+        }
+      });
+
+      ticks.forEach((tick, tickIndex) => {
+        tick.classList.toggle("active", tickIndex <= index);
+      });
+    }
+
+    function next() {
+      index = (index + 1) % steps.length;
+      render();
+    }
+
+    function prev() {
+      index = (index - 1 + steps.length) % steps.length;
+      render();
+    }
+
+    function play() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+        document.getElementById("play").textContent = "Reproduzir";
+        return;
+      }
+      document.getElementById("play").textContent = "Pausar";
+      timer = setInterval(next, 2600);
+    }
+
+    document.getElementById("next").addEventListener("click", next);
+    document.getElementById("prev").addEventListener("click", prev);
+    document.getElementById("play").addEventListener("click", play);
+    render();
+  </script>
+</body>
+</html>

@@ -24,6 +24,7 @@ type SimulationRequest struct {
 	BudgetLimit     *float64       `json:"budget_limit"`
 	DeadlineLimit   *float64       `json:"deadline_limit"`
 	OptionCount     int            `json:"option_count"`
+	BeamWidth       int            `json:"beam_width"`
 	WorkflowYAML    *string        `json:"workflow_yaml"`
 	ResourceSpecs   []ResourceSpec `json:"resource_specs"`
 }
@@ -77,6 +78,7 @@ type SLA struct {
 	BudgetLimit   *float64 `json:"budget_limit"`
 	DeadlineLimit *float64 `json:"deadline_limit"`
 	OptionCount   int      `json:"option_count"`
+	BeamWidth     int      `json:"beam_width"`
 }
 
 type Workflow struct {
@@ -243,6 +245,7 @@ type ScheduleConstraints struct {
 	BudgetLimit   *float64 `json:"budget_limit"`
 	DeadlineLimit *float64 `json:"deadline_limit"`
 	OptionCount   int      `json:"option_count"`
+	BeamWidth     int      `json:"beam_width"`
 }
 
 type ScheduleOption struct {

@@ -24,7 +24,7 @@ export default function WorkflowSourceSection({ controller }) {
               ))}
             </ControlSelect>
             <ControlInput label="Seed" value={c.request.seed} min={1} step={1} onChange={(value) => c.updateRequest("seed", value)} />
-            <ControlInput label="Tasks" value={c.request.task_count} min={3} max={80} step={1} onChange={(value) => c.updateRequest("task_count", value)} />
+            <ControlInput label="Tasks" value={c.request.task_count} min={3} max={100} step={1} onChange={(value) => c.updateRequest("task_count", value)} />
             <ControlInput label="Edge density" value={c.request.edge_density} min={0} max={0.8} step={0.01} onChange={(value) => c.updateRequest("edge_density", value)} />
           </>
         )}

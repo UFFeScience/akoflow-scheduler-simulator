@@ -4,3 +4,4 @@ __pycache__/
 node_modules/
 dist/
 .DS_Store
+backend/__debug_bin*

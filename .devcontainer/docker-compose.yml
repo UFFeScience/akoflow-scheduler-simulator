@@ -1,0 +1,6 @@
+services:
+  backend:
+    command: sleep infinity
+    volumes:
+      - .:/workspace/scheduler-simulator
+      - ./backend:/app

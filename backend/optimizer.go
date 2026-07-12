@@ -1,11 +1,11 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"math"
+	"runtime"
 	"sort"
 	"strings"
+	"sync"
 )
 
 type beamState struct {
@@ -16,15 +16,33 @@ type beamState struct {
 	NodeReadyTime     map[string]float64
 	NodeLastActive    map[string]float64
 	StopIntervals     []MachineStopInterval
-	SchedulerSteps    []ScheduleStep
+	StepTrace         *scheduleStepTrace
 	PartialBudgetUsed float64
 	PartialMakespan   float64
 	PartialScore      float64
 }
 
+type scheduleStepTrace struct {
+	Step ScheduleStep
+	Prev *scheduleStepTrace
+	Len  int
+}
+
+type optimizerContext struct {
+	Tasks        map[string]Task
+	Resources    map[string]Resource
+	DepsByTarget map[string][]Dependency
+}
+
+type beamFrontier struct {
+	WeightTime float64
+	WeightCost float64
+}
+
 func optimizeSchedule(generated GeneratedSimulation) (ScheduleOptimizationResponse, error) {
-	optionCount := max(1, min(generated.SLA.OptionCount, 100))
-	finalStates, err := beamSearch(generated, optionCount)
+	optionCount := max(1, min(generated.SLA.OptionCount, maxScheduleOptions))
+	beamWidth := normalizedBeamWidth(generated.SLA.BeamWidth)
+	finalStates, err := beamSearch(generated, beamWidth)
 	if err != nil {
 		return ScheduleOptimizationResponse{}, err
 	}
@@ -33,10 +51,17 @@ func optimizeSchedule(generated GeneratedSimulation) (ScheduleOptimizationRespon
 	if len(options) > 0 {
 		selected = &options[0].ID
 	}
-	return ScheduleOptimizationResponse{SelectedOptionID: selected, Constraints: ScheduleConstraints{BudgetLimit: generated.SLA.BudgetLimit, DeadlineLimit: generated.SLA.DeadlineLimit, OptionCount: optionCount}, Options: options}, nil
+	return ScheduleOptimizationResponse{SelectedOptionID: selected, Constraints: ScheduleConstraints{BudgetLimit: generated.SLA.BudgetLimit, DeadlineLimit: generated.SLA.DeadlineLimit, OptionCount: optionCount, BeamWidth: beamWidth}, Options: options}, nil
 }
 
-func beamSearch(generated GeneratedSimulation, optionCount int) ([]beamState, error) {
+func normalizedBeamWidth(value int) int {
+	if value <= 0 {
+		return defaultBeamWidth
+	}
+	return max(minBeamWidth, min(value, maxBeamWidth))
+}
+
+func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, error) {
 	coreAvail := map[string]float64{}
 	for _, resource := range generated.Resources {
 		for _, core := range resource.Cores {
@@ -44,42 +69,105 @@ func beamSearch(generated GeneratedSimulation, optionCount int) ([]beamState, er
 		}
 	}
 	hasBooted, ready, last := initialNodeState(generated.Resources)
-	beam := []beamState{{Assignments: []Assignment{}, AssignmentByTask: map[string]Assignment{}, CoreAvail: coreAvail, NodeHasBooted: hasBooted, NodeReadyTime: ready, NodeLastActive: last, StopIntervals: []MachineStopInterval{}, SchedulerSteps: []ScheduleStep{}}}
-	overflow := []beamState{}
-	beamWidth := min(600, max(120, optionCount*6))
-	overflowWidth := min(240, max(60, optionCount*3))
+	initialBeam := []beamState{{Assignments: []Assignment{}, AssignmentByTask: map[string]Assignment{}, CoreAvail: coreAvail, NodeHasBooted: hasBooted, NodeReadyTime: ready, NodeLastActive: last, StopIntervals: []MachineStopInterval{}}}
+	ctx := optimizerContext{Tasks: taskMap(generated.Workflow.Tasks), Resources: resourceMap(generated.Resources), DepsByTarget: dependenciesByTarget(generated.Workflow.Dependencies)}
 	order, err := topologicalOrder(generated)
 	if err != nil {
 		return nil, err
 	}
+	frontiers := beamFrontiers()
+	widths := beamFrontierWidths(beamWidth, len(frontiers))
+	beams := make([][]beamState, len(frontiers))
+	for index := range frontiers {
+		beams[index] = append([]beamState{}, initialBeam...)
+	}
 	for stepIndex, taskID := range order {
-		expanded, overflowExpanded := []beamState{}, []beamState{}
-		for _, state := range append(append([]beamState{}, beam...), overflow...) {
-			nextStates := expandState(generated, state, stepIndex+1, taskID)
-			for _, next := range nextStates {
-				if generated.SLA.BudgetLimit != nil && next.PartialBudgetUsed > *generated.SLA.BudgetLimit {
-					overflowExpanded = append(overflowExpanded, next)
-				} else {
-					expanded = append(expanded, next)
-				}
+		anyExpanded := false
+		for index, frontier := range frontiers {
+			expanded := expandStatesParallel(generated, ctx, beams[index], stepIndex+1, taskID, frontier)
+			if len(expanded) == 0 {
+				beams[index] = []beamState{}
+				continue
 			}
+			anyExpanded = true
+			beams[index] = selectBeamStates(expanded, widths[index], generated)
 		}
-		if len(expanded) == 0 && len(overflowExpanded) == 0 {
+		if !anyExpanded {
 			return nil, fmt.Errorf("No feasible resource for task %s", taskID)
 		}
-		beam = selectBeamStates(expanded, beamWidth, generated)
-		overflow = selectBeamStates(overflowExpanded, overflowWidth, generated)
-		if len(beam) == 0 {
-			overflow = selectBeamStates(overflow, overflowWidth, generated)
-		}
 	}
-	return append(beam, overflow...), nil
+	finalStates := []beamState{}
+	for index := range frontiers {
+		finalStates = append(finalStates, beams[index]...)
+	}
+	return dedupeStates(finalStates), nil
 }
 
-func expandState(generated GeneratedSimulation, state beamState, stepIndex int, taskID string) []beamState {
-	tasks, resources := taskMap(generated.Workflow.Tasks), resourceMap(generated.Resources)
-	depsByTarget := dependenciesByTarget(generated.Workflow.Dependencies)
-	task := tasks[taskID]
+func beamFrontiers() []beamFrontier {
+	return []beamFrontier{
+		{WeightTime: 0, WeightCost: 1},
+		{WeightTime: 0.3, WeightCost: 0.7},
+		{WeightTime: 0.5, WeightCost: 0.5},
+		{WeightTime: 0.7, WeightCost: 0.3},
+		{WeightTime: 1, WeightCost: 0},
+	}
+}
+
+func beamFrontierWidths(total int, frontierCount int) []int {
+	widths := make([]int, frontierCount)
+	if frontierCount == 0 {
+		return widths
+	}
+	base := max(1, total/frontierCount)
+	remainder := max(0, total-base*frontierCount)
+	for index := range widths {
+		widths[index] = base
+		if index < remainder {
+			widths[index]++
+		}
+	}
+	return widths
+}
+
+func expandStatesParallel(generated GeneratedSimulation, ctx optimizerContext, states []beamState, stepIndex int, taskID string, frontier beamFrontier) []beamState {
+	if len(states) == 0 {
+		return []beamState{}
+	}
+	if len(states) == 1 {
+		return expandState(generated, ctx, states[0], stepIndex, taskID, frontier)
+	}
+	workers := min(len(states), runtime.GOMAXPROCS(0))
+	results := make([][]beamState, len(states))
+	jobs := make(chan int)
+	var wg sync.WaitGroup
+	wg.Add(workers)
+	for worker := 0; worker < workers; worker++ {
+		go func() {
+			defer wg.Done()
+			for index := range jobs {
+				results[index] = expandState(generated, ctx, states[index], stepIndex, taskID, frontier)
+			}
+		}()
+	}
+	for index := range states {
+		jobs <- index
+	}
+	close(jobs)
+	wg.Wait()
+
+	total := 0
+	for _, stateResults := range results {
+		total += len(stateResults)
+	}
+	out := make([]beamState, 0, total)
+	for _, stateResults := range results {
+		out = append(out, stateResults...)
+	}
+	return out
+}
+
+func expandState(generated GeneratedSimulation, ctx optimizerContext, state beamState, stepIndex int, taskID string, frontier beamFrontier) []beamState {
+	task := ctx.Tasks[taskID]
 	type candidateRow struct {
 		assignment      Assignment
 		candidate       CandidateEvaluation
@@ -91,9 +179,9 @@ func expandState(generated GeneratedSimulation, state beamState, stepIndex int, 
 		if task.CPU > resource.CPU || task.Memory > resource.Memory {
 			continue
 		}
-		predecessorFloor, transferTotal := predecessorTiming(depsByTarget[task.ID], state.AssignmentByTask, generated, resource.ID)
+		predecessorFloor, transferTotal := predecessorTiming(ctx.DepsByTarget[task.ID], state.AssignmentByTask, generated, resource.ID)
 		networkCost := 0.0
-		for _, dep := range depsByTarget[task.ID] {
+		for _, dep := range ctx.DepsByTarget[task.ID] {
 			predecessor := state.AssignmentByTask[dep.Source]
 			networkCost += dep.DataMB * generated.Matrices.FinancialNetworkCost[predecessor.ResourceID][resource.ID]
 		}
@@ -139,30 +227,48 @@ func expandState(generated GeneratedSimulation, state beamState, stepIndex int, 
 		score := ScoreBreakdown{
 			TimeScore: round(timeScore, 5), CostScore: round(costScore, 5),
 			InterferenceScore: round(rows[i].phi, 5),
-			TotalScore:        round(generated.SLA.WeightTime*timeScore+generated.SLA.WeightCost*costScore, 5),
+			TotalScore:        round(0.5*timeScore+0.5*costScore, 5),
 		}
 		rows[i].assignment.Score = score
 		rows[i].candidate.Score = score
+	}
+	rankedRows := append([]candidateRow{}, rows...)
+	sort.SliceStable(rankedRows, func(i, j int) bool {
+		a, b := beamFrontierScore(rankedRows[i].assignment.Score, frontier), beamFrontierScore(rankedRows[j].assignment.Score, frontier)
+		if a != b {
+			return a < b
+		}
+		if rankedRows[i].assignment.FinishTime != rankedRows[j].assignment.FinishTime {
+			return rankedRows[i].assignment.FinishTime < rankedRows[j].assignment.FinishTime
+		}
+		if rankedRows[i].incBudget != rankedRows[j].incBudget {
+			return rankedRows[i].incBudget < rankedRows[j].incBudget
+		}
+		return rankedRows[i].assignment.ResourceID+"|"+rankedRows[i].assignment.CoreID < rankedRows[j].assignment.ResourceID+"|"+rankedRows[j].assignment.CoreID
+	})
+	frontierRankBySlot := map[string]int{}
+	for i, row := range rankedRows {
+		frontierRankBySlot[row.assignment.ResourceID+"|"+row.assignment.CoreID] = i + 1
 	}
 	rankedCandidates := []CandidateEvaluation{}
 	for _, row := range rows {
 		rankedCandidates = append(rankedCandidates, row.candidate)
 	}
 	sortCandidates(rankedCandidates)
-	rankBySlot := map[string]int{}
+	displayRankBySlot := map[string]int{}
 	for i, candidate := range rankedCandidates {
-		rankBySlot[candidate.ResourceID+"|"+candidate.CoreID] = i + 1
+		displayRankBySlot[candidate.ResourceID+"|"+candidate.CoreID] = i + 1
 	}
 	nextStates := []beamState{}
 	for _, row := range rows {
 		selectedCandidates := []CandidateEvaluation{}
 		for _, ranked := range rankedCandidates {
 			item := ranked
-			item.Rank = rankBySlot[item.ResourceID+"|"+item.CoreID]
+			item.Rank = displayRankBySlot[item.ResourceID+"|"+item.CoreID]
 			item.Selected = item.ResourceID == row.assignment.ResourceID && item.CoreID == row.assignment.CoreID
 			selectedCandidates = append(selectedCandidates, item)
 		}
-		selectedRank := rankBySlot[row.assignment.ResourceID+"|"+row.assignment.CoreID]
+		selectedRank := frontierRankBySlot[row.assignment.ResourceID+"|"+row.assignment.CoreID]
 		step := ScheduleStep{Step: stepIndex, TaskID: task.ID, SelectedResourceID: row.assignment.ResourceID, SelectedCoreID: row.assignment.CoreID, SelectedTotalScore: row.assignment.Score.TotalScore, Candidates: selectedCandidates}
 		coreAvail := copyFloatMap(state.CoreAvail)
 		coreAvail[row.assignment.CoreID] = row.assignment.FinishTime
@@ -170,19 +276,42 @@ func expandState(generated GeneratedSimulation, state beamState, stepIndex int, 
 		nodeReady := copyFloatMap(state.NodeReadyTime)
 		nodeLast := copyFloatMap(state.NodeLastActive)
 		intervals := append([]MachineStopInterval{}, state.StopIntervals...)
-		updateNodeState(row.assignment, resources[row.assignment.ResourceID], nodeHasBooted, nodeReady, nodeLast, &intervals)
+		updateNodeState(row.assignment, ctx.Resources[row.assignment.ResourceID], nodeHasBooted, nodeReady, nodeLast, &intervals)
 		partialBudget := round(state.PartialBudgetUsed+row.incBudget, 4)
 		partialMakespan := round(maxf(state.PartialMakespan, row.assignment.FinishTime), 3)
-		partialScore := round(state.PartialScore+row.assignment.Score.TotalScore+limitRatio(partialMakespan, generated.SLA.DeadlineLimit)+limitRatio(partialBudget, generated.SLA.BudgetLimit)+float64(selectedRank)*0.0001, 6)
+		partialScore := round(state.PartialScore+beamFrontierScore(row.assignment.Score, frontier)+float64(selectedRank)*0.0001, 6)
 		assignments := append(append([]Assignment{}, state.Assignments...), row.assignment)
 		byTask := map[string]Assignment{}
 		for key, value := range state.AssignmentByTask {
 			byTask[key] = value
 		}
 		byTask[row.assignment.TaskID] = row.assignment
-		nextStates = append(nextStates, beamState{Assignments: assignments, AssignmentByTask: byTask, CoreAvail: coreAvail, NodeHasBooted: nodeHasBooted, NodeReadyTime: nodeReady, NodeLastActive: nodeLast, StopIntervals: intervals, SchedulerSteps: append(append([]ScheduleStep{}, state.SchedulerSteps...), step), PartialBudgetUsed: partialBudget, PartialMakespan: partialMakespan, PartialScore: partialScore})
+		nextStates = append(nextStates, beamState{Assignments: assignments, AssignmentByTask: byTask, CoreAvail: coreAvail, NodeHasBooted: nodeHasBooted, NodeReadyTime: nodeReady, NodeLastActive: nodeLast, StopIntervals: intervals, StepTrace: appendStepTrace(state.StepTrace, step), PartialBudgetUsed: partialBudget, PartialMakespan: partialMakespan, PartialScore: partialScore})
 	}
 	return nextStates
+}
+
+func beamFrontierScore(score ScoreBreakdown, frontier beamFrontier) float64 {
+	return frontier.WeightTime*score.TimeScore + frontier.WeightCost*score.CostScore
+}
+
+func appendStepTrace(prev *scheduleStepTrace, step ScheduleStep) *scheduleStepTrace {
+	length := 1
+	if prev != nil {
+		length = prev.Len + 1
+	}
+	return &scheduleStepTrace{Step: step, Prev: prev, Len: length}
+}
+
+func traceSteps(trace *scheduleStepTrace) []ScheduleStep {
+	if trace == nil {
+		return []ScheduleStep{}
+	}
+	steps := make([]ScheduleStep, trace.Len)
+	for item := trace; item != nil; item = item.Prev {
+		steps[item.Len-1] = item.Step
+	}
+	return steps
 }
 
 func copyFloatMap(in map[string]float64) map[string]float64 {
@@ -201,32 +330,58 @@ func copyBoolMap(in map[string]bool) map[string]bool {
 	return out
 }
 
-func limitRatio(value float64, limit *float64) float64 {
-	if limit == nil || *limit <= 0 {
-		return 0
-	}
-	return maxf(0, value/(*limit)-1)
-}
-
 func selectBeamStates(states []beamState, width int, generated GeneratedSimulation) []beamState {
 	if width <= 0 || len(states) == 0 {
 		return []beamState{}
 	}
 	unique := dedupeStates(states)
+	unique = preferPartiallyFeasibleStates(unique, generated)
 	if len(unique) <= width {
 		return unique
 	}
-	sort.Slice(unique, func(i, j int) bool {
-		a, b := unique[i], unique[j]
-		if a.PartialScore != b.PartialScore {
-			return a.PartialScore < b.PartialScore
-		}
-		if a.PartialMakespan != b.PartialMakespan {
-			return a.PartialMakespan < b.PartialMakespan
-		}
-		return a.PartialBudgetUsed < b.PartialBudgetUsed
+	sort.SliceStable(unique, func(i, j int) bool {
+		return beamStateLess(unique[i], unique[j])
 	})
 	return append([]beamState{}, unique[:width]...)
+}
+
+func preferPartiallyFeasibleStates(states []beamState, generated GeneratedSimulation) []beamState {
+	if len(states) == 0 || (generated.SLA.BudgetLimit == nil && generated.SLA.DeadlineLimit == nil) {
+		return states
+	}
+	feasible := make([]beamState, 0, len(states))
+	for _, state := range states {
+		if isPartiallyFeasibleState(state, generated) {
+			feasible = append(feasible, state)
+		}
+	}
+	if len(feasible) == 0 {
+		return states
+	}
+	return feasible
+}
+
+func isPartiallyFeasibleState(state beamState, generated GeneratedSimulation) bool {
+	if generated.SLA.BudgetLimit != nil && state.PartialBudgetUsed > *generated.SLA.BudgetLimit {
+		return false
+	}
+	if generated.SLA.DeadlineLimit != nil && state.PartialMakespan > *generated.SLA.DeadlineLimit {
+		return false
+	}
+	return true
+}
+
+func beamStateLess(a, b beamState) bool {
+	if a.PartialScore != b.PartialScore {
+		return a.PartialScore < b.PartialScore
+	}
+	if a.PartialMakespan != b.PartialMakespan {
+		return a.PartialMakespan < b.PartialMakespan
+	}
+	if a.PartialBudgetUsed != b.PartialBudgetUsed {
+		return a.PartialBudgetUsed < b.PartialBudgetUsed
+	}
+	return stateSignature(a) < stateSignature(b)
 }
 
 func dedupeStates(states []beamState) []beamState {
@@ -263,33 +418,9 @@ func stateSignature(state beamState) string {
 
 func buildOptions(generated GeneratedSimulation, states []beamState, optionCount int, budgetLimit, deadlineLimit *float64) []ScheduleOption {
 	unique := dedupeStates(states)
-	built := []ScheduleOption{}
-	for _, state := range unique {
-		copyGenerated := cloneGenerated(generated)
-		result := buildResult(copyGenerated, append([]Assignment{}, state.Assignments...), append([]MachineStopInterval{}, state.StopIntervals...), append([]ScheduleStep{}, state.SchedulerSteps...))
-		budgetUsed, makespan := result.CostVariables.BUsed, result.TimingVariables.Makespan
-		budgetViolation, deadlineViolation := 0.0, 0.0
-		if budgetLimit != nil {
-			budgetViolation = round(maxf(0, budgetUsed-*budgetLimit), 4)
-		}
-		if deadlineLimit != nil {
-			deadlineViolation = round(maxf(0, makespan-*deadlineLimit), 3)
-		}
-		distribution := machineDistribution(state)
-		built = append(built, ScheduleOption{ID: "pending", Feasible: budgetViolation == 0 && deadlineViolation == 0, BudgetUsed: budgetUsed, BudgetLimit: budgetLimit, BudgetViolation: budgetViolation, Makespan: makespan, DeadlineLimit: deadlineLimit, DeadlineViolation: deadlineViolation, MachineSignature: stateSignature(state), MachineDistribution: distribution, Result: result})
-	}
-	feasible := []ScheduleOption{}
-	for _, option := range built {
-		if option.Feasible {
-			feasible = append(feasible, option)
-		}
-	}
-	source := built
-	if len(feasible) > 0 {
-		source = feasible
-	}
-	annotateOptionScores(source, generated)
-	ranked := rankOptions(source, optionCount)
+	built := buildOptionsParallel(generated, unique, budgetLimit, deadlineLimit)
+	annotateOptionScores(built, generated)
+	ranked := rankOptions(built, optionCount, generated.SLA.WeightTime, generated.SLA.WeightCost)
 	if len(ranked) > optionCount {
 		ranked = ranked[:optionCount]
 	}
@@ -301,10 +432,65 @@ func buildOptions(generated GeneratedSimulation, states []beamState, optionCount
 	return ranked
 }
 
-func cloneGenerated(in GeneratedSimulation) GeneratedSimulation {
-	data, _ := json.Marshal(in)
-	var out GeneratedSimulation
-	_ = json.Unmarshal(data, &out)
+func buildOptionsParallel(generated GeneratedSimulation, states []beamState, budgetLimit, deadlineLimit *float64) []ScheduleOption {
+	if len(states) == 0 {
+		return []ScheduleOption{}
+	}
+	if len(states) == 1 {
+		return []ScheduleOption{buildOption(generated, states[0], budgetLimit, deadlineLimit)}
+	}
+	workers := min(len(states), runtime.GOMAXPROCS(0))
+	built := make([]ScheduleOption, len(states))
+	jobs := make(chan int)
+	var wg sync.WaitGroup
+	wg.Add(workers)
+	for worker := 0; worker < workers; worker++ {
+		go func() {
+			defer wg.Done()
+			for index := range jobs {
+				built[index] = buildOption(generated, states[index], budgetLimit, deadlineLimit)
+			}
+		}()
+	}
+	for index := range states {
+		jobs <- index
+	}
+	close(jobs)
+	wg.Wait()
+	return built
+}
+
+func buildOption(generated GeneratedSimulation, state beamState, budgetLimit, deadlineLimit *float64) ScheduleOption {
+	copyGenerated := cloneGeneratedForOption(generated)
+	result := buildResult(copyGenerated, append([]Assignment{}, state.Assignments...), append([]MachineStopInterval{}, state.StopIntervals...), traceSteps(state.StepTrace))
+	budgetUsed, makespan := result.CostVariables.BUsed, result.TimingVariables.Makespan
+	budgetViolation, deadlineViolation := 0.0, 0.0
+	if budgetLimit != nil {
+		budgetViolation = round(maxf(0, budgetUsed-*budgetLimit), 4)
+	}
+	if deadlineLimit != nil {
+		deadlineViolation = round(maxf(0, makespan-*deadlineLimit), 3)
+	}
+	distribution := machineDistribution(state)
+	return ScheduleOption{ID: "pending", Feasible: budgetViolation == 0 && deadlineViolation == 0, BudgetUsed: budgetUsed, BudgetLimit: budgetLimit, BudgetViolation: budgetViolation, Makespan: makespan, DeadlineLimit: deadlineLimit, DeadlineViolation: deadlineViolation, MachineSignature: stateSignature(state), MachineDistribution: distribution, Result: result}
+}
+
+func cloneGeneratedForOption(in GeneratedSimulation) GeneratedSimulation {
+	out := in
+	out.Matrices = in.Matrices
+	out.Matrices.ETStar = copyNestedFloatMap(in.Matrices.ETStar)
+	return out
+}
+
+func copyNestedFloatMap(in map[string]map[string]float64) map[string]map[string]float64 {
+	out := make(map[string]map[string]float64, len(in))
+	for key, values := range in {
+		copied := make(map[string]float64, len(values))
+		for innerKey, value := range values {
+			copied[innerKey] = value
+		}
+		out[key] = copied
+	}
 	return out
 }
 
@@ -325,7 +511,7 @@ func annotateOptionScores(options []ScheduleOption, generated GeneratedSimulatio
 	for i := range options {
 		timeScore := options[i].Makespan / maxMakespan
 		costScore := options[i].BudgetUsed / maxBudget
-		penalty := options[i].BudgetViolation + options[i].DeadlineViolation
+		penalty := optionBudgetViolationRatio(options[i]) + optionDeadlineViolationRatio(options[i])
 		options[i].WeightedScore = round(generated.SLA.WeightTime*timeScore+generated.SLA.WeightCost*costScore+penalty, 6)
 		options[i].DiversityScore = round(distributionDiversity(options[i].MachineDistribution), 6)
 	}
@@ -345,73 +531,70 @@ func distributionDiversity(distribution map[string]int) float64 {
 	return float64(len(distribution)) - float64(maxValue)/float64(max(1, total))
 }
 
-func rankOptions(options []ScheduleOption, optionCount int) []ScheduleOption {
+func rankOptions(options []ScheduleOption, optionCount int, weightTime, weightCost float64) []ScheduleOption {
 	if len(options) == 0 {
 		return []ScheduleOption{}
 	}
-	sort.Slice(options, func(i, j int) bool {
-		a, b := options[i], options[j]
-		if a.WeightedScore != b.WeightedScore {
-			return a.WeightedScore < b.WeightedScore
-		}
-		if a.Makespan != b.Makespan {
-			return a.Makespan < b.Makespan
-		}
-		return a.BudgetUsed < b.BudgetUsed
+	ranked := append([]ScheduleOption{}, options...)
+	sort.SliceStable(ranked, func(i, j int) bool {
+		return optionRankLess(ranked[i], ranked[j], weightTime, weightCost)
 	})
-	selected := []ScheduleOption{options[0]}
-	remaining := append([]ScheduleOption{}, options[1:]...)
-	for len(remaining) > 0 && len(selected) < optionCount {
-		bestIndex := 0
-		bestKey := math.Inf(-1)
-		for i, option := range remaining {
-			distance := optionDistanceToSelected(option, selected)
-			key := distance*1000000 - option.WeightedScore*1000 + option.DiversityScore - option.Makespan*0.0001 - option.BudgetUsed*0.0001
-			if key > bestKey {
-				bestKey = key
-				bestIndex = i
+	if len(ranked) > optionCount {
+		return append([]ScheduleOption{}, ranked[:optionCount]...)
+	}
+	return ranked
+}
+
+func optionRankLess(a, b ScheduleOption, weightTime, weightCost float64) bool {
+	if a.Feasible != b.Feasible {
+		return a.Feasible
+	}
+	aBudgetRatio, bBudgetRatio := optionBudgetViolationRatio(a), optionBudgetViolationRatio(b)
+	aDeadlineRatio, bDeadlineRatio := optionDeadlineViolationRatio(a), optionDeadlineViolationRatio(b)
+	if !a.Feasible && !b.Feasible {
+		if weightTime > weightCost {
+			if aDeadlineRatio != bDeadlineRatio {
+				return aDeadlineRatio < bDeadlineRatio
 			}
-		}
-		selected = append(selected, remaining[bestIndex])
-		remaining = append(remaining[:bestIndex], remaining[bestIndex+1:]...)
-	}
-	return selected
-}
-
-func optionDistanceToSelected(candidate ScheduleOption, selected []ScheduleOption) float64 {
-	candidateSlots := splitSignature(candidate.MachineSignature)
-	best := math.Inf(1)
-	for _, option := range selected {
-		best = minf(best, symmetricDistance(candidateSlots, splitSignature(option.MachineSignature)))
-	}
-	if math.IsInf(best, 1) {
-		return float64(len(candidateSlots))
-	}
-	return best
-}
-
-func splitSignature(signature string) map[string]bool {
-	out := map[string]bool{}
-	if signature == "" {
-		return out
-	}
-	for _, part := range strings.Split(signature, "|") {
-		out[part] = true
-	}
-	return out
-}
-
-func symmetricDistance(left, right map[string]bool) float64 {
-	count := 0
-	for key := range left {
-		if !right[key] {
-			count++
+			if aBudgetRatio != bBudgetRatio {
+				return aBudgetRatio < bBudgetRatio
+			}
+		} else if weightCost > weightTime {
+			if aBudgetRatio != bBudgetRatio {
+				return aBudgetRatio < bBudgetRatio
+			}
+			if aDeadlineRatio != bDeadlineRatio {
+				return aDeadlineRatio < bDeadlineRatio
+			}
+		} else if aBudgetRatio+aDeadlineRatio != bBudgetRatio+bDeadlineRatio {
+			return aBudgetRatio+aDeadlineRatio < bBudgetRatio+bDeadlineRatio
 		}
 	}
-	for key := range right {
-		if !left[key] {
-			count++
-		}
+	if aBudgetRatio+aDeadlineRatio != bBudgetRatio+bDeadlineRatio {
+		return aBudgetRatio+aDeadlineRatio < bBudgetRatio+bDeadlineRatio
 	}
-	return float64(count)
+	if a.WeightedScore != b.WeightedScore {
+		return a.WeightedScore < b.WeightedScore
+	}
+	if a.Makespan != b.Makespan {
+		return a.Makespan < b.Makespan
+	}
+	if a.BudgetUsed != b.BudgetUsed {
+		return a.BudgetUsed < b.BudgetUsed
+	}
+	return a.MachineSignature < b.MachineSignature
+}
+
+func optionBudgetViolationRatio(option ScheduleOption) float64 {
+	if option.BudgetLimit == nil || *option.BudgetLimit <= 0 {
+		return 0
+	}
+	return option.BudgetViolation / *option.BudgetLimit
+}
+
+func optionDeadlineViolationRatio(option ScheduleOption) float64 {
+	if option.DeadlineLimit == nil || *option.DeadlineLimit <= 0 {
+		return 0
+	}
+	return option.DeadlineViolation / *option.DeadlineLimit
 }

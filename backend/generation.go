@@ -75,7 +75,7 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 	return GeneratedSimulation{
 		ID:   fmt.Sprintf("sim-%d-%d-%d-%d", req.Seed, len(workflow.Tasks), clusterCount, cloudCount),
 		Seed: req.Seed, Workflow: workflow, Resources: resources,
-		SLA:      SLA{WeightTime: req.WeightTime, WeightCost: req.WeightCost, BudgetLimit: req.BudgetLimit, DeadlineLimit: req.DeadlineLimit, OptionCount: req.OptionCount},
+		SLA:      SLA{WeightTime: req.WeightTime, WeightCost: req.WeightCost, BudgetLimit: req.BudgetLimit, DeadlineLimit: req.DeadlineLimit, OptionCount: req.OptionCount, BeamWidth: req.BeamWidth},
 		Matrices: Matrices{ET0: et0, ETStar: etStar, InterferenceIN: interference, BandwidthBW: bandwidth, TransferDelay: transferDelay, FinancialNetworkCost: financialCost, ContainerOverhead: container},
 	}, nil
 }

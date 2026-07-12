@@ -5,6 +5,7 @@ export default function SlaPolicySection({ controller }) {
   const { request } = controller;
   const weightTotal = request.weight_time + request.weight_cost;
   const updateWeight = (key, value) => controller.updateWeights(normalizeWeights(request, key, value));
+  const clampInteger = (value, min, max) => Math.min(max, Math.max(min, Number(value) || min));
   const updateOptionalNumber = (key, value) => {
     const numericValue = Number(value);
     controller.updateRequest(key, value === "" || numericValue <= 0 ? null : numericValue);
@@ -33,8 +34,12 @@ export default function SlaPolicySection({ controller }) {
               <input type="number" min="0" step="0.1" value={request.deadline_limit ?? ""} onChange={(event) => updateOptionalNumber("deadline_limit", event.target.value)} />
             </label>
             <label className="control">
+              <span>Beam width</span>
+              <input type="number" min="120" max="10000" step="10" value={request.beam_width} onChange={(event) => controller.updateRequest("beam_width", clampInteger(event.target.value, 120, 10000))} />
+            </label>
+            <label className="control">
               <span>Options</span>
-              <input type="number" min="1" max="100" step="1" value={request.option_count} onChange={(event) => controller.updateRequest("option_count", Math.min(100, Math.max(1, Number(event.target.value) || 1)))} />
+              <input type="number" min="1" max="1000" step="1" value={request.option_count} onChange={(event) => controller.updateRequest("option_count", clampInteger(event.target.value, 1, 1000))} />
             </label>
           </div>
         </section>

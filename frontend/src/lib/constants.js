@@ -18,4 +18,5 @@ export const defaultRequest = {
   budget_limit: null,
   deadline_limit: null,
   option_count: 5,
+  beam_width: 2000,
 };
