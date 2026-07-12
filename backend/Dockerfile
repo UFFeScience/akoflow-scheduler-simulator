@@ -1,10 +1,17 @@
-FROM python:3.12-slim
+FROM golang:1.23-alpine AS build
 
-WORKDIR /app
+WORKDIR /src
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY go.mod go.sum* ./
+RUN go mod download
 
 COPY . .
+RUN go test ./... && go build -o /out/scheduler-simulator .
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+FROM alpine:3.21
+
+WORKDIR /app
+COPY --from=build /out/scheduler-simulator /app/scheduler-simulator
+
+EXPOSE 8000
+CMD ["/app/scheduler-simulator"]
