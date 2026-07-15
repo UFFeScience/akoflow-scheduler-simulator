@@ -24,3 +24,4 @@ inside Docker, so the host machine does not need a local Go installation.
 ```bash
 docker compose run --rm backend go test ./...
 ```
+# akoflow-scheduler-simulator

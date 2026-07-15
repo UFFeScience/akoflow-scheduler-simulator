@@ -39,6 +39,8 @@ type beamFrontier struct {
 	WeightCost float64
 }
 
+const beamFrontierCount = 11
+
 func optimizeSchedule(generated GeneratedSimulation) (ScheduleOptimizationResponse, error) {
 	optionCount := max(1, min(generated.SLA.OptionCount, maxScheduleOptions))
 	beamWidth := normalizedBeamWidth(generated.SLA.BeamWidth)
@@ -106,9 +108,15 @@ func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, erro
 func beamFrontiers() []beamFrontier {
 	return []beamFrontier{
 		{WeightTime: 0, WeightCost: 1},
+		{WeightTime: 0.1, WeightCost: 0.9},
+		{WeightTime: 0.2, WeightCost: 0.8},
 		{WeightTime: 0.3, WeightCost: 0.7},
+		{WeightTime: 0.4, WeightCost: 0.6},
 		{WeightTime: 0.5, WeightCost: 0.5},
+		{WeightTime: 0.6, WeightCost: 0.4},
 		{WeightTime: 0.7, WeightCost: 0.3},
+		{WeightTime: 0.8, WeightCost: 0.2},
+		{WeightTime: 0.9, WeightCost: 0.1},
 		{WeightTime: 1, WeightCost: 0},
 	}
 }
@@ -511,8 +519,14 @@ func annotateOptionScores(options []ScheduleOption, generated GeneratedSimulatio
 	for i := range options {
 		timeScore := options[i].Makespan / maxMakespan
 		costScore := options[i].BudgetUsed / maxBudget
-		penalty := optionBudgetViolationRatio(options[i]) + optionDeadlineViolationRatio(options[i])
-		options[i].WeightedScore = round(generated.SLA.WeightTime*timeScore+generated.SLA.WeightCost*costScore+penalty, 6)
+		timeContribution := generated.SLA.WeightTime * timeScore
+		costContribution := generated.SLA.WeightCost * costScore
+		options[i].WeightedScore = round(timeContribution+costContribution, 6)
+		optionTotal := timeScore + costScore
+		if optionTotal > 0 {
+			options[i].WeightedTimePercent = round(timeScore/optionTotal*100, 1)
+			options[i].WeightedCostPercent = round(costScore/optionTotal*100, 1)
+		}
 		options[i].DiversityScore = round(distributionDiversity(options[i].MachineDistribution), 6)
 	}
 }

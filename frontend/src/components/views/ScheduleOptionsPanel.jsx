@@ -9,6 +9,12 @@ export default function ScheduleOptionsPanel({ response, selectedOptionId, onSel
     .slice(0, 4)
     .map(([resourceId, count]) => `${resourceId}:${count}`)
     .join(" ");
+  const weightedSummary = (option) => {
+    if (option.weighted_time_percent === undefined || option.weighted_cost_percent === undefined) {
+      return fmt(option.weighted_score);
+    }
+    return `M ${fmt(option.weighted_time_percent)}% / C ${fmt(option.weighted_cost_percent)}%`;
+  };
 
   return (
     <section className="schedule-options-panel">
@@ -35,7 +41,7 @@ export default function ScheduleOptionsPanel({ response, selectedOptionId, onSel
                 <td>{fmt(option.makespan)}</td>
                 <td>{fmt(option.budget_used)}</td>
                 <td>B {fmt(option.budget_violation)} / D {fmt(option.deadline_violation)}</td>
-                <td>{fmt(option.weighted_score)}</td>
+                <td title={`Score ${fmt(option.weighted_score)}`}>{weightedSummary(option)}</td>
                 <td>{machineSummary(option)}</td>
               </tr>
             ))}

@@ -500,6 +500,36 @@ func TestOptionRankUsesCombinedViolationForBalancedObjective(t *testing.T) {
 	}
 }
 
+func TestAnnotateOptionScoresDoesNotIncludeViolationPenalty(t *testing.T) {
+	budgetLimit, deadlineLimit := 10.0, 100.0
+	options := []ScheduleOption{
+		{BudgetUsed: 10, BudgetLimit: &budgetLimit, BudgetViolation: 10, Makespan: 100, DeadlineLimit: &deadlineLimit, DeadlineViolation: 100},
+	}
+	generated := GeneratedSimulation{SLA: SLA{WeightTime: 0.25, WeightCost: 0.75}}
+	annotateOptionScores(options, generated)
+	if options[0].WeightedScore != 1 {
+		t.Fatalf("weighted score should include only selected objective weights, got %v", options[0].WeightedScore)
+	}
+	if options[0].WeightedTimePercent != 50 || options[0].WeightedCostPercent != 50 {
+		t.Fatalf("weighted percentages mismatch: time=%v cost=%v", options[0].WeightedTimePercent, options[0].WeightedCostPercent)
+	}
+}
+
+func TestAnnotateOptionScorePercentagesDescribeScheduleComposition(t *testing.T) {
+	options := []ScheduleOption{
+		{BudgetUsed: 100, Makespan: 50},
+		{BudgetUsed: 50, Makespan: 100},
+	}
+	generated := GeneratedSimulation{SLA: SLA{WeightTime: 1, WeightCost: 0}}
+	annotateOptionScores(options, generated)
+	if options[0].WeightedTimePercent != 33.3 || options[0].WeightedCostPercent != 66.7 {
+		t.Fatalf("first option percentages mismatch: time=%v cost=%v", options[0].WeightedTimePercent, options[0].WeightedCostPercent)
+	}
+	if options[1].WeightedTimePercent != 66.7 || options[1].WeightedCostPercent != 33.3 {
+		t.Fatalf("second option percentages mismatch: time=%v cost=%v", options[1].WeightedTimePercent, options[1].WeightedCostPercent)
+	}
+}
+
 func TestBeamSelectionUsesFrontierSpecificScores(t *testing.T) {
 	costFrontier := beamFrontier{WeightTime: 0, WeightCost: 1}
 	timeFrontier := beamFrontier{WeightTime: 1, WeightCost: 0}
@@ -513,22 +543,19 @@ func TestBeamSelectionUsesFrontierSpecificScores(t *testing.T) {
 	}
 }
 
-func TestBeamSearchUsesFiveObjectiveFrontiers(t *testing.T) {
+func TestBeamSearchUsesStepObjectiveFrontiers(t *testing.T) {
 	frontiers := beamFrontiers()
-	if len(frontiers) != 5 {
-		t.Fatalf("expected five objective frontiers, got %d", len(frontiers))
+	if len(frontiers) != beamFrontierCount {
+		t.Fatalf("expected %d objective frontiers, got %d", beamFrontierCount, len(frontiers))
 	}
-	expected := []beamFrontier{
-		{WeightTime: 0, WeightCost: 1},
-		{WeightTime: 0.3, WeightCost: 0.7},
-		{WeightTime: 0.5, WeightCost: 0.5},
-		{WeightTime: 0.7, WeightCost: 0.3},
-		{WeightTime: 1, WeightCost: 0},
+	if frontiers[0] != (beamFrontier{WeightTime: 0, WeightCost: 1}) {
+		t.Fatalf("first frontier mismatch: %+v", frontiers[0])
 	}
-	for index, frontier := range frontiers {
-		if frontier != expected[index] {
-			t.Fatalf("frontier %d mismatch: %+v != %+v", index, frontier, expected[index])
-		}
+	if frontiers[5] != (beamFrontier{WeightTime: 0.5, WeightCost: 0.5}) {
+		t.Fatalf("middle frontier mismatch: %+v", frontiers[5])
+	}
+	if frontiers[10] != (beamFrontier{WeightTime: 1, WeightCost: 0}) {
+		t.Fatalf("last frontier mismatch: %+v", frontiers[10])
 	}
 	widths := beamFrontierWidths(120, len(frontiers))
 	total := 0
@@ -581,8 +608,8 @@ func TestBeamSelectionPrunesPerFrontierWithoutChangingBeamSplit(t *testing.T) {
 	generated := GeneratedSimulation{SLA: SLA{BudgetLimit: &budgetLimit, DeadlineLimit: &deadlineLimit}}
 	frontiers := beamFrontiers()
 	widths := beamFrontierWidths(120, len(frontiers))
-	if len(frontiers) != 5 || len(widths) != 5 {
-		t.Fatalf("expected five frontiers and widths, got %d/%d", len(frontiers), len(widths))
+	if len(frontiers) != beamFrontierCount || len(widths) != beamFrontierCount {
+		t.Fatalf("expected %d frontiers and widths, got %d/%d", beamFrontierCount, len(frontiers), len(widths))
 	}
 	states := []beamState{
 		{Assignments: []Assignment{{TaskID: "t1", ResourceID: "feasible", CoreID: "c1"}}, PartialBudgetUsed: 19.9, PartialMakespan: 179.9, PartialScore: 10},
@@ -683,7 +710,7 @@ func TestScheduleResponseJSONContainsFrontendFields(t *testing.T) {
 	}
 	options := decoded["options"].([]any)
 	first := options[0].(map[string]any)
-	for _, key := range []string{"machine_distribution", "weighted_score", "result"} {
+	for _, key := range []string{"machine_distribution", "weighted_score", "weighted_time_percent", "weighted_cost_percent", "result"} {
 		if _, ok := first[key]; !ok {
 			t.Fatalf("missing option field %s", key)
 		}

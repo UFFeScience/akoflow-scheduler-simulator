@@ -124,6 +124,7 @@ A largura do feixe e controlada pela SLA com `beam_width`:
 
 - `option_count` pode ir de 1 a 1000 e define quantas opcoes finais retornar.
 - `beam_width` pode ir de 120 a 10000, com padrao 2000, e define quantos estados parciais a busca tenta preservar a cada tarefa.
+- A busca usa 11 frentes objetivas, de `0.0 tempo / 1.0 custo` ate `1.0 tempo / 0.0 custo`, em passos de `0.1`; o `beam_width` total e dividido entre essas frentes.
 
 Valores altos de `beam_width` aumentam o espaco explorado e o tempo de processamento. Valores altos de `option_count` aumentam o tamanho do payload, porque cada opcao retorna um `SimulationResult` completo.
 

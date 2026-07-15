@@ -262,6 +262,8 @@ type ScheduleOption struct {
 	MachineSignature    string           `json:"machine_signature"`
 	MachineDistribution map[string]int   `json:"machine_distribution"`
 	WeightedScore       float64          `json:"weighted_score"`
+	WeightedTimePercent float64          `json:"weighted_time_percent"`
+	WeightedCostPercent float64          `json:"weighted_cost_percent"`
 	DiversityScore      float64          `json:"diversity_score"`
 	Result              SimulationResult `json:"result"`
 }
