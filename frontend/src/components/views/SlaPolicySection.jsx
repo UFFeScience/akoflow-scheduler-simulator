@@ -1,10 +1,10 @@
-import { normalizeWeights } from '../../slaControls.js';
-import WeightSliderControl from '../controls/WeightSliderControl.jsx';
+import { getDecisionDirection, weightsForDecisionDirection } from '../../slaControls.js';
+import DecisionDirectionControl from '../controls/DecisionDirectionControl.jsx';
 
 export default function SlaPolicySection({ controller }) {
   const { request } = controller;
-  const weightTotal = request.weight_time + request.weight_cost;
-  const updateWeight = (key, value) => controller.updateWeights(normalizeWeights(request, key, value));
+  const decisionDirection = getDecisionDirection(request);
+  const updateDecisionDirection = (direction) => controller.updateWeights(weightsForDecisionDirection(direction));
   const clampInteger = (value, min, max) => Math.min(max, Math.max(min, Number(value) || min));
   const updateOptionalNumber = (key, value) => {
     const numericValue = Number(value);
@@ -16,14 +16,7 @@ export default function SlaPolicySection({ controller }) {
       <h2>SLA policy</h2>
       <div className="sla-sections">
         <section className="sla-subsection">
-          <header><strong>Decision weights</strong><span>Total {Math.round(weightTotal * 100)}%</span></header>
-          <div className="weight-slider-stack">
-            <WeightSliderControl label="Finish earlier" value={request.weight_time} help="Multiplies the time score. Higher values prefer candidates with lower finish times." onChange={(value) => updateWeight("weight_time", value)} />
-            <WeightSliderControl label="Spend less" value={request.weight_cost} help="Multiplies the cost score. Higher values prefer lower CPU and memory execution cost." onChange={(value) => updateWeight("weight_cost", value)} />
-          </div>
-        </section>
-        <section className="sla-subsection">
-          <header><strong>Optimization limits</strong><span>Beam search options</span></header>
+          <header><strong>Optimization limits</strong><span>Beam search recommendations</span></header>
           <div className="constraint-grid">
             <label className="control">
               <span>Budget limit</span>
@@ -38,10 +31,14 @@ export default function SlaPolicySection({ controller }) {
               <input type="number" min="120" max="10000" step="10" value={request.beam_width} onChange={(event) => controller.updateRequest("beam_width", clampInteger(event.target.value, 120, 10000))} />
             </label>
             <label className="control">
-              <span>Options</span>
+              <span>Recommendations</span>
               <input type="number" min="1" max="1000" step="1" value={request.option_count} onChange={(event) => controller.updateRequest("option_count", clampInteger(event.target.value, 1, 1000))} />
             </label>
           </div>
+        </section>
+        <section className="sla-subsection">
+          <header><strong>Objective</strong><span>{decisionDirection === "time" ? "Finish earlier" : "Spend less"}</span></header>
+          <DecisionDirectionControl request={request} onChange={updateDecisionDirection} label={null} />
         </section>
       </div>
     </div>

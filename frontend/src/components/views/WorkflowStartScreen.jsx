@@ -20,7 +20,7 @@ export default function WorkflowStartScreen({ controller }) {
           <Play size={17} />
           {controller.workflowMode === "yaml" ? "Import workflow" : "Generate workflow"}
         </button>
-        {controller.statusMessage && <p className="status-message error">{controller.statusMessage}</p>}
+        {controller.statusMessage && <p className={controller.status === "error" ? "status-message error" : "status-message"}>{controller.statusMessage}</p>}
       </section>
       <div className="stats-grid">
         <Metric label="Workflow source" value={controller.workflowMode === "yaml" ? "YAML import" : "Synthetic random"} />

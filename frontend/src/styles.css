@@ -430,18 +430,82 @@ h2 {
   font-style: normal;
 }
 
-.weight-slider-stack {
+.decision-direction {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
-.weight-control .slider-row {
-  grid-template-columns: minmax(120px, 1fr) 48px;
+.decision-direction > span {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
 }
 
-.weight-control strong {
+.decision-direction small {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+}
+
+.decision-switch {
+  display: grid;
+  grid-template-columns: minmax(82px, 1fr) 48px minmax(72px, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+}
+
+.decision-switch strong {
+  color: var(--text-muted);
   font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+}
+
+.decision-switch strong:first-child {
   text-align: right;
+}
+
+.decision-switch strong.active {
+  color: var(--text-primary);
+}
+
+.decision-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.decision-switch-track {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.decision-switch-track::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  content: "";
+  border-radius: 50%;
+  background: var(--accent-primary);
+  transition: var(--transition-fast);
+}
+
+.decision-switch input:checked + .decision-switch-track::after {
+  transform: translateX(22px);
+}
+
+.decision-switch:focus-within .decision-switch-track {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 .setup-submit {
@@ -533,6 +597,10 @@ h2 {
 .icon-button:hover {
   color: var(--text-primary);
   border-color: var(--border-strong);
+}
+
+.file-icon-button input {
+  display: none;
 }
 
 .workspace {
@@ -632,7 +700,7 @@ h2 {
 
 .calculate-controls {
   display: grid;
-  grid-template-columns: repeat(5, minmax(160px, 1fr));
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
   gap: 12px;
 }
 
@@ -661,6 +729,50 @@ h2 {
   max-width: 92px;
 }
 
+.calculate-objective-section {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.calculate-objective-section header {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.calculate-advanced-controls {
+  grid-column: 1 / -1;
+}
+
+.calculate-advanced-controls summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  list-style: none;
+}
+
+.calculate-advanced-controls summary::-webkit-details-marker {
+  display: none;
+}
+
+.calculate-advanced-controls summary:hover {
+  color: var(--text-primary);
+}
+
+.calculate-advanced-controls > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 6px;
+}
+
 .calculate-navbar .slider-control {
   min-width: 0;
 }
@@ -674,8 +786,17 @@ h2 {
   gap: 8px;
 }
 
-.calculate-navbar .weight-control .slider-row {
-  grid-template-columns: minmax(80px, 1fr) 42px;
+.calculate-navbar .decision-direction {
+  min-width: 0;
+}
+
+.calculate-navbar .decision-switch {
+  grid-template-columns: minmax(82px, 1fr) 48px minmax(72px, 1fr);
+  gap: 8px;
+}
+
+.calculate-navbar .decision-switch strong {
+  font-size: var(--text-xs);
 }
 
 .calculate-button {
@@ -746,6 +867,23 @@ h2 {
 
 .schedule-options-table tr.selected-row {
   box-shadow: inset 3px 0 0 var(--accent-primary);
+}
+
+.schedule-options-table td:first-child {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.schedule-options-table td:first-child em {
+  color: var(--accent-primary);
+  background: color-mix(in srgb, var(--accent-primary), transparent 88%);
+  border: 1px solid color-mix(in srgb, var(--accent-primary), transparent 55%);
+  border-radius: var(--radius-base);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: var(--font-weight-bold);
+  padding: 2px 5px;
 }
 
 .schedule-options-table tr.feasible td:first-child {

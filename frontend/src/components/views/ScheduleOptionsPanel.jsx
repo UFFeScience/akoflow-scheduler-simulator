@@ -19,14 +19,14 @@ export default function ScheduleOptionsPanel({ response, selectedOptionId, onSel
   return (
     <section className="schedule-options-panel">
       <header>
-        <strong>Schedule options</strong>
-        <span>{options.filter((option) => option.feasible).length} feasible / {options.length} returned</span>
+        <strong>Recommended schedules</strong>
+        <span>{options.filter((option) => option.feasible).length} feasible / {options.length} recommendations</span>
       </header>
       <div className="schedule-options-table-wrap">
         <table className="schedule-options-table">
           <thead>
             <tr>
-              {["rank", "status", "makespan", "budget", "violations", "weighted", "machines"].map((heading) => <th key={heading}>{heading}</th>)}
+              {["item", "status", "makespan", "budget", "violations", "score", "machines"].map((heading) => <th key={heading}>{heading}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -36,7 +36,10 @@ export default function ScheduleOptionsPanel({ response, selectedOptionId, onSel
                 className={`${option.id === selectedOptionId ? "selected-row" : ""} ${option.feasible ? "feasible" : "infeasible"}`}
                 onClick={() => onSelect(option.id)}
               >
-                <td>#{option.rank}{option.recommended ? " rec." : ""}</td>
+                <td>
+                  <span>Recommendation #{option.rank}</span>
+                  {option.recommended && <em>Recommended</em>}
+                </td>
                 <td>{option.feasible ? "feasible" : "infeasible"}</td>
                 <td>{fmt(option.makespan)}</td>
                 <td>{fmt(option.budget_used)}</td>

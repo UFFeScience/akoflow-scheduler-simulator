@@ -1,22 +1,26 @@
 export const weightKeys = ["weight_time", "weight_cost"];
 
-export function normalizeWeights(currentWeights, changedKey, changedValue) {
-  const editedUnits = clamp(Math.round(Number(changedValue) * 100), 0, 100);
-  const remainingUnits = 100 - editedUnits;
-  const otherKeys = weightKeys.filter((key) => key !== changedKey);
-  const otherKey = otherKeys[0];
+export const decisionDirections = {
+  time: {
+    key: "time",
+    weightKey: "weight_time",
+    label: "Finish earlier",
+    help: "Prioritizes candidates with lower finish times.",
+  },
+  cost: {
+    key: "cost",
+    weightKey: "weight_cost",
+    label: "Spend less",
+    help: "Prioritizes candidates with lower CPU and memory execution cost.",
+  },
+};
 
-  return {
-    [changedKey]: toWeight(editedUnits),
-    [otherKey]: toWeight(remainingUnits),
-  };
+export function getDecisionDirection(weights) {
+  return Number(weights.weight_cost) > Number(weights.weight_time) ? "cost" : "time";
 }
 
-function toWeight(units) {
-  return Number((units / 100).toFixed(2));
-}
-
-function clamp(value, min, max) {
-  if (!Number.isFinite(value)) return min;
-  return Math.min(max, Math.max(min, value));
+export function weightsForDecisionDirection(direction) {
+  return direction === "cost"
+    ? { weight_time: 0, weight_cost: 1 }
+    : { weight_time: 1, weight_cost: 0 };
 }

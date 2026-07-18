@@ -9,12 +9,13 @@ import ScheduleOptionsPanel from './views/ScheduleOptionsPanel.jsx';
 
 export default function App() {
   function exportJson() {
-    if (!controller.result) return;
-    const blob = new Blob([JSON.stringify(controller.result, null, 2)], { type: "application/json" });
+    if (!controller.generated) return;
+    const snapshot = controller.exportSnapshot();
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `${controller.result.id}.json`;
+    anchor.download = `${snapshot.generated?.id || snapshot.result?.id || "scheduler-simulation"}-snapshot.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -38,7 +39,13 @@ export default function App() {
         </aside>
       )}
       <main className="workspace">
-        <Topbar {...controller} onReset={controller.resetFlow} onThemeToggle={() => controller.setTheme((current) => (current === "light" ? "dark" : "light"))} onExport={exportJson} />
+        <Topbar
+          {...controller}
+          onReset={controller.resetFlow}
+          onThemeToggle={() => controller.setTheme((current) => (current === "light" ? "dark" : "light"))}
+          onExport={exportJson}
+          onImport={controller.importSnapshotFile}
+        />
         <TabNav phase={controller.phase} activeTab={controller.activeTab} onChange={controller.setActiveTab} />
         {controller.phase === "results" && <CalculateNavbar controller={controller} />}
         {controller.phase === "results" && (

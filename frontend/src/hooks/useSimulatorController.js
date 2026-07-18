@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { API_URL, defaultRequest } from '../lib/constants.js';
 import { buildResourceSpecs, syncResourceSpecs } from '../lib/resourceSpecs.js';
+import { buildSimulationSnapshot, restoreSimulationSnapshot } from '../lib/simulationSnapshot.js';
 
 export function useSimulatorController() {
   const [request, setRequest] = useState(defaultRequest);
@@ -132,6 +133,29 @@ export function useSimulatorController() {
     setWorkflowMode("yaml");
   }
 
+  async function importSnapshotFile(file) {
+    if (!file) return;
+    try {
+      const restored = restoreSimulationSnapshot(await file.text());
+      setRequest(restored.request);
+      setWorkflowMode(restored.workflowMode);
+      setWorkflowYaml(restored.workflowYaml);
+      setWorkflowFileName(restored.workflowFileName);
+      setGenerated(restored.generated);
+      setScheduleResponse(restored.scheduleResponse);
+      setSelectedOptionId(restored.selectedOptionId);
+      setResult(restored.result);
+      setPhase(restored.phase);
+      setActiveTab(restored.activeTab);
+      setSelectedTaskId(restored.selectedTaskId);
+      setStatus("ready");
+      setStatusMessage(restored.message);
+    } catch (error) {
+      setStatus("error");
+      setStatusMessage(error.message || "Snapshot import failed");
+    }
+  }
+
   function updateRequest(key, value) {
     setRequest((current) => {
       const next = { ...current, [key]: value };
@@ -160,6 +184,10 @@ export function useSimulatorController() {
     workflowMode, workflowYaml, workflowFileName, theme, selectedAssignment,
     setGenerated, setPhase, setActiveTab, setSelectedTaskId, setWorkflowMode, setTheme,
     generateWorkflowAndMatrices, saveMatricesAndSchedule, calculateCurrentSchedule, resetFlow, importWorkflowFile, selectScheduleOption,
+    importSnapshotFile,
+    exportSnapshot: () => buildSimulationSnapshot({
+      request, workflowMode, workflowYaml, workflowFileName, generated, scheduleResponse, selectedOptionId, result, phase, activeTab, selectedTaskId,
+    }),
     clearWorkflowFile: () => { setWorkflowYaml(""); setWorkflowFileName(""); setWorkflowMode("random"); },
     updateRequest,
     updateResourceSpec: (id, key, value) => setRequest((current) => ({

@@ -1,8 +1,8 @@
-import { Download, Moon, RefreshCw, Sun } from 'lucide-react';
+import { Download, Moon, RefreshCw, Sun, Upload } from 'lucide-react';
 import { fmt } from '../../lib/format.js';
 import Metric from '../Metric.jsx';
 
-export default function Topbar({ phase, result, generated, request, workflowYaml, theme, onReset, onThemeToggle, onExport }) {
+export default function Topbar({ phase, result, generated, request, workflowYaml, theme, onReset, onThemeToggle, onExport, onImport }) {
   const title = phase === "results" ? result?.workflow.preset : generated?.workflow.preset || request.preset;
   const subtitle = phase === "results" && result
     ? `${result.workflow.tasks.length} tasks / ${result.resources.length} machines${workflowYaml ? " / imported YAML" : ""}`
@@ -24,7 +24,18 @@ export default function Topbar({ phase, result, generated, request, workflowYaml
         <button className="icon-button" title="Toggle theme" onClick={onThemeToggle}>
           {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
         </button>
-        <button className="icon-button" title="Export JSON" onClick={onExport} disabled={phase !== "results" || !result}>
+        <label className="icon-button file-icon-button" title="Import simulator snapshot">
+          <Upload size={18} />
+          <input
+            type="file"
+            accept=".json,application/json"
+            onChange={(event) => {
+              onImport(event.target.files?.[0]);
+              event.target.value = "";
+            }}
+          />
+        </label>
+        <button className="icon-button" title="Export simulator snapshot" onClick={onExport} disabled={!generated}>
           <Download size={18} />
         </button>
       </div>

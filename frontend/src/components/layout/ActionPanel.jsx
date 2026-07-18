@@ -37,7 +37,7 @@ export default function ActionPanel({ phase, generated, status, statusMessage, o
           Edit matrices
         </button>
       )}
-      {statusMessage && <p className="status-message error">{statusMessage}</p>}
+      {statusMessage && <p className={status === "error" ? "status-message error" : "status-message"}>{statusMessage}</p>}
     </>
   );
 }

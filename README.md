@@ -2,6 +2,12 @@
 
 Greenfield Docker Compose app for simulating Akoflow-style scientific workflow scheduling.
 
+## Beam Search Recommendation Animation
+
+![Beam search scheduling recommendation animation](doc/assets/beam-search-animation.gif)
+
+The animation shows how the scheduler expands candidate schedules, applies beam pruning, ranks final schedules, and selects `Recommendation #1`.
+
 ## Run
 
 ```bash
