@@ -6,6 +6,7 @@ export const scalableTimeMatrices = new Set(["et_0", "et_star", "transfer_delay"
 
 export const defaultRequest = {
   preset: "Montage",
+  experiment_scenario_id: "",
   seed: 42,
   task_count: 12,
   edge_density: 0.22,

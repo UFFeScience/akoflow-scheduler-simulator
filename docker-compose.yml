@@ -8,6 +8,7 @@ services:
       - "2345:2345"
     volumes:
       - ./backend:/app
+      - ./experiments:/experiments:ro
     environment:
       - PORT=8000
     security_opt:

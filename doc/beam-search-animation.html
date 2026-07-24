@@ -3,24 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Animacao do DAG e Beam Search</title>
+  <title>Beam search scheduling tree</title>
   <style>
     :root {
-      color-scheme: light;
       --bg: #f6f7fb;
       --panel: #ffffff;
-      --ink: #182033;
-      --muted: #667085;
+      --ink: #111827;
+      --muted: #64748b;
       --line: #cbd5e1;
-      --accent: #0f766e;
-      --accent-soft: #ccfbf1;
-      --warn: #b45309;
-      --warn-soft: #fef3c7;
-      --drop: #9ca3af;
-      --drop-soft: #f3f4f6;
+      --accent: #0f62fe;
+      --accent-soft: #e8f1ff;
+      --cost: #b45309;
+      --cost-soft: #fef3c7;
+      --explore: #7c3aed;
+      --explore-soft: #ede9fe;
+      --time: #0f766e;
+      --time-soft: #ccfbf1;
       --good: #166534;
       --good-soft: #dcfce7;
-      --shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+      --drop: #9ca3af;
+      --drop-soft: #f3f4f6;
+      --danger: #b91c1c;
+      --danger-soft: #fee2e2;
     }
 
     * {
@@ -29,83 +33,69 @@
 
     body {
       margin: 0;
+      min-height: 100vh;
       background: var(--bg);
       color: var(--ink);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.5;
     }
 
     main {
-      width: min(1180px, calc(100vw - 32px));
-      margin: 32px auto;
+      width: min(1500px, calc(100vw - 24px));
+      margin: 12px auto;
     }
 
-    header {
+    .toolbar {
       display: flex;
-      gap: 24px;
-      align-items: flex-end;
+      align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
+      gap: 12px;
+      margin-bottom: 10px;
     }
 
     h1 {
-      margin: 0 0 6px;
-      font-size: clamp(28px, 4vw, 44px);
+      margin: 0;
+      font-size: 22px;
       letter-spacing: 0;
-      line-height: 1.05;
     }
 
-    p {
-      margin: 0;
-      color: var(--muted);
+    .controls {
+      display: flex;
+      gap: 8px;
     }
 
     button {
-      min-height: 40px;
-      border: 1px solid #0f766e;
+      min-height: 36px;
+      color: #ffffff;
+      background: var(--accent);
+      border: 1px solid var(--accent);
       border-radius: 6px;
-      background: #0f766e;
-      color: white;
-      padding: 0 14px;
-      font-weight: 700;
       cursor: pointer;
+      font-weight: 800;
+      padding: 0 12px;
     }
 
     button.secondary {
-      background: white;
-      color: #0f766e;
+      color: var(--accent);
+      background: #ffffff;
     }
 
     .stage {
-      display: grid;
-      grid-template-columns: minmax(360px, 1.1fr) minmax(340px, 0.9fr);
-      gap: 20px;
-    }
-
-    .panel {
+      overflow: auto;
       background: var(--panel);
       border: 1px solid #e5e7eb;
       border-radius: 8px;
-      box-shadow: var(--shadow);
-      min-width: 0;
-    }
-
-    .panel-title {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 16px 18px;
-      border-bottom: 1px solid #eef2f7;
-      font-size: 14px;
-      font-weight: 800;
-      text-transform: uppercase;
-      color: #475467;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
     }
 
     .canvas {
       position: relative;
-      height: 500px;
-      overflow: hidden;
+      width: 1480px;
+      height: 900px;
+      margin: 0 auto;
+      background:
+        linear-gradient(#ffffff 0 0) padding-box,
+        radial-gradient(circle at 24px 24px, #e5e7eb 1px, transparent 1px);
+      background-size: auto, 32px 32px;
     }
 
     svg {
@@ -116,140 +106,266 @@
       pointer-events: none;
     }
 
-    .node {
+    .step-title {
       position: absolute;
-      width: 124px;
-      min-height: 56px;
-      border: 2px solid #94a3b8;
-      border-radius: 8px;
-      background: white;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      font-weight: 800;
-      color: #334155;
-      transition: transform 280ms ease, background 280ms ease, border-color 280ms ease, color 280ms ease, opacity 280ms ease;
+      left: 28px;
+      top: 22px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      font-size: 20px;
+      font-weight: 900;
     }
 
-    .node small {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: #64748b;
-    }
-
-    .node.ready {
-      border-color: var(--accent);
+    .step-title span {
+      color: var(--accent);
       background: var(--accent-soft);
-      color: #134e4a;
-      transform: translateY(-3px);
+      border: 1px solid #bfdbfe;
+      border-radius: 999px;
+      font-size: 12px;
+      padding: 5px 9px;
     }
 
-    .node.done {
-      border-color: var(--good);
-      background: var(--good-soft);
-      color: var(--good);
+    .legend {
+      position: absolute;
+      right: 28px;
+      top: 20px;
+      z-index: 2;
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 900;
     }
 
-    .node.waiting {
-      opacity: 0.55;
+    .legend b {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--muted);
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 999px;
+      padding: 5px 8px;
     }
 
-    .edge {
-      stroke: var(--line);
-      stroke-width: 3;
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .dot.drop {
+      background: var(--danger);
+    }
+
+    .dot.pick {
+      background: var(--good);
+    }
+
+    .layer-label {
+      fill: #64748b;
+      font-size: 12px;
+      font-weight: 900;
+      text-anchor: middle;
+      text-transform: uppercase;
+    }
+
+    .gate {
+      opacity: 0;
+      fill: rgba(15, 98, 254, 0.055);
+      stroke: var(--accent);
+      stroke-dasharray: 9 7;
+      stroke-width: 2;
+      transition: opacity 280ms ease;
+    }
+
+    .gate.visible {
+      opacity: 1;
+    }
+
+    .link {
       fill: none;
-      transition: stroke 280ms ease, opacity 280ms ease;
+      stroke: var(--line);
+      stroke-width: 2.5;
+      opacity: 0.08;
+      transition: opacity 280ms ease, stroke 280ms ease, stroke-width 280ms ease;
     }
 
-    .edge.active {
+    .link.visible {
+      opacity: 0.58;
+    }
+
+    .link.keep {
+      opacity: 1;
+      stroke: var(--accent);
+      stroke-width: 3.2;
+    }
+
+    .link.drop {
+      opacity: 0.4;
+      stroke: var(--drop);
+      stroke-dasharray: 7 6;
+    }
+
+    .link.selected {
+      opacity: 1;
+      stroke: var(--good);
+      stroke-width: 5;
+    }
+
+    .node {
+      opacity: 0.06;
+      transform-box: fill-box;
+      transform-origin: center;
+      transition: opacity 280ms ease, transform 280ms ease;
+    }
+
+    .node.visible {
+      opacity: 1;
+    }
+
+    .node rect.card {
+      x: -70px;
+      y: -34px;
+      width: 140px;
+      height: 68px;
+      rx: 7px;
+      fill: #ffffff;
+      stroke: #94a3b8;
+      stroke-width: 2;
+      transition: fill 280ms ease, stroke 280ms ease, stroke-width 280ms ease;
+    }
+
+    .node.root rect.card {
+      height: 58px;
+      y: -29px;
+    }
+
+    .node.cost rect.card {
+      fill: var(--cost-soft);
+      stroke: var(--cost);
+    }
+
+    .node.explore rect.card {
+      fill: var(--explore-soft);
+      stroke: var(--explore);
+    }
+
+    .node.time rect.card {
+      fill: var(--time-soft);
+      stroke: var(--time);
+    }
+
+    .node.keep rect.card {
+      fill: var(--accent-soft);
       stroke: var(--accent);
     }
 
-    .beam {
-      padding: 18px;
-      display: grid;
-      gap: 14px;
+    .node.drop {
+      opacity: 0.32;
+      transform: scale(0.96);
     }
 
-    .step-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 14px;
-      background: #fff;
+    .node.drop rect.card {
+      fill: var(--drop-soft);
+      stroke: var(--drop);
     }
 
-    .step-card strong {
-      display: block;
-      margin-bottom: 4px;
-      color: #111827;
+    .node.selected rect.card {
+      fill: var(--good-soft);
+      stroke: var(--good);
+      stroke-width: 3.5;
     }
 
-    .candidate-grid {
-      display: grid;
-      gap: 10px;
-      margin-top: 12px;
+    .node text {
+      fill: var(--ink);
+      font-size: 13px;
+      font-weight: 900;
+      text-anchor: middle;
     }
 
-    .candidate {
-      display: grid;
-      grid-template-columns: 78px 1fr auto;
-      gap: 10px;
-      align-items: center;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 10px;
-      background: #f8fafc;
-      transition: opacity 280ms ease, transform 280ms ease, background 280ms ease, border-color 280ms ease;
-    }
-
-    .candidate .label {
+    .node text.meta {
+      fill: var(--muted);
+      font-size: 10px;
       font-weight: 800;
-      color: #334155;
     }
 
-    .candidate .bar {
-      height: 10px;
-      border-radius: 999px;
-      background: #e2e8f0;
-      overflow: hidden;
+    .node text.score {
+      fill: #334155;
+      font-size: 11px;
+      font-weight: 900;
     }
 
-    .candidate .bar span {
-      display: block;
-      height: 100%;
-      width: var(--w);
-      background: var(--accent);
+    .metric-bg {
+      x: -52px;
+      y: 18px;
+      width: 104px;
+      height: 6px;
+      rx: 999px;
+      fill: #e2e8f0;
+    }
+
+    .metric-fill {
+      x: -52px;
+      y: 18px;
+      height: 6px;
+      rx: 999px;
+      fill: var(--accent);
       transition: width 280ms ease;
     }
 
-    .candidate .score {
-      font-variant-numeric: tabular-nums;
-      color: #475467;
-      font-weight: 800;
+    .node.drop .metric-fill {
+      fill: var(--drop);
     }
 
-    .candidate.keep {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      transform: translateX(4px);
+    .node.selected .metric-fill {
+      fill: var(--good);
     }
 
-    .candidate.drop {
-      opacity: 0.45;
-      background: var(--drop-soft);
+    .slash {
+      stroke: var(--danger);
+      stroke-width: 3;
+      opacity: 0;
+      transition: opacity 280ms ease;
     }
 
-    .candidate.overflow {
-      border-color: var(--warn);
-      background: var(--warn-soft);
+    .node.drop .slash {
+      opacity: 1;
+    }
+
+    .rank {
+      opacity: 0;
+      transition: opacity 280ms ease;
+    }
+
+    .rank.visible {
+      opacity: 1;
+    }
+
+    .rank rect {
+      fill: #ffffff;
+      stroke: var(--good);
+      stroke-width: 2;
+      rx: 999px;
+    }
+
+    .rank text {
+      fill: var(--good);
+      font-size: 12px;
+      font-weight: 900;
+      text-anchor: middle;
     }
 
     .timeline {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(8, 1fr);
       gap: 8px;
-      margin-top: 18px;
+      padding: 10px 14px 14px;
+      background: #ffffff;
+      border-top: 1px solid #eef2f7;
     }
 
     .tick {
@@ -263,236 +379,444 @@
       background: var(--accent);
     }
 
-    .explain {
-      padding: 18px;
-      border-top: 1px solid #eef2f7;
-      min-height: 112px;
+    body.clean main {
+      width: 1480px;
+      margin: 0;
     }
 
-    .explain h2 {
-      margin: 0 0 6px;
-      font-size: 20px;
-      letter-spacing: 0;
+    body.clean .toolbar,
+    body.clean .timeline {
+      display: none;
     }
 
-    .explain p {
-      font-size: 15px;
+    body.clean .stage {
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: hidden;
     }
 
-    .controls {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    @media (max-width: 860px) {
-      header {
+    @media (max-width: 900px) {
+      .toolbar {
         display: grid;
       }
 
-      .stage {
-        grid-template-columns: 1fr;
-      }
-
-      .canvas {
-        height: 420px;
+      .controls {
+        justify-content: flex-start;
       }
     }
   </style>
 </head>
 <body>
   <main>
-    <header>
-      <div>
-        <h1>Montage N=100 + Beam Search</h1>
-        <p>Animacao local para explicar como o simulador libera 100 atividades Montage no DAG, expande candidatos e preserva os melhores estados.</p>
-      </div>
+    <div class="toolbar">
+      <h1>Beam search scheduling tree</h1>
       <div class="controls">
         <button id="play">Reproduzir</button>
         <button id="prev" class="secondary">Anterior</button>
         <button id="next" class="secondary">Proximo</button>
       </div>
-    </header>
+    </div>
 
-    <section class="stage" aria-label="Animacao explicativa do algoritmo">
-      <article class="panel">
-        <div class="panel-title">
-          <span>DAG Montage N=100</span>
-          <span id="step-label">Etapa 1/5</span>
+    <section class="stage">
+      <div class="canvas">
+        <div class="step-title"><span id="step-label">1/8</span><strong id="step-title">frontiers</strong></div>
+        <div class="legend">
+          <b><i class="dot"></i> keep</b>
+          <b><i class="dot drop"></i> prune</b>
+          <b><i class="dot pick"></i> selected</b>
         </div>
-        <div class="canvas" id="dag">
-          <svg viewBox="0 0 620 500" aria-hidden="true">
-            <defs>
-              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#cbd5e1"></path>
-              </marker>
-            </defs>
-            <path class="edge e-t1-t3" d="M145 98 C220 98 240 190 300 190" marker-end="url(#arrow)"></path>
-            <path class="edge e-t2-t3" d="M145 308 C220 308 240 230 300 230" marker-end="url(#arrow)"></path>
-            <path class="edge e-t3-t4" d="M404 210 C455 210 470 210 518 210" marker-end="url(#arrow)"></path>
-            <path class="edge e-t4-t5" d="M570 238 C570 310 470 368 392 382" marker-end="url(#arrow)"></path>
-          </svg>
-          <div class="node n-t1" style="left: 42px; top: 70px;">mProject<small>20 atividades</small></div>
-          <div class="node n-t2" style="left: 42px; top: 280px;">mDiffFit<small>20 atividades</small></div>
-          <div class="node n-t3" style="left: 286px; top: 180px;">mConcatFit<small>20 atividades</small></div>
-          <div class="node n-t4" style="left: 506px; top: 180px;">mBgModel<small>20 atividades</small></div>
-          <div class="node n-t5" style="left: 286px; top: 360px;">mAdd<small>20 atividades</small></div>
-        </div>
-        <div class="explain">
-          <h2 id="title">1. Montage N=100 vira um DAG</h2>
-          <p id="copy">As 100 atividades sao vertices e as dependencias sao arestas direcionadas. A busca so pode escalonar uma atividade quando todos os predecessores ja foram escolhidos.</p>
-          <div class="timeline" aria-hidden="true">
-            <span class="tick active"></span>
-            <span class="tick"></span>
-            <span class="tick"></span>
-            <span class="tick"></span>
-            <span class="tick"></span>
-          </div>
-        </div>
-      </article>
 
-      <article class="panel">
-        <div class="panel-title">
-          <span>Beam search</span>
-          <span>Estados parciais</span>
-        </div>
-        <div class="beam">
-          <div class="step-card">
-            <strong>Tarefa atual</strong>
-            <p id="task-copy">Nenhuma tarefa foi escalonada ainda.</p>
-          </div>
-          <div class="step-card">
-            <strong>Candidatos avaliados</strong>
-            <div class="candidate-grid">
-              <div class="candidate c-a" style="--w: 82%">
-                <span class="label">edge-1</span>
-                <span class="bar"><span></span></span>
-                <span class="score">0.42</span>
-              </div>
-              <div class="candidate c-b" style="--w: 62%">
-                <span class="label">edge-2</span>
-                <span class="bar"><span></span></span>
-                <span class="score">0.57</span>
-              </div>
-              <div class="candidate c-c" style="--w: 45%">
-                <span class="label">cloud-1</span>
-                <span class="bar"><span></span></span>
-                <span class="score">0.73</span>
-              </div>
-              <div class="candidate c-d" style="--w: 35%">
-                <span class="label">cloud-2</span>
-                <span class="bar"><span></span></span>
-                <span class="score">1.10</span>
-              </div>
-            </div>
-          </div>
-          <div class="step-card">
-            <strong>Resultado parcial</strong>
-            <p id="beam-copy">O feixe comeca com um estado vazio. A cada tarefa, o algoritmo cria novos caminhos possiveis.</p>
-          </div>
-        </div>
-      </article>
+        <svg viewBox="0 0 1480 900" aria-label="Animated beam search tree" role="img">
+          <text class="layer-label" x="740" y="96">objective frontiers</text>
+          <text class="layer-label" x="740" y="218">expand task 1</text>
+          <text class="layer-label" x="740" y="382">expand task 2</text>
+          <text class="layer-label" x="740" y="546">final states</text>
+          <text class="layer-label" x="740" y="728">recommendations</text>
+
+          <rect id="gate-1" class="gate" x="66" y="236" width="1348" height="94" rx="14"></rect>
+          <rect id="gate-2" class="gate" x="120" y="400" width="1240" height="94" rx="14"></rect>
+          <rect id="gate-3" class="gate" x="252" y="564" width="976" height="94" rx="14"></rect>
+
+          <path id="l-root-cost-c1" class="link" d="M230 138 C184 174 166 194 126 236"></path>
+          <path id="l-root-cost-c2" class="link" d="M230 138 C230 174 258 194 300 236"></path>
+          <path id="l-root-cost-c3" class="link" d="M230 138 C278 174 330 194 430 236"></path>
+          <path id="l-root-exp-e1" class="link" d="M740 138 C658 174 626 194 560 236"></path>
+          <path id="l-root-exp-e2" class="link" d="M740 138 C724 174 734 194 740 236"></path>
+          <path id="l-root-exp-e3" class="link" d="M740 138 C796 174 826 194 902 236"></path>
+          <path id="l-root-time-t1" class="link" d="M1250 138 C1192 174 1148 194 1084 236"></path>
+          <path id="l-root-time-t2" class="link" d="M1250 138 C1246 174 1260 194 1260 236"></path>
+          <path id="l-root-time-t3" class="link" d="M1250 138 C1296 174 1334 194 1370 236"></path>
+
+          <path id="l-c1-c1a" class="link" d="M126 304 C142 342 174 358 226 400"></path>
+          <path id="l-c1-c1b" class="link" d="M126 304 C144 342 226 358 336 400"></path>
+          <path id="l-c2-c2a" class="link" d="M300 304 C306 342 366 358 446 400"></path>
+          <path id="l-e1-e1a" class="link" d="M560 304 C534 342 548 358 584 400"></path>
+          <path id="l-e2-e2a" class="link" d="M740 304 C730 342 730 358 740 400"></path>
+          <path id="l-e3-e3a" class="link" d="M902 304 C884 342 868 358 850 400"></path>
+          <path id="l-t1-t1a" class="link" d="M1084 304 C1054 342 1012 358 976 400"></path>
+          <path id="l-t2-t2a" class="link" d="M1260 304 C1222 342 1144 358 1114 400"></path>
+          <path id="l-t3-t3a" class="link" d="M1370 304 C1344 342 1276 358 1240 400"></path>
+
+          <path id="l-c1a-f2" class="link" d="M226 468 C260 510 304 528 368 564"></path>
+          <path id="l-e1a-f1" class="link" d="M584 468 C568 510 568 528 584 564"></path>
+          <path id="l-e2a-f4" class="link" d="M740 468 C724 510 720 528 722 564"></path>
+          <path id="l-t1a-f3" class="link" d="M976 468 C940 510 906 528 896 564"></path>
+          <path id="l-t2a-f5" class="link" d="M1114 468 C1110 510 1086 528 1062 564"></path>
+
+          <path id="l-f2-r2" class="link" d="M368 632 C390 676 444 704 522 746"></path>
+          <path id="l-f1-r1" class="link" d="M584 632 C616 676 670 704 740 746"></path>
+          <path id="l-f3-r3" class="link" d="M896 632 C864 676 872 704 958 746"></path>
+
+          <g id="root-cost" class="node root cost visible" transform="translate(230 116)">
+            <rect class="card"></rect>
+            <text y="-5">Spend less</text>
+            <text class="meta" y="13">wC=1.0</text>
+          </g>
+          <g id="root-exp" class="node root explore visible" transform="translate(740 116)">
+            <rect class="card"></rect>
+            <text y="-5">Explore</text>
+            <text class="meta" y="13">9 frontiers</text>
+          </g>
+          <g id="root-time" class="node root time visible" transform="translate(1250 116)">
+            <rect class="card"></rect>
+            <text y="-5">Finish earlier</text>
+            <text class="meta" y="13">wT=1.0</text>
+          </g>
+
+          <g id="c1" class="node" transform="translate(126 270)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">C1 edge-1</text><text class="score" y="2">S=0.31 T=42 C=8</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="86"></rect>
+          </g>
+          <g id="c2" class="node" transform="translate(300 270)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">C2 edge-2</text><text class="score" y="2">S=0.46 T=39 C=10</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="72"></rect>
+          </g>
+          <g id="c3" class="node" transform="translate(430 270)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">C3 cloud-1</text><text class="score" y="2">S=0.71 T=31 C=21</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="48"></rect>
+          </g>
+          <g id="e1" class="node" transform="translate(560 270)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">E1 hybrid</text><text class="score" y="2">S=0.28 T=35 C=12</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="92"></rect>
+          </g>
+          <g id="e2" class="node" transform="translate(740 270)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">E2 edge+cloud</text><text class="score" y="2">S=0.36 T=33 C=15</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="80"></rect>
+          </g>
+          <g id="e3" class="node" transform="translate(902 270)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">E3 duplicate</text><text class="score" y="2">S=0.52 T=34 C=15</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="66"></rect>
+          </g>
+          <g id="t1" class="node" transform="translate(1084 270)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">T1 cloud-1</text><text class="score" y="2">S=0.29 T=27 C=19</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="90"></rect>
+          </g>
+          <g id="t2" class="node" transform="translate(1260 270)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">T2 cloud-2</text><text class="score" y="2">S=0.44 T=25 C=24</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="74"></rect>
+          </g>
+          <g id="t3" class="node" transform="translate(1370 270)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">T3 expensive</text><text class="score" y="2">S=0.77 T=24 C=33</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="42"></rect>
+          </g>
+
+          <g id="c1a" class="node" transform="translate(226 434)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">C1-A</text><text class="score" y="2">S=0.62 T=86 C=17</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="78"></rect>
+          </g>
+          <g id="c1b" class="node" transform="translate(336 434)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">C1-B</text><text class="score" y="2">S=0.91 T=112 C=16</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="38"></rect>
+          </g>
+          <g id="c2a" class="node" transform="translate(446 434)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">C2-A</text><text class="score" y="2">S=0.88 T=76 C=24</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="44"></rect>
+          </g>
+          <g id="e1a" class="node" transform="translate(584 434)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">E1-A</text><text class="score" y="2">S=0.54 T=69 C=21</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="88"></rect>
+          </g>
+          <g id="e2a" class="node" transform="translate(740 434)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">E2-A</text><text class="score" y="2">S=0.66 T=63 C=25</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="70"></rect>
+          </g>
+          <g id="e3a" class="node" transform="translate(850 434)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">E3-A</text><text class="score" y="2">S=0.79 T=67 C=25</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="50"></rect>
+          </g>
+          <g id="t1a" class="node" transform="translate(976 434)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">T1-A</text><text class="score" y="2">S=0.58 T=51 C=34</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="84"></rect>
+          </g>
+          <g id="t2a" class="node" transform="translate(1114 434)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">T2-A</text><text class="score" y="2">S=0.86 T=49 C=42</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="46"></rect>
+          </g>
+          <g id="t3a" class="node" transform="translate(1240 434)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">T3-A</text><text class="score" y="2">S=0.97 T=48 C=52</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="34"></rect>
+          </g>
+
+          <g id="f2" class="node" transform="translate(368 598)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">Final C</text><text class="score" y="2">T=128 C=29</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="76"></rect>
+          </g>
+          <g id="f1" class="node" transform="translate(584 598)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">Final E</text><text class="score" y="2">T=103 C=36</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="92"></rect>
+          </g>
+          <g id="f4" class="node" transform="translate(722 598)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">Final D</text><text class="score" y="2">T=110 C=40</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="68"></rect>
+          </g>
+          <g id="f3" class="node" transform="translate(896 598)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">Final T</text><text class="score" y="2">T=92 C=51</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="82"></rect>
+          </g>
+          <g id="f5" class="node" transform="translate(1062 598)">
+            <rect class="card"></rect><line class="slash" x1="-48" y1="-22" x2="48" y2="22"></line>
+            <text y="-15">Final X</text><text class="score" y="2">T=91 C=66</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="36"></rect>
+          </g>
+
+          <g id="r2" class="node" transform="translate(522 780)">
+            <rect class="card"></rect>
+            <text y="-15">Rec #2</text><text class="score" y="2">budget saver</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="76"></rect>
+          </g>
+          <g id="r1" class="node" transform="translate(740 780)">
+            <rect class="card"></rect>
+            <text y="-15">Rec #1</text><text class="score" y="2">selected</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="96"></rect>
+          </g>
+          <g id="r3" class="node" transform="translate(958 780)">
+            <rect class="card"></rect>
+            <text y="-15">Rec #3</text><text class="score" y="2">faster option</text>
+            <rect class="metric-bg"></rect><rect class="metric-fill" width="82"></rect>
+          </g>
+
+          <g id="rank-r2" class="rank" transform="translate(522 842)">
+            <rect x="-54" y="-14" width="108" height="28"></rect><text y="4">rank 2</text>
+          </g>
+          <g id="rank-r1" class="rank" transform="translate(740 842)">
+            <rect x="-62" y="-14" width="124" height="28"></rect><text y="4">recommended</text>
+          </g>
+          <g id="rank-r3" class="rank" transform="translate(958 842)">
+            <rect x="-54" y="-14" width="108" height="28"></rect><text y="4">rank 3</text>
+          </g>
+        </svg>
+      </div>
+      <div class="timeline" aria-hidden="true">
+        <span class="tick active"></span>
+        <span class="tick"></span>
+        <span class="tick"></span>
+        <span class="tick"></span>
+        <span class="tick"></span>
+        <span class="tick"></span>
+        <span class="tick"></span>
+        <span class="tick"></span>
+      </div>
     </section>
   </main>
 
   <script>
+    const roots = ["root-cost", "root-exp", "root-time"];
+    const layer1 = ["c1", "c2", "c3", "e1", "e2", "e3", "t1", "t2", "t3"];
+    const layer2 = ["c1a", "c1b", "c2a", "e1a", "e2a", "e3a", "t1a", "t2a", "t3a"];
+    const finals = ["f2", "f1", "f4", "f3", "f5"];
+    const recs = ["r2", "r1", "r3"];
+    const rootLinks = ["l-root-cost-c1", "l-root-cost-c2", "l-root-cost-c3", "l-root-exp-e1", "l-root-exp-e2", "l-root-exp-e3", "l-root-time-t1", "l-root-time-t2", "l-root-time-t3"];
+    const layer2Links = ["l-c1-c1a", "l-c1-c1b", "l-c2-c2a", "l-e1-e1a", "l-e2-e2a", "l-e3-e3a", "l-t1-t1a", "l-t2-t2a", "l-t3-t3a"];
+    const finalLinks = ["l-c1a-f2", "l-e1a-f1", "l-e2a-f4", "l-t1a-f3", "l-t2a-f5"];
+    const recLinks = ["l-f2-r2", "l-f1-r1", "l-f3-r3"];
+    const keep1 = ["c1", "e1", "e2", "t1"];
+    const drop1 = ["c2", "c3", "e3", "t2", "t3"];
+    const keep2 = ["c1a", "e1a", "e2a", "t1a"];
+    const drop2 = ["c1b", "c2a", "e3a", "t2a", "t3a"];
+    const keepFinal = ["f2", "f1", "f4", "f3"];
+    const dropFinal = ["f5"];
+    const selectedPath = ["root-exp", "e1", "e1a", "f1", "r1"];
+    const selectedLinks = ["l-root-exp-e1", "l-e1-e1a", "l-e1a-f1", "l-f1-r1"];
+
     const steps = [
       {
-        title: "1. Montage N=100 vira um DAG",
-        copy: "As 100 atividades Montage sao vertices e as dependencias sao arestas direcionadas. A visualizacao agrupa 20 atividades por tipo para mostrar a estrutura sem poluir a tela.",
-        task: "Nenhuma atividade foi escalonada ainda.",
-        beam: "O feixe comeca com um estado vazio. A cada atividade, o algoritmo cria novos caminhos possiveis.",
-        ready: ["t1", "t2"],
-        done: [],
-        activeEdges: [],
-        candidates: []
+        label: "1/8",
+        title: "create objective frontiers",
+        gates: [],
+        visible: roots,
+        keep: [],
+        drop: [],
+        links: [],
+        keepLinks: [],
+        dropLinks: [],
+        selected: [],
+        selectedLinks: [],
+        ranks: []
       },
       {
-        title: "2. A ordem topologica libera mProject e mDiffFit",
-        copy: "As primeiras atividades Montage entram quando seus predecessores estao resolvidos. No preset sintetico, os estagios seguem mProject, mDiffFit, mConcatFit, mBgModel e mAdd.",
-        task: "Atividade pronta: mProject-1. O algoritmo testa cada recurso/core compativel.",
-        beam: "Cada candidato vira um novo estado parcial com start, finish, custo, boot, transferencia e interferencia.",
-        ready: ["t1", "t2"],
-        done: [],
-        activeEdges: [],
-        candidates: ["keep", "keep", "drop", "drop"]
+        label: "2/8",
+        title: "expand candidates for task 1",
+        gates: [],
+        visible: roots.concat(layer1),
+        keep: [],
+        drop: [],
+        links: rootLinks,
+        keepLinks: [],
+        dropLinks: [],
+        selected: [],
+        selectedLinks: [],
+        ranks: []
       },
       {
-        title: "3. O beam preserva os melhores caminhos",
-        copy: "Depois de escolher possibilidades para atividades predecessoras, mConcatFit fica liberada porque todos os predecessores ja possuem assignment.",
-        task: "Atividade pronta: mConcatFit. O predecessorFloor inclui o fim dos predecessores mais transferencias de dados.",
-        beam: "Estados com menor score parcial continuam no beam. Estados acima do budget parcial vao para overflow.",
-        ready: ["t3"],
-        done: ["t1", "t2"],
-        activeEdges: ["e-t1-t3", "e-t2-t3"],
-        candidates: ["keep", "overflow", "keep", "drop"]
+        label: "3/8",
+        title: "beam width keeps top states",
+        gates: ["gate-1"],
+        visible: roots.concat(layer1),
+        keep: keep1,
+        drop: drop1,
+        links: rootLinks,
+        keepLinks: ["l-root-cost-c1", "l-root-exp-e1", "l-root-exp-e2", "l-root-time-t1"],
+        dropLinks: ["l-root-cost-c2", "l-root-cost-c3", "l-root-exp-e3", "l-root-time-t2", "l-root-time-t3"],
+        selected: [],
+        selectedLinks: [],
+        ranks: []
       },
       {
-        title: "4. A busca segue por mBgModel",
-        copy: "mBgModel so aparece depois dos ajustes anteriores. Cada decisao atualiza disponibilidade de core, estado de boot e ultimo uso do recurso.",
-        task: "Atividade pronta: mBgModel. A interferencia pairwise aumenta runtime quando ha atividades sobrepostas no mesmo recurso.",
-        beam: "A poda limita a explosao combinatoria de 100 atividades: varios caminhos existem, mas apenas os melhores estados do beam seguem vivos.",
-        ready: ["t4"],
-        done: ["t1", "t2", "t3"],
-        activeEdges: ["e-t3-t4"],
-        candidates: ["keep", "drop", "keep", "overflow"]
+        label: "4/8",
+        title: "expand only the surviving states",
+        gates: ["gate-1"],
+        visible: roots.concat(layer1, layer2),
+        keep: keep1,
+        drop: drop1,
+        links: rootLinks.concat(layer2Links),
+        keepLinks: ["l-root-cost-c1", "l-root-exp-e1", "l-root-exp-e2", "l-root-time-t1"],
+        dropLinks: ["l-root-cost-c2", "l-root-cost-c3", "l-root-exp-e3", "l-root-time-t2", "l-root-time-t3"],
+        selected: [],
+        selectedLinks: [],
+        ranks: []
       },
       {
-        title: "5. Estados finais viram opcoes",
-        copy: "Quando as atividades mAdd terminam, cada estado final vira uma ScheduleOption com makespan, budget usado, violacoes e ranking.",
-        task: "Workflow Montage completo: 100 atividades foram alocadas em recursos e cores.",
-        beam: "A opcao 1 e recomendada. As demais sao escolhidas buscando boa pontuacao e diversidade de distribuicao entre maquinas.",
-        ready: [],
-        done: ["t1", "t2", "t3", "t4", "t5"],
-        activeEdges: ["e-t4-t5"],
-        candidates: ["keep", "keep", "keep", "drop"]
+        label: "5/8",
+        title: "prune next layer",
+        gates: ["gate-1", "gate-2"],
+        visible: roots.concat(layer1, layer2),
+        keep: keep1.concat(keep2),
+        drop: drop1.concat(drop2),
+        links: rootLinks.concat(layer2Links),
+        keepLinks: ["l-root-cost-c1", "l-root-exp-e1", "l-root-exp-e2", "l-root-time-t1", "l-c1-c1a", "l-e1-e1a", "l-e2-e2a", "l-t1-t1a"],
+        dropLinks: ["l-root-cost-c2", "l-root-cost-c3", "l-root-exp-e3", "l-root-time-t2", "l-root-time-t3", "l-c1-c1b", "l-c2-c2a", "l-e3-e3a", "l-t2-t2a", "l-t3-t3a"],
+        selected: [],
+        selectedLinks: [],
+        ranks: []
+      },
+      {
+        label: "6/8",
+        title: "build final schedules",
+        gates: ["gate-1", "gate-2", "gate-3"],
+        visible: roots.concat(layer1, layer2, finals),
+        keep: keep1.concat(keep2, keepFinal),
+        drop: drop1.concat(drop2, dropFinal),
+        links: rootLinks.concat(layer2Links, finalLinks),
+        keepLinks: ["l-root-cost-c1", "l-root-exp-e1", "l-root-exp-e2", "l-root-time-t1", "l-c1-c1a", "l-e1-e1a", "l-e2-e2a", "l-t1-t1a", "l-c1a-f2", "l-e1a-f1", "l-e2a-f4", "l-t1a-f3"],
+        dropLinks: ["l-root-cost-c2", "l-root-cost-c3", "l-root-exp-e3", "l-root-time-t2", "l-root-time-t3", "l-c1-c1b", "l-c2-c2a", "l-e3-e3a", "l-t2-t2a", "l-t3-t3a", "l-t2a-f5"],
+        selected: [],
+        selectedLinks: [],
+        ranks: []
+      },
+      {
+        label: "7/8",
+        title: "rank recommendation items",
+        gates: ["gate-1", "gate-2", "gate-3"],
+        visible: roots.concat(layer1, layer2, finals, recs),
+        keep: keep1.concat(keep2, keepFinal, recs),
+        drop: drop1.concat(drop2, dropFinal),
+        links: rootLinks.concat(layer2Links, finalLinks, recLinks),
+        keepLinks: ["l-root-cost-c1", "l-root-exp-e1", "l-root-exp-e2", "l-root-time-t1", "l-c1-c1a", "l-e1-e1a", "l-e2-e2a", "l-t1-t1a", "l-c1a-f2", "l-e1a-f1", "l-e2a-f4", "l-t1a-f3", "l-f2-r2", "l-f1-r1", "l-f3-r3"],
+        dropLinks: ["l-root-cost-c2", "l-root-cost-c3", "l-root-exp-e3", "l-root-time-t2", "l-root-time-t3", "l-c1-c1b", "l-c2-c2a", "l-e3-e3a", "l-t2-t2a", "l-t3-t3a", "l-t2a-f5"],
+        selected: [],
+        selectedLinks: [],
+        ranks: ["rank-r2", "rank-r1", "rank-r3"]
+      },
+      {
+        label: "8/8",
+        title: "select Recommendation #1",
+        gates: ["gate-1", "gate-2", "gate-3"],
+        visible: roots.concat(layer1, layer2, finals, recs),
+        keep: keep1.concat(keep2, keepFinal, recs),
+        drop: drop1.concat(drop2, dropFinal),
+        links: rootLinks.concat(layer2Links, finalLinks, recLinks),
+        keepLinks: ["l-root-cost-c1", "l-root-exp-e1", "l-root-exp-e2", "l-root-time-t1", "l-c1-c1a", "l-e1-e1a", "l-e2-e2a", "l-t1-t1a", "l-c1a-f2", "l-e1a-f1", "l-e2a-f4", "l-t1a-f3", "l-f2-r2", "l-f1-r1", "l-f3-r3"],
+        dropLinks: ["l-root-cost-c2", "l-root-cost-c3", "l-root-exp-e3", "l-root-time-t2", "l-root-time-t3", "l-c1-c1b", "l-c2-c2a", "l-e3-e3a", "l-t2-t2a", "l-t3-t3a", "l-t2a-f5"],
+        selected: selectedPath,
+        selectedLinks,
+        ranks: ["rank-r2", "rank-r1", "rank-r3"]
       }
     ];
 
+    const params = new URLSearchParams(window.location.search);
+    const clean = params.get("clean") === "1";
+    const autoplay = params.get("autoplay") === "1";
+    const intervalMs = Number(params.get("speed")) || 1800;
+    if (clean) document.body.classList.add("clean");
+
     let index = 0;
     let timer = null;
-
-    const title = document.getElementById("title");
-    const copy = document.getElementById("copy");
-    const taskCopy = document.getElementById("task-copy");
-    const beamCopy = document.getElementById("beam-copy");
     const stepLabel = document.getElementById("step-label");
+    const stepTitle = document.getElementById("step-title");
+    const nodes = Array.from(document.querySelectorAll(".node"));
+    const links = Array.from(document.querySelectorAll(".link"));
+    const gates = Array.from(document.querySelectorAll(".gate"));
+    const ranks = Array.from(document.querySelectorAll(".rank"));
     const ticks = Array.from(document.querySelectorAll(".tick"));
-    const nodes = {
-      t1: document.querySelector(".n-t1"),
-      t2: document.querySelector(".n-t2"),
-      t3: document.querySelector(".n-t3"),
-      t4: document.querySelector(".n-t4"),
-      t5: document.querySelector(".n-t5")
-    };
-    const edges = Array.from(document.querySelectorAll(".edge"));
-    const candidates = Array.from(document.querySelectorAll(".candidate"));
 
     function render() {
       const step = steps[index];
-      title.textContent = step.title;
-      copy.textContent = step.copy;
-      taskCopy.textContent = step.task;
-      beamCopy.textContent = step.beam;
-      stepLabel.textContent = `Etapa ${index + 1}/5`;
+      stepLabel.textContent = step.label;
+      stepTitle.textContent = step.title;
 
-      Object.entries(nodes).forEach(([key, node]) => {
-        node.classList.toggle("done", step.done.includes(key));
-        node.classList.toggle("ready", step.ready.includes(key));
-        node.classList.toggle("waiting", !step.done.includes(key) && !step.ready.includes(key));
+      nodes.forEach((node) => {
+        node.classList.toggle("visible", step.visible.includes(node.id));
+        node.classList.toggle("keep", step.keep.includes(node.id));
+        node.classList.toggle("drop", step.drop.includes(node.id));
+        node.classList.toggle("selected", step.selected.includes(node.id));
       });
 
-      edges.forEach((edge) => {
-        step.activeEdges.some((name) => edge.classList.contains(name))
-          ? edge.classList.add("active")
-          : edge.classList.remove("active");
+      links.forEach((link) => {
+        link.classList.toggle("visible", step.links.includes(link.id));
+        link.classList.toggle("keep", step.keepLinks.includes(link.id));
+        link.classList.toggle("drop", step.dropLinks.includes(link.id));
+        link.classList.toggle("selected", step.selectedLinks.includes(link.id));
       });
 
-      candidates.forEach((candidate, candidateIndex) => {
-        candidate.classList.remove("keep", "drop", "overflow");
-        if (step.candidates[candidateIndex]) {
-          candidate.classList.add(step.candidates[candidateIndex]);
-        }
+      gates.forEach((gate) => {
+        gate.classList.toggle("visible", step.gates.includes(gate.id));
+      });
+
+      ranks.forEach((rank) => {
+        rank.classList.toggle("visible", step.ranks.includes(rank.id));
       });
 
       ticks.forEach((tick, tickIndex) => {
@@ -511,20 +835,22 @@
     }
 
     function play() {
+      const playButton = document.getElementById("play");
       if (timer) {
         clearInterval(timer);
         timer = null;
-        document.getElementById("play").textContent = "Reproduzir";
+        playButton.textContent = "Reproduzir";
         return;
       }
-      document.getElementById("play").textContent = "Pausar";
-      timer = setInterval(next, 2600);
+      playButton.textContent = "Pausar";
+      timer = setInterval(next, intervalMs);
     }
 
     document.getElementById("next").addEventListener("click", next);
     document.getElementById("prev").addEventListener("click", prev);
     document.getElementById("play").addEventListener("click", play);
     render();
+    if (autoplay) play();
   </script>
 </body>
 </html>

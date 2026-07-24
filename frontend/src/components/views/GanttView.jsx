@@ -7,7 +7,14 @@ export default function GanttView({ result, selectedTaskId, onSelect }) {
 
   return (
     <div className="gantt-wrap">
-      <GanttToolbar visibleTiming={layout.visibleTiming} showDependencies={layout.showDependencies} onToggleTiming={layout.toggleTiming} onToggleDependencies={layout.toggleDependencies} />
+      <GanttToolbar
+        visibleTiming={layout.visibleTiming}
+        showDependencies={layout.showDependencies}
+        laneMode={layout.laneMode}
+        onToggleTiming={layout.toggleTiming}
+        onToggleDependencies={layout.toggleDependencies}
+        onLaneModeChange={layout.setLaneMode}
+      />
       <GanttChart result={result} layout={layout} selectedTaskId={selectedTaskId} onSelect={onSelect} />
     </div>
   );

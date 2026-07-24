@@ -97,6 +97,8 @@ function restoreLegacyResult(result) {
       },
       options: [{
         id: optionId,
+        scenario_id: `${result.id || "legacy"}-scenario-1`,
+        scenario_name: "Scenario #1",
         rank: 1,
         feasible: true,
         recommended: true,
@@ -165,6 +167,7 @@ function normalizeRequest(request, generated, result) {
     ...defaultRequest,
     ...(request || {}),
     preset: request?.preset || generated?.workflow?.preset || result?.workflow?.preset || defaultRequest.preset,
+    experiment_scenario_id: request?.experiment_scenario_id ?? defaultRequest.experiment_scenario_id,
     seed: request?.seed ?? generated?.seed ?? result?.seed ?? defaultRequest.seed,
     task_count: request?.task_count ?? generated?.workflow?.tasks?.length ?? result?.workflow?.tasks?.length ?? defaultRequest.task_count,
     cluster_machines: request?.cluster_machines ?? clusterMachines,

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"hash/fnv"
 	"math/rand"
 	"strings"
 )
@@ -90,7 +91,7 @@ func generateResources(req SimulationRequest) ([]Resource, map[string]map[string
 				ID: spec.ID, Name: spec.Name, Kind: spec.Kind, Cores: makeCores(spec.ID, spec.Cores), CPU: float64(spec.Cores),
 				Memory: round(spec.Memory, 2), PricePerCPUSecond: round((0.006+rng.Float64()*0.019)*priceMultiplier, 5),
 				PricePerGBSecond: round((0.001+rng.Float64()*0.005)*priceMultiplier, 5), FinancialNetworkPrice: finPrice,
-				Bandwidth: round(spec.Bandwidth, 2), Location: spec.Location, Status: status, BootOverhead: boot, ImageCache: cache,
+				Bandwidth: round(spec.Bandwidth, 2), Location: spec.Location, Status: status, BootOverhead: boot, Speedup: spec.Speedup, ImageCache: cache,
 			})
 		}
 	} else {
@@ -134,7 +135,6 @@ func makeCores(resourceID string, count int) []Core {
 }
 
 func generateInterference(req SimulationRequest, workflow Workflow, resources []Resource) map[string]map[string]map[string]map[string]float64 {
-	rng := rand.New(rand.NewSource(req.Seed + 23))
 	matrix := map[string]map[string]map[string]map[string]float64{}
 	dimensions := []string{"cpu", "memory", "io", "network"}
 	for _, resource := range resources {
@@ -146,7 +146,7 @@ func generateInterference(req SimulationRequest, workflow Workflow, resources []
 				for _, target := range workflow.Tasks {
 					value := 0.0
 					if source.ID != target.ID {
-						value = rng.Float64() * 0.18
+						value = fixedInterferenceValue(dimension, source.ID, target.ID)
 					}
 					matrix[resource.ID][dimension][source.ID][target.ID] = round(value, 4)
 				}
@@ -154,4 +154,10 @@ func generateInterference(req SimulationRequest, workflow Workflow, resources []
 		}
 	}
 	return matrix
+}
+
+func fixedInterferenceValue(dimension, sourceID, targetID string) float64 {
+	hash := fnv.New32a()
+	_, _ = hash.Write([]byte("scheduler-simulator/interference/v1|" + dimension + "|" + sourceID + "|" + targetID))
+	return round(float64(hash.Sum32()%1801)/10000.0, 4)
 }

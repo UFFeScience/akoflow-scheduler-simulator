@@ -3,12 +3,27 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 )
 
 func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
+	if req.ExperimentScenarioID != "" {
+		specs, err := experimentScenarioResources(req.ExperimentScenarioID)
+		if err != nil {
+			return GeneratedSimulation{}, err
+		}
+		req.ResourceSpecs = specs
+		req.ClusterMachines = 1
+		req.CloudMachines = 0
+	}
 	workflow, err := generateWorkflow(req)
 	if err != nil {
 		return GeneratedSimulation{}, err
+	}
+	if req.ExperimentScenarioID != "" && strings.EqualFold(req.Preset, "Montage") {
+		if err := applyMontageExperimentRuntimes(&workflow); err != nil {
+			return GeneratedSimulation{}, err
+		}
 	}
 	resources, bandwidth, err := generateResources(req)
 	if err != nil {
@@ -30,6 +45,9 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 				}
 			}
 			speed := maxf(0.35, resource.CPU/maxf(task.CPU, 0.1))
+			if resource.Speedup > 0 {
+				speed = resource.Speedup
+			}
 			et0[task.ID][resource.ID] = round(task.BaseRuntime/speed+rng.Float64()*4.0, 3)
 			baseOverhead := 3.5
 			if imageHit {

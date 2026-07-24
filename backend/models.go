@@ -9,24 +9,26 @@ type ResourceSpec struct {
 	Bandwidth    float64 `json:"bandwidth"`
 	BootOverhead float64 `json:"boot_overhead"`
 	Location     string  `json:"location"`
+	Speedup      float64 `json:"speedup,omitempty"`
 }
 
 type SimulationRequest struct {
-	Preset          string         `json:"preset"`
-	Seed            int64          `json:"seed"`
-	TaskCount       int            `json:"task_count"`
-	EdgeDensity     float64        `json:"edge_density"`
-	ClusterMachines int            `json:"cluster_machines"`
-	CloudMachines   int            `json:"cloud_machines"`
-	CoresPerMachine int            `json:"cores_per_machine"`
-	WeightTime      float64        `json:"weight_time"`
-	WeightCost      float64        `json:"weight_cost"`
-	BudgetLimit     *float64       `json:"budget_limit"`
-	DeadlineLimit   *float64       `json:"deadline_limit"`
-	OptionCount     int            `json:"option_count"`
-	BeamWidth       int            `json:"beam_width"`
-	WorkflowYAML    *string        `json:"workflow_yaml"`
-	ResourceSpecs   []ResourceSpec `json:"resource_specs"`
+	Preset               string         `json:"preset"`
+	ExperimentScenarioID string         `json:"experiment_scenario_id"`
+	Seed                 int64          `json:"seed"`
+	TaskCount            int            `json:"task_count"`
+	EdgeDensity          float64        `json:"edge_density"`
+	ClusterMachines      int            `json:"cluster_machines"`
+	CloudMachines        int            `json:"cloud_machines"`
+	CoresPerMachine      int            `json:"cores_per_machine"`
+	WeightTime           float64        `json:"weight_time"`
+	WeightCost           float64        `json:"weight_cost"`
+	BudgetLimit          *float64       `json:"budget_limit"`
+	DeadlineLimit        *float64       `json:"deadline_limit"`
+	OptionCount          int            `json:"option_count"`
+	BeamWidth            int            `json:"beam_width"`
+	WorkflowYAML         *string        `json:"workflow_yaml"`
+	ResourceSpecs        []ResourceSpec `json:"resource_specs"`
 }
 
 type Core struct {
@@ -49,6 +51,7 @@ type Resource struct {
 	Location              string   `json:"location"`
 	Status                string   `json:"status"`
 	BootOverhead          float64  `json:"boot_overhead"`
+	Speedup               float64  `json:"speedup,omitempty"`
 	ImageCache            []string `json:"image_cache"`
 }
 
@@ -250,6 +253,8 @@ type ScheduleConstraints struct {
 
 type ScheduleOption struct {
 	ID                  string           `json:"id"`
+	ScenarioID          string           `json:"scenario_id"`
+	ScenarioName        string           `json:"scenario_name"`
 	Rank                int              `json:"rank"`
 	Feasible            bool             `json:"feasible"`
 	Recommended         bool             `json:"recommended"`

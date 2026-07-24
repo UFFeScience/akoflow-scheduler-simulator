@@ -6,6 +6,7 @@ import { buildSimulationSnapshot, restoreSimulationSnapshot } from '../lib/simul
 export function useSimulatorController() {
   const [request, setRequest] = useState(defaultRequest);
   const [presets, setPresets] = useState([]);
+  const [experimentScenarios, setExperimentScenarios] = useState([]);
   const [generated, setGenerated] = useState(null);
   const [result, setResult] = useState(null);
   const [scheduleResponse, setScheduleResponse] = useState(null);
@@ -25,6 +26,11 @@ export function useSimulatorController() {
       .then((response) => response.json())
       .then((data) => setPresets(data.presets || []))
       .catch(() => setPresets([]));
+
+    fetch(`${API_URL}/api/experiment-scenarios`)
+      .then((response) => response.json())
+      .then((data) => setExperimentScenarios(data.scenarios || []))
+      .catch(() => setExperimentScenarios([]));
   }, []);
 
   useEffect(() => {
@@ -50,10 +56,11 @@ export function useSimulatorController() {
   async function generateWorkflowAndMatrices() {
     setStatus("running");
     setStatusMessage("");
+    const usingExperimentScenario = Boolean(request.experiment_scenario_id);
     const response = await fetch(`${API_URL}/api/simulations/generate-only`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...request, workflow_yaml: workflowMode === "yaml" ? workflowYaml || null : null }),
+      body: JSON.stringify({ ...request, workflow_yaml: !usingExperimentScenario && workflowMode === "yaml" ? workflowYaml || null : null }),
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
@@ -159,11 +166,17 @@ export function useSimulatorController() {
   function updateRequest(key, value) {
     setRequest((current) => {
       const next = { ...current, [key]: value };
+      if (key === "experiment_scenario_id" && value) {
+        next.preset = "Montage";
+      }
       if (["cluster_machines", "cloud_machines", "cores_per_machine"].includes(key)) {
         next.resource_specs = syncResourceSpecs(current.resource_specs || [], next.cluster_machines, next.cloud_machines, next.cores_per_machine);
       }
       return next;
     });
+    if (key === "experiment_scenario_id" && value) {
+      setWorkflowMode("random");
+    }
   }
 
   const selectedAssignment = useMemo(
@@ -180,7 +193,7 @@ export function useSimulatorController() {
   }
 
   return {
-    request, presets, generated, result, scheduleResponse, selectedOptionId, phase, activeTab, selectedTaskId, status, statusMessage,
+    request, presets, experimentScenarios, generated, result, scheduleResponse, selectedOptionId, phase, activeTab, selectedTaskId, status, statusMessage,
     workflowMode, workflowYaml, workflowFileName, theme, selectedAssignment,
     setGenerated, setPhase, setActiveTab, setSelectedTaskId, setWorkflowMode, setTheme,
     generateWorkflowAndMatrices, saveMatricesAndSchedule, calculateCurrentSchedule, resetFlow, importWorkflowFile, selectScheduleOption,

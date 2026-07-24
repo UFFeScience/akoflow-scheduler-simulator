@@ -19,14 +19,14 @@ export default function ScheduleOptionsPanel({ response, selectedOptionId, onSel
   return (
     <section className="schedule-options-panel">
       <header>
-        <strong>Recommended schedules</strong>
-        <span>{options.filter((option) => option.feasible).length} feasible / {options.length} recommendations</span>
+        <strong>Scenarios</strong>
+        <span>{options.filter((option) => option.feasible).length} feasible / {options.length} materialized</span>
       </header>
       <div className="schedule-options-table-wrap">
         <table className="schedule-options-table">
           <thead>
             <tr>
-              {["item", "status", "makespan", "budget", "violations", "score", "machines"].map((heading) => <th key={heading}>{heading}</th>)}
+              {["scenario", "status", "makespan", "budget", "violations", "score", "machines"].map((heading) => <th key={heading}>{heading}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -37,7 +37,7 @@ export default function ScheduleOptionsPanel({ response, selectedOptionId, onSel
                 onClick={() => onSelect(option.id)}
               >
                 <td>
-                  <span>Recommendation #{option.rank}</span>
+                  <span>{option.scenario_name || `Scenario #${option.rank}`}</span>
                   {option.recommended && <em>Recommended</em>}
                 </td>
                 <td>{option.feasible ? "feasible" : "infeasible"}</td>

@@ -1,7 +1,8 @@
 import GanttStopWindow from './GanttStopWindow.jsx';
 import GanttTaskBar from './GanttTaskBar.jsx';
 
-export default function GanttMachine({ resource, y, result, layout, selectedTaskId, onSelect }) {
+export default function GanttMachine({ resource, cores, y, result, layout, selectedTaskId, onSelect }) {
+  const visibleCores = cores || resource.cores;
   return (
     <section className="gantt-machine" key={resource.id} style={{ top: y }}>
       <header className="gantt-machine-header">
@@ -12,7 +13,7 @@ export default function GanttMachine({ resource, y, result, layout, selectedTask
         </div>
       </header>
       <div className="gantt-cores">
-        {resource.cores.map((core) => (
+        {visibleCores.map((core) => (
           <div className="gantt-row" key={core.id}>
             <div className="lane-label">Core {core.index + 1}</div>
             <div className="lane-track">

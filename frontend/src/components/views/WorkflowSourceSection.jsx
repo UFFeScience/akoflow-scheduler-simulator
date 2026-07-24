@@ -4,19 +4,29 @@ import ControlSelect from '../controls/ControlSelect.jsx';
 
 export default function WorkflowSourceSection({ controller }) {
   const c = controller;
+  const usingExperimentScenario = Boolean(c.request.experiment_scenario_id);
   return (
     <div className="setup-section">
       <h2>Workflow source</h2>
-      <div className="mode-selector">
-        {["random", "yaml"].map((mode) => (
-          <button type="button" key={mode} className={c.workflowMode === mode ? "mode-card active" : "mode-card"} onClick={() => c.setWorkflowMode(mode)}>
-            <strong>{mode === "random" ? "Generate random workflow" : "Import Akoflow YAML"}</strong>
-            <span>{mode === "random" ? "Use preset, task count, seed, and edge density." : "Use activities and dependsOn from a workflow file."}</span>
+      {usingExperimentScenario ? (
+        <div className="mode-selector">
+          <button type="button" className="mode-card active">
+            <strong>Montage C3D experiment</strong>
+            <span>Use the predefined Montage runtime profile and scenario machines.</span>
           </button>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="mode-selector">
+          {["random", "yaml"].map((mode) => (
+            <button type="button" key={mode} className={c.workflowMode === mode ? "mode-card active" : "mode-card"} onClick={() => c.setWorkflowMode(mode)}>
+              <strong>{mode === "random" ? "Generate random workflow" : "Import Akoflow YAML"}</strong>
+              <span>{mode === "random" ? "Use preset, task count, seed, and edge density." : "Use activities and dependsOn from a workflow file."}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <div className="setup-grid">
-        {c.workflowMode === "random" && (
+        {(c.workflowMode === "random" || usingExperimentScenario) && (
           <>
             <ControlSelect label="Workflow preset" value={c.request.preset} onChange={(value) => c.updateRequest("preset", value)}>
               {(c.presets.length ? c.presets : [{ id: "Montage", label: "Montage" }]).map((preset) => (
@@ -28,7 +38,7 @@ export default function WorkflowSourceSection({ controller }) {
             <ControlInput label="Edge density" value={c.request.edge_density} min={0} max={0.8} step={0.01} onChange={(value) => c.updateRequest("edge_density", value)} />
           </>
         )}
-        {c.workflowMode === "yaml" && (
+        {!usingExperimentScenario && c.workflowMode === "yaml" && (
           <section className="workflow-import inline-import">
             <div><span>Akoflow workflow YAML</span><strong>{c.workflowFileName || "No YAML selected"}</strong></div>
             <label className="file-button">

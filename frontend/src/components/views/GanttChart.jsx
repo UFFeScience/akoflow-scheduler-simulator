@@ -19,8 +19,8 @@ export default function GanttChart({ result, layout, selectedTaskId, onSelect })
           height={layout.ganttBodyHeight}
         />
       )}
-      {layout.machinePositions.map(({ resource, y }) => (
-        <GanttMachine key={resource.id} resource={resource} y={y} result={result} layout={layout} selectedTaskId={selectedTaskId} onSelect={onSelect} />
+      {layout.machinePositions.map(({ resource, cores, y }) => (
+        <GanttMachine key={resource.id} resource={resource} cores={cores} y={y} result={result} layout={layout} selectedTaskId={selectedTaskId} onSelect={onSelect} />
       ))}
     </div>
   );

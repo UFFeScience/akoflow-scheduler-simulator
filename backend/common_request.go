@@ -59,6 +59,11 @@ func validateRequest(r SimulationRequest) error {
 	if r.Preset == "" {
 		return errors.New("preset is required")
 	}
+	if r.ExperimentScenarioID != "" {
+		if _, err := experimentScenarioResources(r.ExperimentScenarioID); err != nil {
+			return err
+		}
+	}
 	if r.TaskCount < 3 || r.TaskCount > 100 {
 		return errors.New("task_count must be between 3 and 100")
 	}
@@ -89,7 +94,15 @@ func validateRequest(r SimulationRequest) error {
 	if r.BeamWidth < minBeamWidth || r.BeamWidth > maxBeamWidth {
 		return fmt.Errorf("beam_width must be between %d and %d", minBeamWidth, maxBeamWidth)
 	}
-	for _, spec := range r.ResourceSpecs {
+	resourceSpecs := r.ResourceSpecs
+	if r.ExperimentScenarioID != "" {
+		var err error
+		resourceSpecs, err = experimentScenarioResources(r.ExperimentScenarioID)
+		if err != nil {
+			return err
+		}
+	}
+	for _, spec := range resourceSpecs {
 		if spec.ID == "" || spec.Name == "" {
 			return errors.New("resource_specs require id and name")
 		}

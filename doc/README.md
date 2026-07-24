@@ -6,10 +6,10 @@ Este documento serve como uma visao de Hyperframe para explicar como o simulador
 
 - `backend/workflow.go`: gera um workflow sintetico ou importa um workflow Akoflow em YAML.
 - `backend/scheduler.go`: contem o escalonador guloso, a ordenacao topologica, calculo de predecessores, transferencia e interferencia.
-- `backend/optimizer.go`: contem a busca por feixe, gerando multiplas opcoes de escalonamento.
+- `backend/optimizer.go`: contem a busca por feixe, gerando multiplas recomendacoes de escalonamento.
 - `backend/models.go`: define as estruturas retornadas para a UI, como `Workflow`, `Assignment`, `ScheduleStep` e `ScheduleOption`.
 - `frontend/src/components/views/DagView.jsx`: renderiza o DAG resultante.
-- `frontend/src/components/views/ScheduleOptionsPanel.jsx`: mostra as opcoes retornadas pelo beam search.
+- `frontend/src/components/views/ScheduleOptionsPanel.jsx`: mostra os escalonamentos recomendados retornados pelo beam search.
 
 ## Visao geral
 
@@ -24,7 +24,7 @@ flowchart LR
     F --> G[Ordena tarefas topologicamente]
     G --> H[Avalia candidatos por tarefa]
     H --> I[Beam search expande estados]
-    I --> J[Rankeia opcoes]
+    I --> J[Rankeia recomendacoes]
     J --> K[Frontend: DAG, Gantt, Steps, Stats]
 ```
 
@@ -122,13 +122,13 @@ flowchart TB
 
 A largura do feixe e controlada pela SLA com `beam_width`:
 
-- `option_count` pode ir de 1 a 1000 e define quantas opcoes finais retornar.
-- `beam_width` pode ir de 120 a 10000, com padrao 2000, e define quantos estados parciais a busca tenta preservar a cada tarefa.
+- `option_count` pode ir de 1 a 1000 e define quantas recomendacoes finais retornar.
+- `beam_width` pode ir de 120 a 10000, com padrao 120, e define quantos estados parciais a busca tenta preservar a cada tarefa.
 - A busca usa 11 frentes objetivas, de `0.0 tempo / 1.0 custo` ate `1.0 tempo / 0.0 custo`, em passos de `0.1`; o `beam_width` total e dividido entre essas frentes.
 
-Valores altos de `beam_width` aumentam o espaco explorado e o tempo de processamento. Valores altos de `option_count` aumentam o tamanho do payload, porque cada opcao retorna um `SimulationResult` completo.
+Valores altos de `beam_width` aumentam o espaco explorado e o tempo de processamento. Valores altos de `option_count` aumentam o tamanho do payload, porque cada recomendacao retorna um `SimulationResult` completo.
 
-O `beam` nao usa `budget_limit` nem `deadline_limit` para decidir quais estados continuam vivos. Esses limites sao aplicados na saida final para marcar viabilidade, calcular violacoes e ordenar as opcoes recomendadas.
+O `beam` usa `budget_limit` e `deadline_limit` como preferencia de poda parcial: se houver estados ainda dentro dos limites, eles sao preservados antes dos estados que ja violaram budget ou deadline. Na saida final, esses limites tambem marcam viabilidade, calculam violacoes e ordenam as recomendacoes.
 
 ### Score parcial
 
@@ -143,17 +143,17 @@ partialScore =
 
 Estados com menor `PartialScore` sao preferidos. Em empate, o algoritmo prefere menor `PartialMakespan` e depois menor `PartialBudgetUsed`.
 
-## Saida do otimizador
+## Saida do otimizador como recomendacao
 
-Depois que todos os estados finais sao construidos, `buildOptions` converte cada estado em uma opcao completa de escalonamento:
+Depois que todos os estados finais sao construidos, `buildOptions` converte cada estado em um item completo de recomendacao de escalonamento:
 
 - monta um `SimulationResult`;
 - calcula budget usado e makespan;
 - marca violacao de budget e deadline;
 - calcula `WeightedScore`;
-- ordena opcoes viaveis antes das inviaveis;
-- recomenda a melhor opcao por viabilidade/violacao/desempenho;
-- usa diversidade para preencher as opcoes seguintes sem tirar a melhor opcao da primeira posicao.
+- ordena itens viaveis antes dos inviaveis;
+- recomenda o melhor item por viabilidade, violacao, objetivo e desempenho;
+- usa diversidade para preencher as recomendacoes seguintes sem tirar o melhor item da primeira posicao.
 
 ```mermaid
 flowchart LR
@@ -162,15 +162,15 @@ flowchart LR
     C --> D[Calcula budget/deadline]
     D --> E[Marca viabilidade e violacoes]
     E --> F[Ordena viaveis antes das inviaveis]
-    F --> G[Seleciona option-1 recomendada]
-    G --> H[Preenche demais opcoes com diversidade]
+    F --> G[Seleciona Recommendation #1]
+    G --> H[Preenche demais recomendacoes com diversidade]
 ```
 
 ## Diferenca entre escalonador guloso e beam search
 
 O escalonador guloso (`scheduleWorkflow`) escolhe o melhor candidato local para cada tarefa e segue em frente. Ele e simples e rapido, mas uma escolha boa agora pode bloquear uma combinacao melhor depois.
 
-O beam search (`optimizeSchedule`) mantem varias possibilidades vivas. Isso permite comparar caminhos diferentes de alocacao no DAG, respeitando precedencia, custo, disponibilidade dos cores, overhead de boot, transferencia de dados e interferencia.
+O beam search (`optimizeSchedule`) mantem varias possibilidades vivas. Isso permite comparar caminhos diferentes de alocacao no DAG, respeitando precedencia, custo, disponibilidade dos cores, overhead de boot, transferencia de dados e interferencia. Na interface, esses caminhos finais aparecem como itens recomendados de escalonamento.
 
 ```mermaid
 flowchart LR
@@ -180,7 +180,7 @@ flowchart LR
     D --> E[Segue com apenas 1 caminho]
     C --> F[Mantem varios candidatos]
     F --> G[Poda os menos promissores]
-    G --> H[Retorna varias opcoes finais]
+    G --> H[Retorna varias recomendacoes finais]
 ```
 
 ## Como ler na interface
@@ -191,17 +191,21 @@ flowchart LR
 - **Pairwise**: mostra interferencias entre tarefas colocalizadas.
 - **Machines**: mostra distribuicao de tarefas por recurso.
 - **Variables**: mostra as variaveis calculadas para tempo, custo, interferencia e scheduler.
+- **Recommended schedules**: mostra os itens recomendados. `Recommendation #1` e o escalonamento sugerido; os demais itens sao alternativas para comparar custo, tempo, violacoes e uso de maquinas.
 
-Essa estrutura ajuda a enxergar o algoritmo em tres camadas: o DAG define o que pode executar, a avaliacao de candidatos define onde cada tarefa poderia executar, e o beam search decide quais caminhos completos valem continuar ate virar uma opcao final.
+Essa estrutura ajuda a enxergar o algoritmo em tres camadas: o DAG define o que pode executar, a avaliacao de candidatos define onde cada tarefa poderia executar, e o beam search decide quais caminhos completos valem continuar ate virar uma recomendacao final.
 
 ## Animacao explicativa
 
-Para fechar a visao, existe uma animacao local em [beam-search-animation.html](beam-search-animation.html). Ela usa um exemplo Montage com `N = 100` atividades e mostra o algoritmo em cinco quadros:
+Para fechar a visao, existe uma animacao local em [beam-search-animation.html](beam-search-animation.html). Ela e uma cena unica, quase sem texto explicativo, focada na arvore do beam search e mostra o algoritmo como um sistema de recomendacao em oito quadros:
 
-- o workflow como DAG;
-- a liberacao das primeiras tarefas pela ordem topologica;
-- a expansao de candidatos por recurso/core;
-- a poda do beam sem aplicar limites finais de budget/deadline;
-- a conversao dos estados finais em opcoes recomendadas.
+- varias raizes/frentes objetivas;
+- expansao dos candidatos por tarefa;
+- janela de `beam_width`;
+- escolha dos melhores estados do beam;
+- poda dos estados que nao continuam vivos;
+- expansao dos estados preservados;
+- conversao dos estados finais em recomendacoes;
+- destaque do caminho selecionado como `Recommendation #1`.
 
-Abra o arquivo no navegador ou incorpore no Hyperframe como um frame HTML. A animacao nao usa dependencias externas.
+Abra o arquivo no navegador ou incorpore no Hyperframe como um frame HTML. A animacao nao usa dependencias externas. Para gravar um GIF, use a URL com `?clean=1&autoplay=1`, que esconde os controles e inicia a animacao automaticamente.

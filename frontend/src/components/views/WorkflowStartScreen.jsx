@@ -5,6 +5,8 @@ import SlaPolicySection from './SlaPolicySection.jsx';
 import WorkflowSourceSection from './WorkflowSourceSection.jsx';
 
 export default function WorkflowStartScreen({ controller }) {
+  const usingExperimentScenario = Boolean(controller.request.experiment_scenario_id);
+  const workflowSourceLabel = usingExperimentScenario ? "Montage C3D experiment" : controller.workflowMode === "yaml" ? "YAML import" : "Synthetic random";
   return (
     <div className="steps-view">
       <section className="data-section start-screen">
@@ -16,15 +18,15 @@ export default function WorkflowStartScreen({ controller }) {
         <WorkflowSourceSection controller={controller} />
         <ResourcesSection controller={controller} />
         <SlaPolicySection controller={controller} />
-        <button className="primary-button setup-submit" onClick={controller.generateWorkflowAndMatrices} disabled={controller.status === "running" || (controller.workflowMode === "yaml" && !controller.workflowYaml)}>
+        <button className="primary-button setup-submit" onClick={controller.generateWorkflowAndMatrices} disabled={controller.status === "running" || (!usingExperimentScenario && controller.workflowMode === "yaml" && !controller.workflowYaml)}>
           <Play size={17} />
-          {controller.workflowMode === "yaml" ? "Import workflow" : "Generate workflow"}
+          {!usingExperimentScenario && controller.workflowMode === "yaml" ? "Import workflow" : "Generate workflow"}
         </button>
         {controller.statusMessage && <p className={controller.status === "error" ? "status-message error" : "status-message"}>{controller.statusMessage}</p>}
       </section>
       <div className="stats-grid">
-        <Metric label="Workflow source" value={controller.workflowMode === "yaml" ? "YAML import" : "Synthetic random"} />
-        <Metric label="YAML file" value={controller.workflowFileName || "-"} />
+        <Metric label="Workflow source" value={workflowSourceLabel} />
+        <Metric label="YAML file" value={usingExperimentScenario ? "Not required" : controller.workflowFileName || "-"} />
       </div>
     </div>
   );

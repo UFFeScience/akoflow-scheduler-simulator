@@ -435,6 +435,8 @@ func buildOptions(generated GeneratedSimulation, states []beamState, optionCount
 	for i := range ranked {
 		ranked[i].Rank = i + 1
 		ranked[i].ID = fmt.Sprintf("option-%d", i+1)
+		ranked[i].ScenarioID = fmt.Sprintf("scenario-%d", i+1)
+		ranked[i].ScenarioName = fmt.Sprintf("Scenario #%d", i+1)
 		ranked[i].Recommended = i == 0
 	}
 	return ranked

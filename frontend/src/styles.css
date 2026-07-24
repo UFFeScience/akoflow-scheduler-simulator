@@ -959,6 +959,42 @@ h2 {
   border-radius: var(--radius-base);
 }
 
+.gantt-toolbar-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.segmented-control {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-base);
+  background: var(--bg-tertiary);
+}
+
+.segmented-control button {
+  min-height: 34px;
+  padding: 0 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+.segmented-control button:last-child {
+  border-right: 0;
+}
+
+.segmented-control button.active {
+  color: #ffffff;
+  background: var(--accent-primary);
+}
+
 .gantt-checks {
   display: flex;
   flex-wrap: wrap;

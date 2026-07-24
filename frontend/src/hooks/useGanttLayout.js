@@ -5,7 +5,9 @@ import { resourceColors } from '../lib/colors.js';
 export function useGanttLayout(result) {
   const [visibleTiming, setVisibleTiming] = useState({ interference: false, container: false, boot: false, transfer: false, stopped: true });
   const [showDependencies, setShowDependencies] = useState(true);
+  const [laneMode, setLaneMode] = useState("compact");
   const stopIntervals = result.machine_stop_intervals || [];
+  const usedCoreIds = new Set(result.assignments.map((assignment) => assignment.core_id));
   const maxVisibleFinish = result.assignments.reduce((maxValue, item) => {
     const baseRuntime = result.matrices.et_0[item.task_id]?.[item.resource_id] ?? item.effective_runtime;
     const interferenceRuntime = Math.max(0, item.effective_runtime - baseRuntime);
@@ -34,15 +36,19 @@ export function useGanttLayout(result) {
   let currentY = 0;
 
   for (const resource of result.resources) {
-    machinePositions.push({ resource, y: currentY });
-    for (const core of resource.cores) {
+    const visibleCores = laneMode === "compact" ? resource.cores.filter((core) => usedCoreIds.has(core.id)) : resource.cores;
+    if (visibleCores.length === 0) {
+      continue;
+    }
+    machinePositions.push({ resource, cores: visibleCores, y: currentY });
+    for (const [visibleIndex, core] of visibleCores.entries()) {
       lanePositions[core.id] = {
-        y: currentY + machineBorder + machineHeaderHeight + coresPaddingTop + core.index * (laneTrackHeight + coreGap),
+        y: currentY + machineBorder + machineHeaderHeight + coresPaddingTop + visibleIndex * (laneTrackHeight + coreGap),
         resourceId: resource.id,
       };
     }
     currentY += machineBorder * 2 + machineHeaderHeight + coresPaddingTop + coresPaddingBottom
-      + resource.cores.length * laneTrackHeight + Math.max(0, resource.cores.length - 1) * coreGap + machineGap;
+      + visibleCores.length * laneTrackHeight + Math.max(0, visibleCores.length - 1) * coreGap + machineGap;
   }
 
   function assignmentLayout(item) {
@@ -59,6 +65,7 @@ export function useGanttLayout(result) {
   return {
     visibleTiming,
     showDependencies,
+    laneMode,
     stopIntervals,
     timelineOrigin,
     timelineWidth,
@@ -71,5 +78,6 @@ export function useGanttLayout(result) {
     assignmentLayoutByTask: Object.fromEntries(result.assignments.map((assignment) => [assignment.task_id, assignmentLayout(assignment)])),
     toggleTiming: (key) => setVisibleTiming((current) => ({ ...current, [key]: !current[key] })),
     toggleDependencies: () => setShowDependencies((current) => !current),
+    setLaneMode,
   };
 }

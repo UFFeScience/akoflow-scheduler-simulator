@@ -19,6 +19,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /api/presets", presetsHandler)
+	mux.HandleFunc("GET /api/experiment-scenarios", experimentScenariosHandler)
 	mux.HandleFunc("GET /api/schema", schemaHandler)
 	mux.HandleFunc("POST /api/simulations/generate-only", generateOnlyHandler)
 	mux.HandleFunc("POST /api/simulations/run", runSimulationHandler)
@@ -60,6 +61,15 @@ func presetsHandler(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"presets": presets})
 }
 
+func experimentScenariosHandler(w http.ResponseWriter, _ *http.Request) {
+	scenarios, err := experimentScenarios()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"scenarios": scenarios})
+}
+
 func schemaHandler(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"openapi": "3.1.0",
@@ -67,6 +77,7 @@ func schemaHandler(w http.ResponseWriter, _ *http.Request) {
 		"paths": map[string]any{
 			"/health":                        map[string]any{"get": map[string]string{"summary": "Health"}},
 			"/api/presets":                   map[string]any{"get": map[string]string{"summary": "Presets"}},
+			"/api/experiment-scenarios":      map[string]any{"get": map[string]string{"summary": "Experiment scenarios"}},
 			"/api/schema":                    map[string]any{"get": map[string]string{"summary": "Schema"}},
 			"/api/simulations/generate-only": map[string]any{"post": map[string]string{"summary": "Generate simulation"}},
 			"/api/simulations/run":           map[string]any{"post": map[string]string{"summary": "Run simulation"}},
