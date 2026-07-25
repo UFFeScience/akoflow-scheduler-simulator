@@ -12,6 +12,7 @@ import (
 const (
 	machineSimulatorsCSV = "machine_simulators.csv"
 	montageRuntimesCSV   = "montage_c3d_standard_16_runtimes.csv"
+	montageWorkflowYAML  = "wf-montage-050d-gcp.yaml"
 )
 
 type ExperimentScenario struct {
@@ -22,17 +23,20 @@ type ExperimentScenario struct {
 }
 
 type experimentMachineRow struct {
-	ScenarioID  string
-	Homogeneity string
-	MachineID   string
-	Kind        string
-	Provider    string
-	MachineType string
-	Cores       int
-	MemoryGB    float64
-	Bandwidth   float64
-	Location    string
-	Speedup     float64
+	ScenarioID           string
+	Homogeneity          string
+	MachineID            string
+	Kind                 string
+	Provider             string
+	MachineType          string
+	Cores                int
+	MemoryGB             float64
+	Bandwidth            float64
+	Location             string
+	Speedup              float64
+	PricePerHourUSD      float64
+	NetworkPricePerGBUSD float64
+	PricingModel         string
 }
 
 type montageRuntimeRow struct {
@@ -70,6 +74,7 @@ func experimentScenarioResources(scenarioID string) ([]ResourceSpec, error) {
 		specs = append(specs, ResourceSpec{
 			ID: row.MachineID, Name: name, Kind: row.Kind, Cores: row.Cores,
 			Memory: row.MemoryGB, Bandwidth: bandwidth, BootOverhead: boot, Location: row.Location, Speedup: row.Speedup,
+			PricePerHourUSD: row.PricePerHourUSD, NetworkPricePerGBUSD: row.NetworkPricePerGBUSD, PricingModel: row.PricingModel,
 		})
 	}
 	if len(specs) == 0 {
@@ -123,6 +128,9 @@ func applyMontageExperimentRuntimes(workflow *Workflow) error {
 			task.Label = row.ActivityID
 			continue
 		}
+		if len(workflow.Tasks) == len(rows) {
+			return fmt.Errorf("runtime missing for Montage activity %s", task.ID)
+		}
 		stage := normalizeStage(task.WorkflowStage)
 		values := runtimesByStage[stage]
 		if len(values) == 0 {
@@ -132,7 +140,29 @@ func applyMontageExperimentRuntimes(workflow *Workflow) error {
 		task.BaseRuntime = round(values[index], 3)
 		stageCursor[stage]++
 	}
+	if len(workflow.Tasks) == len(rows) {
+		seen := map[string]bool{}
+		for _, task := range workflow.Tasks {
+			seen[task.ID] = true
+		}
+		for _, row := range rows {
+			if !seen[row.ActivityID] {
+				return fmt.Errorf("runtime activity %s is absent from the Montage workflow", row.ActivityID)
+			}
+		}
+	}
 	return nil
+}
+
+func readExperimentText(name string) (string, error) {
+	for _, base := range []string{"/experiments", "experiments", "../experiments"} {
+		path := filepath.Join(base, name)
+		data, err := os.ReadFile(path)
+		if err == nil {
+			return string(data), nil
+		}
+	}
+	return "", fmt.Errorf("experiment file not found: %s", name)
 }
 
 func readExperimentMachines() ([]experimentMachineRow, error) {
@@ -154,11 +184,23 @@ func readExperimentMachines() ([]experimentMachineRow, error) {
 			return nil, fmt.Errorf("invalid memory_gb on row %d: %w", i+1, err)
 		}
 		bandwidth, _ := strconv.ParseFloat(record[11], 64)
-		speedup, _ := strconv.ParseFloat(record[15], 64)
+		speedup, err := strconv.ParseFloat(record[14], 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid speedup on row %d: %w", i+1, err)
+		}
+		pricePerHour, err := strconv.ParseFloat(record[16], 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid price_per_hour_usd on row %d: %w", i+1, err)
+		}
+		networkPricePerGB, err := strconv.ParseFloat(record[17], 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid network_price_per_gb_usd on row %d: %w", i+1, err)
+		}
 		rows = append(rows, experimentMachineRow{
 			ScenarioID: record[0], Homogeneity: record[1], MachineID: record[2], Kind: record[3],
 			Provider: record[4], MachineType: record[5], Cores: cores, MemoryGB: memory,
 			Bandwidth: bandwidth, Location: record[12], Speedup: speedup,
+			PricePerHourUSD: pricePerHour, NetworkPricePerGBUSD: networkPricePerGB, PricingModel: record[18],
 		})
 	}
 	return rows, nil

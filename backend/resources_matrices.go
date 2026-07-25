@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math/rand"
+	"sort"
 	"strings"
 )
 
@@ -67,10 +68,8 @@ func generateResources(req SimulationRequest) ([]Resource, map[string]map[string
 				return nil, nil, fmt.Errorf("Duplicate resource id: %s", spec.ID)
 			}
 			seen[spec.ID] = true
-			priceMultiplier := 0.0
 			status := "warm"
 			if spec.Kind == "cloud" {
-				priceMultiplier = 1.0
 				status = "cold"
 			}
 			_, stages := stagesForPreset(presets[(index+1)%len(presets)]["id"].(string))
@@ -79,19 +78,17 @@ func generateResources(req SimulationRequest) ([]Resource, map[string]map[string
 			for _, stage := range stages[:cacheCount] {
 				cache = append(cache, strings.ToLower(stage)+":latest")
 			}
-			finPrice := 0.0
-			if spec.Kind == "cloud" {
-				finPrice = round(0.0008+rng.Float64()*0.0052, 5)
-			}
+			finPrice := spec.NetworkPricePerGBUSD / 1024
 			boot := 0.0
 			if spec.Kind == "cloud" {
 				boot = round(spec.BootOverhead, 3)
 			}
 			resources = append(resources, Resource{
 				ID: spec.ID, Name: spec.Name, Kind: spec.Kind, Cores: makeCores(spec.ID, spec.Cores), CPU: float64(spec.Cores),
-				Memory: round(spec.Memory, 2), PricePerCPUSecond: round((0.006+rng.Float64()*0.019)*priceMultiplier, 5),
-				PricePerGBSecond: round((0.001+rng.Float64()*0.005)*priceMultiplier, 5), FinancialNetworkPrice: finPrice,
-				Bandwidth: round(spec.Bandwidth, 2), Location: spec.Location, Status: status, BootOverhead: boot, Speedup: spec.Speedup, ImageCache: cache,
+				Memory: round(spec.Memory, 2), PricePerCPUSecond: spec.PricePerHourUSD / float64(spec.Cores) / 3600,
+				PricePerGBSecond: 0, FinancialNetworkPrice: finPrice,
+				Bandwidth: round(spec.Bandwidth, 2), Location: spec.Location, Status: status, BootOverhead: boot, Speedup: spec.Speedup,
+				PricePerHourUSD: spec.PricePerHourUSD, PricingModel: spec.PricingModel, ImageCache: cache,
 			})
 		}
 	} else {
@@ -160,4 +157,40 @@ func fixedInterferenceValue(dimension, sourceID, targetID string) float64 {
 	hash := fnv.New32a()
 	_, _ = hash.Write([]byte("scheduler-simulator/interference/v1|" + dimension + "|" + sourceID + "|" + targetID))
 	return round(float64(hash.Sum32()%1801)/10000.0, 4)
+}
+
+func applyControlledInterference(generated *GeneratedSimulation, seed int64, rate float64, disabled bool) {
+	taskIDs := make([]string, 0, len(generated.Workflow.Tasks))
+	for _, task := range generated.Workflow.Tasks {
+		taskIDs = append(taskIDs, task.ID)
+	}
+	sort.Strings(taskIDs)
+	selected := []string{}
+	if !disabled {
+		rng := rand.New(rand.NewSource(seed))
+		rng.Shuffle(len(taskIDs), func(i, j int) { taskIDs[i], taskIDs[j] = taskIDs[j], taskIDs[i] })
+		selected = append(selected, taskIDs[:len(taskIDs)/2]...)
+		sort.Strings(selected)
+	}
+	selectedSet := map[string]bool{}
+	for _, id := range selected {
+		selectedSet[id] = true
+	}
+	for resourceID, dimensions := range generated.Matrices.InterferenceIN {
+		for dimension, sources := range dimensions {
+			for sourceID, targets := range sources {
+				for targetID := range targets {
+					value := 0.0
+					if sourceID != targetID && selectedSet[sourceID] && selectedSet[targetID] {
+						value = rate
+					}
+					generated.Matrices.InterferenceIN[resourceID][dimension][sourceID][targetID] = value
+				}
+			}
+		}
+	}
+	generated.Experimental = &ExperimentMetadata{
+		InterferenceSeed:        seed,
+		InterferenceActivityIDs: selected, InterferenceRate: rate, InterferenceDisabled: disabled,
+	}
 }

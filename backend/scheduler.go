@@ -33,7 +33,24 @@ func candidatePairwiseInterference(generated GeneratedSimulation, taskID, resour
 		}
 		pairs = append(pairs, PairwiseInterference{OtherTaskID: otherID, Value: round(sum/float64(max(1, len(dimensions))), 4), Dimensions: dimensions})
 	}
+	if generated.Experimental != nil {
+		return round(total/float64(max(1, len(dimensionsForInterference(generated, resourceID)))), 4), pairs
+	}
 	return round(total/float64(max(1, count)), 4), pairs
+}
+
+func dimensionsForInterference(generated GeneratedSimulation, resourceID string) []string {
+	return sortedKeys4(generated.Matrices.InterferenceIN[resourceID])
+}
+
+func earliestAvailableCore(resource Resource, coreAvail map[string]float64) Core {
+	best := resource.Cores[0]
+	for _, core := range resource.Cores[1:] {
+		if coreAvail[core.ID] < coreAvail[best.ID] || (coreAvail[core.ID] == coreAvail[best.ID] && core.ID < best.ID) {
+			best = core
+		}
+	}
+	return best
 }
 
 func sortedKeys4(m map[string]map[string]map[string]float64) []string {
@@ -81,7 +98,7 @@ func scheduleWorkflow(generated GeneratedSimulation) (SimulationResult, error) {
 				continue
 			}
 			predecessorFloor, transferTotal := predecessorTiming(depsByTarget[task.ID], assignmentByTask, generated, resource.ID)
-			for _, core := range resource.Cores {
+			for _, core := range []Core{earliestAvailableCore(resource, coreAvail)} {
 				readyFloor := maxf(predecessorFloor, coreAvail[core.ID], nodeReady[resource.ID])
 				lastActive := nodeLast[resource.ID]
 				stopBoot := resource.Kind == "cloud" && nodeHasBooted[resource.ID] && resource.BootOverhead > 0 && readyFloor-lastActive >= resource.BootOverhead
@@ -100,9 +117,9 @@ func scheduleWorkflow(generated GeneratedSimulation) (SimulationResult, error) {
 				phi, pairwise := candidatePairwiseInterference(generated, task.ID, resource.ID, assignments, start, start+baseRuntime)
 				effective := round(baseRuntime*(1+phi), 3)
 				finish := round(start+effective, 3)
-				rawCost := effective * (task.CPU*resource.PricePerCPUSecond + task.Memory*resource.PricePerGBSecond)
 				score := ScoreBreakdown{}
 				assignment := Assignment{TaskID: task.ID, ResourceID: resource.ID, CoreID: core.ID, StartTime: start, FinishTime: finish, EffectiveRuntime: effective, TransferDelay: round(transferTotal, 3), BootOverhead: boot, ContainerOverhead: container, PhiN: phi, PredecessorFinishFloor: round(predecessorFloor, 3), Score: score}
+				rawCost := incrementalMachineActiveCost(assignments, assignment, resource)
 				candidate := CandidateEvaluation{TaskID: task.ID, ResourceID: resource.ID, CoreID: core.ID, StartTime: start, FinishTime: finish, BaseRuntime: baseRuntime, EffectiveRuntime: effective, InterferenceTime: round(effective-baseRuntime, 3), TransferDelay: round(transferTotal, 3), BootOverhead: boot, ContainerOverhead: container, PredecessorFinishFloor: round(predecessorFloor, 3), RawCost: round(rawCost, 4), PhiN: phi, PairwiseInterference: pairwise, Score: score}
 				candidates = append(candidates, assignment)
 				evaluations = append(evaluations, candidate)

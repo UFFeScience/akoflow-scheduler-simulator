@@ -193,7 +193,7 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 			predecessor := state.AssignmentByTask[dep.Source]
 			networkCost += dep.DataMB * generated.Matrices.FinancialNetworkCost[predecessor.ResourceID][resource.ID]
 		}
-		for _, core := range resource.Cores {
+		for _, core := range []Core{earliestAvailableCore(resource, state.CoreAvail)} {
 			readyFloor := maxf(predecessorFloor, state.CoreAvail[core.ID], state.NodeReadyTime[resource.ID])
 			stopBoot := resource.Kind == "cloud" && state.NodeHasBooted[resource.ID] && resource.BootOverhead > 0 && readyFloor-state.NodeLastActive[resource.ID] >= resource.BootOverhead
 			coldBoot := !state.NodeHasBooted[resource.ID]
@@ -211,9 +211,9 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 			phi, pairwise := candidatePairwiseInterference(generated, task.ID, resource.ID, state.Assignments, start, start+baseRuntime)
 			effective := round(baseRuntime*(1+phi), 3)
 			finish := round(start+effective, 3)
-			rawCost := effective * (task.CPU*resource.PricePerCPUSecond + task.Memory*resource.PricePerGBSecond)
 			score := ScoreBreakdown{}
 			assignment := Assignment{TaskID: task.ID, ResourceID: resource.ID, CoreID: core.ID, StartTime: start, FinishTime: finish, EffectiveRuntime: effective, TransferDelay: round(transferTotal, 3), BootOverhead: boot, ContainerOverhead: container, PhiN: phi, PredecessorFinishFloor: round(predecessorFloor, 3), Score: score}
+			rawCost := incrementalMachineActiveCost(state.Assignments, assignment, resource)
 			candidate := CandidateEvaluation{TaskID: task.ID, ResourceID: resource.ID, CoreID: core.ID, StartTime: start, FinishTime: finish, BaseRuntime: baseRuntime, EffectiveRuntime: effective, InterferenceTime: round(effective-baseRuntime, 3), TransferDelay: round(transferTotal, 3), BootOverhead: boot, ContainerOverhead: container, PredecessorFinishFloor: round(predecessorFloor, 3), RawCost: round(rawCost, 4), PhiN: phi, PairwiseInterference: pairwise, Score: score}
 			rows = append(rows, candidateRow{assignment: assignment, candidate: candidate, finish: finish, rawCost: rawCost, phi: phi, incBudget: rawCost + networkCost})
 		}

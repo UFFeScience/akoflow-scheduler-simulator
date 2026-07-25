@@ -15,6 +15,11 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 		req.ResourceSpecs = specs
 		req.ClusterMachines = 1
 		req.CloudMachines = 0
+		workflowYAML, err := readExperimentText(montageWorkflowYAML)
+		if err != nil {
+			return GeneratedSimulation{}, err
+		}
+		req.WorkflowYAML = &workflowYAML
 	}
 	workflow, err := generateWorkflow(req)
 	if err != nil {

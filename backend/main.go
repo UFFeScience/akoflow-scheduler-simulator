@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -16,6 +17,20 @@ type errorResponse struct {
 var simulations = map[string]SimulationResult{}
 
 func main() {
+	experimentOutput := flag.String("experiment-output", "", "run the complete experimental protocol and write CSV results to this directory")
+	experimentRepetitions := flag.Int("experiment-repetitions", 30, "number of paired interference seeds")
+	experimentBeamWidth := flag.Int("experiment-beam-width", minBeamWidth, "beam width used by the experimental protocol")
+	flag.Parse()
+	if *experimentOutput != "" {
+		if err := runExperimentalProtocol(ExperimentRunOptions{
+			OutputDirectory: *experimentOutput, Repetitions: *experimentRepetitions,
+			StructuralSeed: 42, BeamWidth: *experimentBeamWidth,
+		}); err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("experimental results written to %s", *experimentOutput)
+		return
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /api/presets", presetsHandler)

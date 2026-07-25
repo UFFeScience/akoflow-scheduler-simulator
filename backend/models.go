@@ -1,15 +1,18 @@
 package main
 
 type ResourceSpec struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	Kind         string  `json:"kind"`
-	Cores        int     `json:"cores"`
-	Memory       float64 `json:"memory"`
-	Bandwidth    float64 `json:"bandwidth"`
-	BootOverhead float64 `json:"boot_overhead"`
-	Location     string  `json:"location"`
-	Speedup      float64 `json:"speedup,omitempty"`
+	ID                   string  `json:"id"`
+	Name                 string  `json:"name"`
+	Kind                 string  `json:"kind"`
+	Cores                int     `json:"cores"`
+	Memory               float64 `json:"memory"`
+	Bandwidth            float64 `json:"bandwidth"`
+	BootOverhead         float64 `json:"boot_overhead"`
+	Location             string  `json:"location"`
+	Speedup              float64 `json:"speedup,omitempty"`
+	PricePerHourUSD      float64 `json:"price_per_hour_usd"`
+	NetworkPricePerGBUSD float64 `json:"network_price_per_gb_usd"`
+	PricingModel         string  `json:"pricing_model,omitempty"`
 }
 
 type SimulationRequest struct {
@@ -52,6 +55,8 @@ type Resource struct {
 	Status                string   `json:"status"`
 	BootOverhead          float64  `json:"boot_overhead"`
 	Speedup               float64  `json:"speedup,omitempty"`
+	PricePerHourUSD       float64  `json:"price_per_hour_usd"`
+	PricingModel          string   `json:"pricing_model,omitempty"`
 	ImageCache            []string `json:"image_cache"`
 }
 
@@ -219,12 +224,13 @@ type SchedulerVariables struct {
 }
 
 type GeneratedSimulation struct {
-	ID        string     `json:"id"`
-	Seed      int64      `json:"seed"`
-	Workflow  Workflow   `json:"workflow"`
-	Resources []Resource `json:"resources"`
-	SLA       SLA        `json:"sla"`
-	Matrices  Matrices   `json:"matrices"`
+	ID           string              `json:"id"`
+	Seed         int64               `json:"seed"`
+	Workflow     Workflow            `json:"workflow"`
+	Resources    []Resource          `json:"resources"`
+	SLA          SLA                 `json:"sla"`
+	Matrices     Matrices            `json:"matrices"`
+	Experimental *ExperimentMetadata `json:"experimental,omitempty"`
 }
 
 type SimulationResult struct {
@@ -242,6 +248,16 @@ type SimulationResult struct {
 	CostVariables         CostVariables         `json:"cost_variables"`
 	InterferenceVariables InterferenceVariables `json:"interference_variables"`
 	DeviationVariables    DeviationVariables    `json:"deviation_variables"`
+	Experimental          *ExperimentMetadata   `json:"experimental,omitempty"`
+}
+
+type ExperimentMetadata struct {
+	Algorithm               string   `json:"algorithm"`
+	ScenarioID              string   `json:"scenario_id"`
+	InterferenceSeed        int64    `json:"interference_seed"`
+	InterferenceActivityIDs []string `json:"interference_activity_ids"`
+	InterferenceRate        float64  `json:"interference_rate"`
+	InterferenceDisabled    bool     `json:"interference_disabled"`
 }
 
 type ScheduleConstraints struct {

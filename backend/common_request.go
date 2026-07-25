@@ -109,11 +109,14 @@ func validateRequest(r SimulationRequest) error {
 		if spec.Kind != "cluster" && spec.Kind != "cloud" {
 			return fmt.Errorf("invalid resource kind: %s", spec.Kind)
 		}
-		if spec.Cores < 1 || spec.Cores > 64 {
-			return errors.New("resource cores must be between 1 and 64")
+		if spec.Cores < 1 || spec.Cores > 256 {
+			return errors.New("resource cores must be between 1 and 256")
 		}
 		if spec.Memory <= 0 || spec.Bandwidth <= 0 || spec.BootOverhead < 0 {
 			return errors.New("resource memory and bandwidth must be positive, boot_overhead cannot be negative")
+		}
+		if spec.PricePerHourUSD < 0 || spec.NetworkPricePerGBUSD < 0 {
+			return errors.New("resource prices cannot be negative")
 		}
 	}
 	return nil
