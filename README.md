@@ -98,4 +98,49 @@ notebooks through `docker run --rm`. No host Python installation is required.
 The executed notebooks are stored in `experiments/notebooks`, and the generated
 PNGs plus their Portuguese descriptions are written to
 `experiments/results/figures`.
+
+## Montage DSS 2.0° — 6,448 tasks
+
+The WfCommons `montage-chameleon-dss-20d-001` instance is available as an
+Akoflow-compatible workflow:
+
+- `experiments/wf-montage-chameleon-dss-20d-001.yaml`: 6,448 activities and
+  18,924 exact parent/child dependencies;
+- `experiments/montage_chameleon_dss_20d_001_runtimes.csv`: observed runtimes
+  normalized to the C3D standard 16 reference;
+- `experiments/montage_chameleon_dss_20d_001_dependencies.csv`: transferred
+  files and exact dependency sizes;
+- `experiments/montage_chameleon_dss_20d_001_provenance.json`: source URL,
+  checksum, reference machines, and normalization assumptions.
+
+WfCommons records 48 cores and the observed clock frequency for each Chameleon
+node, but does not publish FLOPS directly. The importer uses the same peak model
+as the existing machine table:
+
+```text
+peak GFLOPS = cores × GHz × 8 FLOP/cycle
+source speedup vs C3D = source peak GFLOPS / 422.4
+ET0 on C3D = observed runtime × source speedup vs C3D
+```
+
+This normalization does not change any machine or speedup in
+`experiments/machine_simulators.csv`.
+
+Regenerate the artifacts with Python through Docker:
+
+```bash
+docker run --rm --user "$(id -u):$(id -g)" \
+  -v "${PWD}:/workspace" -w /workspace \
+  python:3.12-slim \
+  python experiments/scripts/import_wfcommons_montage_dss20.py
+```
+
+Select the large workflow in the experimental runner with:
+
+```text
+-experiment-workflow montage_dss_20d
+```
+
+For 6,448 tasks, controlled interference is represented sparsely and evaluated
+only for actually co-located tasks, avoiding a quadratic in-memory matrix.
 # akoflow-scheduler-simulator

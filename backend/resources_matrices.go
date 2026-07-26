@@ -134,6 +134,15 @@ func makeCores(resourceID string, count int) []Core {
 func generateInterference(req SimulationRequest, workflow Workflow, resources []Resource) map[string]map[string]map[string]map[string]float64 {
 	matrix := map[string]map[string]map[string]map[string]float64{}
 	dimensions := []string{"cpu", "memory", "io", "network"}
+	if len(workflow.Tasks) > 500 {
+		for _, resource := range resources {
+			matrix[resource.ID] = map[string]map[string]map[string]float64{}
+			for _, dimension := range dimensions {
+				matrix[resource.ID][dimension] = map[string]map[string]float64{}
+			}
+		}
+		return matrix
+	}
 	for _, resource := range resources {
 		matrix[resource.ID] = map[string]map[string]map[string]float64{}
 		for _, dimension := range dimensions {
@@ -192,5 +201,6 @@ func applyControlledInterference(generated *GeneratedSimulation, seed int64, rat
 	generated.Experimental = &ExperimentMetadata{
 		InterferenceSeed:        seed,
 		InterferenceActivityIDs: selected, InterferenceRate: rate, InterferenceDisabled: disabled,
+		interferenceActivitySet: selectedSet,
 	}
 }

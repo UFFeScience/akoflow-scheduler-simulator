@@ -210,6 +210,66 @@ func TestPRISMCCUpwardRankOrderRespectsDependencies(t *testing.T) {
 	}
 }
 
+func TestMontageDSS20WorkflowLoadsExactWfCommonsDAGAndNormalizedRuntimes(t *testing.T) {
+	generated, err := generateExperimentSimulationForWorkflow(
+		"cloud_hetero", montageDSS20WorkflowID, 42, 7, false, minBeamWidth,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(generated.Workflow.Tasks) != 6448 {
+		t.Fatalf("expected 6448 DSS 20d tasks, got %d", len(generated.Workflow.Tasks))
+	}
+	if len(generated.Workflow.Dependencies) != 18924 {
+		t.Fatalf("expected 18924 DSS 20d dependencies, got %d", len(generated.Workflow.Dependencies))
+	}
+	if len(generated.Experimental.InterferenceActivityIDs) != 3224 {
+		t.Fatalf("expected 3224 selected interference tasks, got %d", len(generated.Experimental.InterferenceActivityIDs))
+	}
+	roots, leaves := 0, 0
+	for _, task := range generated.Workflow.Tasks {
+		if len(task.Predecessors) == 0 {
+			roots++
+		}
+		if len(task.Successors) == 0 {
+			leaves++
+		}
+		if task.BaseRuntime <= 0 {
+			t.Fatalf("task %s has invalid normalized runtime %v", task.ID, task.BaseRuntime)
+		}
+	}
+	if roots != 192 || leaves != 4 {
+		t.Fatalf("unexpected DSS 20d topology: roots=%d leaves=%d", roots, leaves)
+	}
+	for _, dependency := range generated.Workflow.Dependencies {
+		if dependency.DataMB <= 0 {
+			t.Fatalf("dependency %s -> %s has invalid data size %v", dependency.Source, dependency.Target, dependency.DataMB)
+		}
+	}
+	if len(generated.Matrices.InterferenceIN["h3-standard-88-1"]["cpu"]) != 0 {
+		t.Fatal("large workflow interference matrix must remain sparse")
+	}
+}
+
+func TestClassicHEFTSchedulesMontageDSS20WithoutColocation(t *testing.T) {
+	generated, err := generateExperimentSimulationForWorkflow(
+		"cloud_hetero", montageDSS20WorkflowID, 42, 1, false, minBeamWidth,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := scheduleHEFTClassic(generated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Assignments) != 6448 {
+		t.Fatalf("expected 6448 classic HEFT assignments, got %d", len(result.Assignments))
+	}
+	if result.InterferenceVariables.TotalInterferenceTime != 0 {
+		t.Fatalf("classic HEFT must not activate DSS 20d interference, got %v", result.InterferenceVariables.TotalInterferenceTime)
+	}
+}
+
 func TestExperimentalRunnerWritesOnePairedRepetition(t *testing.T) {
 	output := t.TempDir()
 	if err := runExperimentalProtocol(ExperimentRunOptions{

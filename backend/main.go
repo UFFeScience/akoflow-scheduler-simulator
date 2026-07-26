@@ -21,12 +21,14 @@ func main() {
 	experimentRepetitions := flag.Int("experiment-repetitions", 30, "number of paired interference seeds")
 	experimentBeamWidth := flag.Int("experiment-beam-width", minBeamWidth, "beam width used by the experimental protocol")
 	experimentPRISMCCPriority := flag.String("experiment-prism-priority", "topological_order", "PRISM-CC task priority: topological_order or upward_rank")
+	experimentWorkflow := flag.String("experiment-workflow", "montage_050d", "experiment workflow: montage_050d or montage_dss_20d")
 	flag.Parse()
 	if *experimentOutput != "" {
 		if err := runExperimentalProtocol(ExperimentRunOptions{
 			OutputDirectory: *experimentOutput, Repetitions: *experimentRepetitions,
 			StructuralSeed: 42, BeamWidth: *experimentBeamWidth,
 			PRISMCCPriority: *experimentPRISMCCPriority,
+			WorkflowID:      *experimentWorkflow,
 		}); err != nil {
 			log.Fatal(err)
 		}

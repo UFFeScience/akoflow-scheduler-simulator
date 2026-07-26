@@ -10,9 +10,13 @@ import (
 )
 
 const (
-	machineSimulatorsCSV = "machine_simulators.csv"
-	montageRuntimesCSV   = "montage_c3d_standard_16_runtimes.csv"
-	montageWorkflowYAML  = "wf-montage-050d-gcp.yaml"
+	machineSimulatorsCSV        = "machine_simulators.csv"
+	montageRuntimesCSV          = "montage_c3d_standard_16_runtimes.csv"
+	montageWorkflowYAML         = "wf-montage-050d-gcp.yaml"
+	montageDSS20WorkflowID      = "montage_dss_20d"
+	montageDSS20WorkflowYAML    = "wf-montage-chameleon-dss-20d-001.yaml"
+	montageDSS20RuntimesCSV     = "montage_chameleon_dss_20d_001_runtimes.csv"
+	montageDSS20DependenciesCSV = "montage_chameleon_dss_20d_001_dependencies.csv"
 )
 
 type ExperimentScenario struct {
@@ -43,6 +47,18 @@ type montageRuntimeRow struct {
 	ActivityID string
 	Stage      string
 	ET0Seconds float64
+}
+
+type montageDSS20RuntimeRow struct {
+	ActivityID string
+	Stage      string
+	ET0Seconds float64
+}
+
+type montageDSS20DependencyRow struct {
+	Source string
+	Target string
+	DataMB float64
 }
 
 func experimentScenarioResources(scenarioID string) ([]ResourceSpec, error) {
@@ -154,6 +170,50 @@ func applyMontageExperimentRuntimes(workflow *Workflow) error {
 	return nil
 }
 
+func applyMontageDSS20ExperimentData(workflow *Workflow) error {
+	runtimes, err := readMontageDSS20Runtimes()
+	if err != nil {
+		return err
+	}
+	dependencies, err := readMontageDSS20Dependencies()
+	if err != nil {
+		return err
+	}
+	if len(workflow.Tasks) != len(runtimes) {
+		return fmt.Errorf("Montage DSS 20d task/runtime mismatch: %d tasks, %d runtimes", len(workflow.Tasks), len(runtimes))
+	}
+	runtimeByID := make(map[string]montageDSS20RuntimeRow, len(runtimes))
+	for _, row := range runtimes {
+		runtimeByID[row.ActivityID] = row
+	}
+	for index := range workflow.Tasks {
+		task := &workflow.Tasks[index]
+		row, ok := runtimeByID[task.ID]
+		if !ok {
+			return fmt.Errorf("runtime missing for Montage DSS 20d activity %s", task.ID)
+		}
+		task.BaseRuntime = round(row.ET0Seconds, 6)
+		task.WorkflowStage = row.Stage
+		task.Label = row.ActivityID
+	}
+	dataByEdge := make(map[string]float64, len(dependencies))
+	for _, row := range dependencies {
+		dataByEdge[row.Source+"\x00"+row.Target] = row.DataMB
+	}
+	if len(workflow.Dependencies) != len(dependencies) {
+		return fmt.Errorf("Montage DSS 20d edge mismatch: %d YAML edges, %d data edges", len(workflow.Dependencies), len(dependencies))
+	}
+	for index := range workflow.Dependencies {
+		dependency := &workflow.Dependencies[index]
+		dataMB, ok := dataByEdge[dependency.Source+"\x00"+dependency.Target]
+		if !ok {
+			return fmt.Errorf("data dependency missing for %s -> %s", dependency.Source, dependency.Target)
+		}
+		dependency.DataMB = round(dataMB, 9)
+	}
+	return nil
+}
+
 func readExperimentText(name string) (string, error) {
 	for _, base := range []string{"/experiments", "experiments", "../experiments"} {
 		path := filepath.Join(base, name)
@@ -221,6 +281,44 @@ func readMontageRuntimes() ([]montageRuntimeRow, error) {
 			return nil, fmt.Errorf("invalid et0_seconds on row %d: %w", i+1, err)
 		}
 		rows = append(rows, montageRuntimeRow{ActivityID: record[0], Stage: record[1], ET0Seconds: et0})
+	}
+	return rows, nil
+}
+
+func readMontageDSS20Runtimes() ([]montageDSS20RuntimeRow, error) {
+	records, err := readExperimentCSV(montageDSS20RuntimesCSV)
+	if err != nil {
+		return nil, err
+	}
+	rows := make([]montageDSS20RuntimeRow, 0, len(records)-1)
+	for i, record := range records {
+		if i == 0 {
+			continue
+		}
+		et0, err := strconv.ParseFloat(record[9], 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid DSS 20d et0_c3d_seconds on row %d: %w", i+1, err)
+		}
+		rows = append(rows, montageDSS20RuntimeRow{ActivityID: record[0], Stage: record[1], ET0Seconds: et0})
+	}
+	return rows, nil
+}
+
+func readMontageDSS20Dependencies() ([]montageDSS20DependencyRow, error) {
+	records, err := readExperimentCSV(montageDSS20DependenciesCSV)
+	if err != nil {
+		return nil, err
+	}
+	rows := make([]montageDSS20DependencyRow, 0, len(records)-1)
+	for i, record := range records {
+		if i == 0 {
+			continue
+		}
+		dataMB, err := strconv.ParseFloat(record[2], 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid DSS 20d data_mb on row %d: %w", i+1, err)
+		}
+		rows = append(rows, montageDSS20DependencyRow{Source: record[0], Target: record[1], DataMB: dataMB})
 	}
 	return rows, nil
 }

@@ -18,6 +18,7 @@ type ResourceSpec struct {
 type SimulationRequest struct {
 	Preset               string         `json:"preset"`
 	ExperimentScenarioID string         `json:"experiment_scenario_id"`
+	ExperimentWorkflowID string         `json:"experiment_workflow_id,omitempty"`
 	Seed                 int64          `json:"seed"`
 	TaskCount            int            `json:"task_count"`
 	EdgeDensity          float64        `json:"edge_density"`
@@ -259,6 +260,7 @@ type ExperimentMetadata struct {
 	InterferenceActivityIDs []string `json:"interference_activity_ids"`
 	InterferenceRate        float64  `json:"interference_rate"`
 	InterferenceDisabled    bool     `json:"interference_disabled"`
+	interferenceActivitySet map[string]bool
 }
 
 type ScheduleConstraints struct {

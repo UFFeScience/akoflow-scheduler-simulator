@@ -31,6 +31,7 @@ type ExperimentRunOptions struct {
 	StructuralSeed  int64
 	BeamWidth       int
 	PRISMCCPriority string
+	WorkflowID      string
 }
 
 type ExperimentRecord struct {
@@ -58,6 +59,8 @@ type ExperimentManifest struct {
 	InterferenceSeeds  []int64  `json:"interference_seeds"`
 	Scenarios          []string `json:"scenarios"`
 	Algorithms         []string `json:"algorithms"`
+	WorkflowID         string   `json:"workflow_id"`
+	TaskCount          int      `json:"task_count"`
 	InterferenceRate   float64  `json:"interference_rate"`
 	SelectedActivities int      `json:"selected_activities"`
 	BudgetLimit        float64  `json:"budget_limit"`
@@ -81,6 +84,12 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	}
 	if options.PRISMCCPriority == "" {
 		options.PRISMCCPriority = "topological_order"
+	}
+	if options.WorkflowID == "" {
+		options.WorkflowID = "montage_050d"
+	}
+	if options.WorkflowID != "montage_050d" && options.WorkflowID != montageDSS20WorkflowID {
+		return fmt.Errorf("unsupported experiment workflow %q", options.WorkflowID)
 	}
 	if options.PRISMCCPriority != "topological_order" && options.PRISMCCPriority != "upward_rank" {
 		return fmt.Errorf("unsupported PRISM-CC priority policy %q", options.PRISMCCPriority)
@@ -110,7 +119,9 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		interferenceSeed := int64(repetition)
 		seeds = append(seeds, interferenceSeed)
 		for _, scenarioID := range experimentScenarioIDs {
-			heftGenerated, generationErr := generateExperimentSimulation(scenarioID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth)
+			heftGenerated, generationErr := generateExperimentSimulationForWorkflow(
+				scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth,
+			)
 			if generationErr != nil {
 				return fmt.Errorf("%s seed %d HEFT generation: %w", scenarioID, interferenceSeed, generationErr)
 			}
@@ -131,6 +142,10 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 
 	deadlineLimit := mean(heftMakespans)
 	budgetLimit := mean(heftBudgets)
+	taskCount := 0
+	if len(heftRuns) > 0 {
+		taskCount = len(heftRuns[0].result.Workflow.Tasks)
+	}
 	for _, heftRun := range heftRuns {
 		records = append(records, experimentRecordFromResult(
 			heftRun.result, "heft_classic", heftRun.scenarioID, heftRun.interferenceSeed,
@@ -143,7 +158,9 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		interferenceSeed := int64(repetition)
 		for _, scenarioID := range experimentScenarioIDs {
 			for _, algorithm := range []string{"prism_cc_time", "prism_cc_cost"} {
-				generated, generationErr := generateExperimentSimulation(scenarioID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth)
+				generated, generationErr := generateExperimentSimulationForWorkflow(
+					scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth,
+				)
 				if generationErr != nil {
 					return fmt.Errorf("%s seed %d generation: %w", scenarioID, interferenceSeed, generationErr)
 				}
@@ -189,7 +206,8 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	manifest := ExperimentManifest{
 		GeneratedAt: time.Now().UTC().Format(time.RFC3339), StructuralSeed: options.StructuralSeed,
 		InterferenceSeeds: seeds, Scenarios: experimentScenarioIDs, Algorithms: experimentAlgorithms,
-		InterferenceRate: 0.20, SelectedActivities: 29,
+		WorkflowID: options.WorkflowID, TaskCount: taskCount,
+		InterferenceRate: 0.20, SelectedActivities: taskCount / 2,
 		BudgetLimit: budgetLimit, DeadlineLimit: deadlineLimit,
 		ReferencePolicy: "Global classic HEFT mean: deadline is the mean makespan and budget is the mean cost across all classic HEFT scenario/seed executions",
 		Calibration:     "Global mean of all classic HEFT runs, without margin",
@@ -200,11 +218,21 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 }
 
 func generateExperimentSimulation(scenarioID string, structuralSeed, interferenceSeed int64, disabled bool, beamWidth int) (GeneratedSimulation, error) {
+	return generateExperimentSimulationForWorkflow(
+		scenarioID, "montage_050d", structuralSeed, interferenceSeed, disabled, beamWidth,
+	)
+}
+
+func generateExperimentSimulationForWorkflow(scenarioID, workflowID string, structuralSeed, interferenceSeed int64, disabled bool, beamWidth int) (GeneratedSimulation, error) {
 	req := defaultRequest()
 	req.Preset = "Montage"
 	req.ExperimentScenarioID = scenarioID
+	req.ExperimentWorkflowID = workflowID
 	req.Seed = structuralSeed
 	req.TaskCount = 58
+	if workflowID == montageDSS20WorkflowID {
+		req.TaskCount = 6448
+	}
 	req.OptionCount = 1
 	req.BeamWidth = beamWidth
 	generated, err := generateSimulation(req)

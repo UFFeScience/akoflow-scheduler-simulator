@@ -1,0 +1,48 @@
+{
+  "source_url": "https://raw.githubusercontent.com/wfcommons/WfInstances/main/pegasus/montage/montage-chameleon-dss-20d-001.json",
+  "source_sha256": "89e67c57f8129f35a4ea17710dd0d751dc124e900aee6dd649ae1633208e32fa",
+  "source_schema_version": "1.5",
+  "workflow_name": "montage-0",
+  "task_count": 6448,
+  "dependency_count": 18924,
+  "file_count": 7041,
+  "observed_makespan_seconds": 13298.0,
+  "normalization": {
+    "formula": "peak_gflops = cores * GHz * 8 FLOP/cycle",
+    "flops_per_cycle": 8.0,
+    "c3d_standard_16_reference_gflops": 422.4,
+    "et0_formula": "observed_runtime_seconds * source_peak_gflops / 422.4"
+  },
+  "machines": [
+    {
+      "node_name": "compute-3",
+      "cores": 48,
+      "speed_mhz": 2600,
+      "peak_gflops": 998.4
+    },
+    {
+      "node_name": "compute-4",
+      "cores": 48,
+      "speed_mhz": 1200,
+      "peak_gflops": 460.8
+    },
+    {
+      "node_name": "compute-5",
+      "cores": 48,
+      "speed_mhz": 1200,
+      "peak_gflops": 460.8
+    },
+    {
+      "node_name": "compute-6",
+      "cores": 48,
+      "speed_mhz": 1480,
+      "peak_gflops": 568.32
+    },
+    {
+      "node_name": "compute-7",
+      "cores": 48,
+      "speed_mhz": 1200,
+      "peak_gflops": 460.8
+    }
+  ]
+}

@@ -15,7 +15,11 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 		req.ResourceSpecs = specs
 		req.ClusterMachines = 1
 		req.CloudMachines = 0
-		workflowYAML, err := readExperimentText(montageWorkflowYAML)
+		workflowFile := montageWorkflowYAML
+		if req.ExperimentWorkflowID == montageDSS20WorkflowID {
+			workflowFile = montageDSS20WorkflowYAML
+		}
+		workflowYAML, err := readExperimentText(workflowFile)
 		if err != nil {
 			return GeneratedSimulation{}, err
 		}
@@ -26,8 +30,14 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 		return GeneratedSimulation{}, err
 	}
 	if req.ExperimentScenarioID != "" && strings.EqualFold(req.Preset, "Montage") {
-		if err := applyMontageExperimentRuntimes(&workflow); err != nil {
-			return GeneratedSimulation{}, err
+		var runtimeErr error
+		if req.ExperimentWorkflowID == montageDSS20WorkflowID {
+			runtimeErr = applyMontageDSS20ExperimentData(&workflow)
+		} else {
+			runtimeErr = applyMontageExperimentRuntimes(&workflow)
+		}
+		if runtimeErr != nil {
+			return GeneratedSimulation{}, runtimeErr
 		}
 	}
 	resources, bandwidth, err := generateResources(req)

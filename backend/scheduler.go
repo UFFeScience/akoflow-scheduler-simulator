@@ -7,6 +7,26 @@ import (
 )
 
 func candidatePairwiseInterference(generated GeneratedSimulation, taskID, resourceID string, scheduled []Assignment, start, finish float64) (float64, []PairwiseInterference) {
+	if generated.Experimental != nil {
+		metadata := generated.Experimental
+		if metadata.InterferenceDisabled || !metadata.interferenceActivitySet[taskID] {
+			return 0, []PairwiseInterference{}
+		}
+		pairs := []PairwiseInterference{}
+		for _, item := range scheduled {
+			if item.ResourceID != resourceID || !metadata.interferenceActivitySet[item.TaskID] {
+				continue
+			}
+			if maxf(start, item.StartTime) >= minf(finish, item.FinishTime) {
+				continue
+			}
+			pairs = append(pairs, PairwiseInterference{
+				OtherTaskID: item.TaskID, Value: metadata.InterferenceRate,
+				Dimensions: map[string]float64{"controlled": metadata.InterferenceRate},
+			})
+		}
+		return round(float64(len(pairs))*metadata.InterferenceRate, 4), pairs
+	}
 	colocated := []string{}
 	for _, item := range scheduled {
 		if item.ResourceID == resourceID && maxf(start, item.StartTime) < minf(finish, item.FinishTime) {
@@ -32,9 +52,6 @@ func candidatePairwiseInterference(generated GeneratedSimulation, taskID, resour
 			sum += value
 		}
 		pairs = append(pairs, PairwiseInterference{OtherTaskID: otherID, Value: round(sum/float64(max(1, len(dimensions))), 4), Dimensions: dimensions})
-	}
-	if generated.Experimental != nil {
-		return round(total/float64(max(1, len(dimensionsForInterference(generated, resourceID)))), 4), pairs
 	}
 	return round(total/float64(max(1, count)), 4), pairs
 }
@@ -271,27 +288,19 @@ func updateNodeState(selected Assignment, resource Resource, hasBooted map[strin
 }
 
 func topologicalOrder(generated GeneratedSimulation) ([]string, error) {
-	remaining := map[string]bool{}
-	predecessors := map[string]map[string]bool{}
+	indegree := map[string]int{}
+	successors := map[string][]string{}
 	for _, task := range generated.Workflow.Tasks {
-		remaining[task.ID] = true
-		predecessors[task.ID] = map[string]bool{}
-		for _, pred := range task.Predecessors {
-			predecessors[task.ID][pred] = true
+		indegree[task.ID] = len(task.Predecessors)
+		for _, predecessor := range task.Predecessors {
+			successors[predecessor] = append(successors[predecessor], task.ID)
 		}
 	}
-	order := []string{}
-	for len(remaining) > 0 {
+	order := make([]string, 0, len(generated.Workflow.Tasks))
+	for len(order) < len(generated.Workflow.Tasks) {
 		ready := []string{}
-		for taskID := range remaining {
-			ok := true
-			for pred := range predecessors[taskID] {
-				if !containsString(order, pred) {
-					ok = false
-					break
-				}
-			}
-			if ok {
+		for taskID, degree := range indegree {
+			if degree == 0 {
 				ready = append(ready, taskID)
 			}
 		}
@@ -301,17 +310,11 @@ func topologicalOrder(generated GeneratedSimulation) ([]string, error) {
 		sort.Strings(ready)
 		for _, taskID := range ready {
 			order = append(order, taskID)
-			delete(remaining, taskID)
+			delete(indegree, taskID)
+			for _, successor := range successors[taskID] {
+				indegree[successor]--
+			}
 		}
 	}
 	return order, nil
-}
-
-func containsString(values []string, needle string) bool {
-	for _, value := range values {
-		if value == needle {
-			return true
-		}
-	}
-	return false
 }

@@ -64,8 +64,17 @@ func validateRequest(r SimulationRequest) error {
 			return err
 		}
 	}
-	if r.TaskCount < 3 || r.TaskCount > 100 {
-		return errors.New("task_count must be between 3 and 100")
+	if r.ExperimentWorkflowID != "" &&
+		r.ExperimentWorkflowID != "montage_050d" &&
+		r.ExperimentWorkflowID != montageDSS20WorkflowID {
+		return fmt.Errorf("unsupported experiment workflow: %s", r.ExperimentWorkflowID)
+	}
+	maxTaskCount := 100
+	if r.ExperimentWorkflowID == montageDSS20WorkflowID {
+		maxTaskCount = 6448
+	}
+	if r.TaskCount < 3 || r.TaskCount > maxTaskCount {
+		return fmt.Errorf("task_count must be between 3 and %d", maxTaskCount)
 	}
 	if r.EdgeDensity < 0 || r.EdgeDensity > 0.8 {
 		return errors.New("edge_density must be between 0 and 0.8")
