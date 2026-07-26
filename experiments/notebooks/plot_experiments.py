@@ -1287,24 +1287,6 @@ def plot_25_recommendation_cloud_by_environment(
                 color=PALETTE[algorithm], alpha=0.24,
                 edgecolor="none", rasterized=True, zorder=2,
             )
-            frontier = (
-                feasible_options.groupby("budget_used", as_index=False)
-                .makespan.min().sort_values("budget_used")
-            )
-            frontier_rows = []
-            best_makespan = float("inf")
-            for row in frontier.itertuples():
-                if row.makespan < best_makespan - 1e-9:
-                    frontier_rows.append(row)
-                    best_makespan = row.makespan
-            if frontier_rows:
-                ax.plot(
-                    [row.budget_used for row in frontier_rows],
-                    [row.makespan for row in frontier_rows],
-                    color=PALETTE[algorithm], linewidth=2.2,
-                    marker=marker_by_algorithm[algorithm], markersize=4,
-                    alpha=0.95, zorder=3,
-                )
             winner_pool = (
                 feasible_options if not feasible_options.empty
                 else algorithm_options
@@ -1356,9 +1338,9 @@ def plot_25_recommendation_cloud_by_environment(
         )
     shape_handles = [
         Line2D(
-            [], [], linestyle="-", marker="o",
+            [], [], linestyle="none", marker="o",
             color=PALETTE["prism_cc_time"],
-            markersize=5, linewidth=2, label="Time — fronteira viável",
+            markersize=5, label="Time — recomendações viáveis",
         ),
         Line2D(
             [], [], linestyle="none", marker="o",
@@ -1367,9 +1349,9 @@ def plot_25_recommendation_cloud_by_environment(
             markersize=11, label="Time — melhor opção viável",
         ),
         Line2D(
-            [], [], linestyle="-", marker="s",
+            [], [], linestyle="none", marker="s",
             color=PALETTE["prism_cc_cost"],
-            markersize=5, linewidth=2, label="Cost — fronteira viável",
+            markersize=5, label="Cost — recomendações viáveis",
         ),
         Line2D(
             [], [], linestyle="none", marker="s",
@@ -1400,7 +1382,7 @@ def plot_25_recommendation_cloud_by_environment(
         frameon=False,
     )
     fig.suptitle(
-        "Recomendações por ambiente — linhas mostram as fronteiras viáveis",
+        "Recomendações viáveis e excedidas por ambiente",
         y=1.01,
     )
     fig.subplots_adjust(bottom=0.13, hspace=0.32, wspace=0.22)
@@ -1526,7 +1508,7 @@ def write_report(
             (
                 "25-lista-n-recomendacoes-por-ambiente.png",
                 "Lista N de recomendações por ambiente",
-                "Exibe todas as recomendações exportadas pelo Beam para PRISM-CC Time e PRISM-CC Cost. Recomendações que excederam budget ou deadline aparecem em cinza ao fundo. As opções viáveis permanecem nas cores de seus algoritmos, e as linhas azul e verde conectam somente as soluções não dominadas das respectivas fronteiras Time e Cost. Um marcador maior identifica a melhor opção viável de cada objetivo; o losango é a referência HEFT.",
+                "Exibe todas as recomendações exportadas pelo Beam para PRISM-CC Time e PRISM-CC Cost. Recomendações que excederam budget ou deadline aparecem em cinza ao fundo. As opções viáveis permanecem azuis para Time e verdes para Cost. Um marcador maior identifica a melhor opção viável de cada objetivo; o losango é a referência HEFT.",
             )
         )
     lines = [
