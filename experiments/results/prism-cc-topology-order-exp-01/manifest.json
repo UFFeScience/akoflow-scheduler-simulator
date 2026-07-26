@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-25T04:14:01Z",
+  "generated_at": "2026-07-26T01:13:08Z",
   "structural_seed": 42,
   "interference_seeds": [
     1,
@@ -42,15 +42,17 @@
     "hybrid_hetero"
   ],
   "algorithms": [
-    "beam_time",
-    "beam_cost",
-    "heft"
+    "prism_cc_time",
+    "prism_cc_cost",
+    "heft_classic"
   ],
   "interference_rate": 0.2,
   "selected_activities": 29,
-  "budget_limit": 0.5036366833333333,
-  "deadline_limit": 170.72955000000016,
-  "reference_policy": "Global HEFT mean: deadline is the mean makespan and budget is the mean cost across all HEFT scenario/seed executions",
-  "calibration": "Global mean of all paired HEFT runs, without margin",
+  "budget_limit": 1.0114725000000009,
+  "deadline_limit": 344.1261666666664,
+  "reference_policy": "Global classic HEFT mean: deadline is the mean makespan and budget is the mean cost across all classic HEFT scenario/seed executions",
+  "calibration": "Global mean of all classic HEFT runs, without margin",
+  "heft_mode": "classic_no_colocation",
+  "prism_cc_priority": "topological_order",
   "beam_width": 120
 }

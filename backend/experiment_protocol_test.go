@@ -113,12 +113,12 @@ func TestControlledInterferenceAccumulatesTwentyPercentPerOverlappingTask(t *tes
 	}
 }
 
-func TestHEFTProducesDependencyRespectingSchedule(t *testing.T) {
+func TestClassicHEFTProducesDependencyRespectingNonColocatedSchedule(t *testing.T) {
 	generated, err := generateExperimentSimulation("hybrid_hetero", 42, 0, true, minBeamWidth)
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := scheduleHEFT(generated)
+	result, err := scheduleHEFTClassic(generated)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,6 +132,53 @@ func TestHEFTProducesDependencyRespectingSchedule(t *testing.T) {
 		if target.StartTime < source.FinishTime {
 			t.Fatalf("dependency violation %s -> %s: %v < %v", dependency.Source, dependency.Target, target.StartTime, source.FinishTime)
 		}
+	}
+	for i, left := range result.Assignments {
+		for _, right := range result.Assignments[i+1:] {
+			if left.ResourceID == right.ResourceID &&
+				maxf(left.StartTime, right.StartTime) < minf(left.FinishTime, right.FinishTime) {
+				t.Fatalf("classic HEFT colocated %s and %s on %s", left.TaskID, right.TaskID, left.ResourceID)
+			}
+		}
+	}
+	if result.InterferenceVariables.TotalInterferenceTime != 0 {
+		t.Fatalf("classic HEFT must not activate interference, got %v", result.InterferenceVariables.TotalInterferenceTime)
+	}
+}
+
+func TestHEFTColocationImplementationIsPreserved(t *testing.T) {
+	generated, err := generateExperimentSimulation("hybrid_hetero", 42, 1, false, minBeamWidth)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := scheduleHEFTColocation(generated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Assignments) != 58 {
+		t.Fatalf("expected preserved HEFT-colocation to schedule 58 tasks, got %d", len(result.Assignments))
+	}
+}
+
+func TestClassicHEFTIsIndependentOfInterferenceSeed(t *testing.T) {
+	firstGenerated, err := generateExperimentSimulation("cloud_hetero", 42, 1, false, minBeamWidth)
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondGenerated, err := generateExperimentSimulation("cloud_hetero", 42, 2, false, minBeamWidth)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := scheduleHEFTClassic(firstGenerated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := scheduleHEFTClassic(secondGenerated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(first.Assignments, second.Assignments) {
+		t.Fatal("classic HEFT schedule must not change with the interference seed")
 	}
 }
 
@@ -161,7 +208,7 @@ func TestExperimentalRunnerWritesOnePairedRepetition(t *testing.T) {
 	heftMakespans := []float64{}
 	heftCosts := []float64{}
 	for _, row := range records[1:] {
-		if row[header["algorithm"]] == "heft" {
+		if row[header["algorithm"]] == "heft_classic" {
 			makespan, _ := strconv.ParseFloat(row[header["makespan"]], 64)
 			cost, _ := strconv.ParseFloat(row[header["budget_used"]], 64)
 			heftMakespans = append(heftMakespans, makespan)

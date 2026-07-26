@@ -29,13 +29,14 @@ SCENARIO_LABELS = {
     "hybrid_homo": "Híbrido\nhomogêneo",
     "hybrid_hetero": "Híbrido\nheterogêneo",
 }
-ALGORITHM_ORDER = ["beam_time", "beam_cost", "heft"]
+ALGORITHM_ORDER = ["prism_cc_time", "prism_cc_cost", "heft_classic"]
 ALGORITHM_LABELS = {
-    "beam_time": "AkoScore - Time",
-    "beam_cost": "AkoScore - Cost",
-    "heft": "HEFT",
+    "prism_cc_time": "PRISM-CC - Time",
+    "prism_cc_cost": "PRISM-CC - Cost",
+    "heft_classic": "HEFT clássico",
 }
-PALETTE = {"beam_time": "#2878B5", "beam_cost": "#59A14F", "heft": "#E07A2D"}
+PALETTE = {"prism_cc_time": "#2878B5", "prism_cc_cost": "#59A14F", "heft_classic": "#E07A2D"}
+EXPERIMENT_RESULT_DIR = "prism-cc-topology-order-exp-01"
 
 
 def configure_style() -> None:
@@ -52,7 +53,7 @@ def configure_style() -> None:
 
 
 def load_results(repo_root: Path) -> tuple[pd.DataFrame, dict]:
-    results_dir = repo_root / "experiments" / "results"
+    results_dir = repo_root / "experiments" / "results" / EXPERIMENT_RESULT_DIR
     df = pd.read_csv(results_dir / "raw_results.csv")
     manifest = json.loads((results_dir / "manifest.json").read_text())
     df["algorithm_label"] = df["algorithm"].map(ALGORITHM_LABELS)
@@ -78,7 +79,7 @@ def validate_results(df: pd.DataFrame, manifest: dict) -> pd.DataFrame:
     assert counts["runs"].eq(len(manifest["interference_seeds"])).all()
     assert df["deadline_limit"].nunique() == 1
     assert df["budget_limit"].nunique() == 1
-    heft = df[df["algorithm"] == "heft"]
+    heft = df[df["algorithm"] == "heft_classic"]
     assert np.isclose(df["deadline_limit"].iloc[0], heft["makespan"].mean(), atol=1e-6)
     assert np.isclose(df["budget_limit"].iloc[0], heft["budget_used"].mean(), atol=1e-6)
     return counts
@@ -173,14 +174,14 @@ def paired_deltas(df: pd.DataFrame) -> pd.DataFrame:
     pivot = df.pivot(index=["scenario_id", "interference_seed"], columns="algorithm", values=["makespan", "budget_used"])
     rows = []
     for (scenario_id, seed), values in pivot.iterrows():
-        for algorithm in ["beam_time", "beam_cost"]:
+        for algorithm in ["prism_cc_time", "prism_cc_cost"]:
             rows.append(
                 {
                     "scenario_id": scenario_id,
                     "interference_seed": seed,
                     "algorithm": algorithm,
-                    "delta_makespan": values[("makespan", "heft")] - values[("makespan", algorithm)],
-                    "delta_budget": values[("budget_used", "heft")] - values[("budget_used", algorithm)],
+                    "delta_makespan": values[("makespan", "heft_classic")] - values[("makespan", algorithm)],
+                    "delta_budget": values[("budget_used", "heft_classic")] - values[("budget_used", algorithm)],
                 }
             )
     return pd.DataFrame(rows)
@@ -190,23 +191,23 @@ def plot_05_gain(df: pd.DataFrame, output: Path) -> None:
     deltas = paired_deltas(df)
     fig, axes = plt.subplots(1, 2, figsize=(14, 5.8))
     for ax, metric, label in [
-        (axes[0], "delta_makespan", "HEFT − Beam (s)"),
-        (axes[1], "delta_budget", "HEFT − Beam (custo)"),
+        (axes[0], "delta_makespan", "HEFT − PRISM-CC (s)"),
+        (axes[1], "delta_budget", "HEFT − PRISM-CC (custo)"),
     ]:
         sns.boxplot(
             data=deltas, x="scenario_id", y=metric, hue="algorithm",
-            order=SCENARIO_ORDER, hue_order=["beam_time", "beam_cost"], palette=PALETTE, ax=ax,
+            order=SCENARIO_ORDER, hue_order=["prism_cc_time", "prism_cc_cost"], palette=PALETTE, ax=ax,
         )
         ax.axhline(0, color="#333333", linewidth=1)
         ax.set(xlabel="", ylabel=label)
         ax.set_xticklabels([SCENARIO_LABELS[item] for item in SCENARIO_ORDER], rotation=15)
-    axes[0].set_title("Ganho pareado do Beam em makespan")
-    axes[1].set_title("Ganho pareado do Beam em custo")
+    axes[0].set_title("Ganho pareado do PRISM-CC em makespan")
+    axes[1].set_title("Ganho pareado do PRISM-CC em custo")
     for ax in axes:
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles, [ALGORITHM_LABELS[item] for item in labels], title="")
-    fig.suptitle("Valores positivos favorecem a respectiva variante Beam", y=1.02, fontweight="bold")
-    save(fig, output, "05-ganho-beam-sobre-heft.png")
+    fig.suptitle("Valores positivos favorecem a respectiva variante PRISM-CC", y=1.02, fontweight="bold")
+    save(fig, output, "05-ganho-prism-cc-sobre-heft.png")
 
 
 def faceted_scatter(df: pd.DataFrame, x: str, filename: str, title: str, xlabel: str, output: Path) -> None:
@@ -333,11 +334,11 @@ def plot_12_seed_stability(df: pd.DataFrame, output: Path) -> None:
 
 def write_report(output: Path, manifest: dict) -> None:
     descriptions = [
-        ("01-makespan-por-ambiente.png", "Makespan por ambiente e algoritmo", "Boxplots das 30 sementes. A linha vermelha é o deadline global, calculado como a média de todas as execuções HEFT. Caixas mais baixas indicam conclusão mais rápida."),
+        ("01-makespan-por-ambiente.png", "Makespan por ambiente e algoritmo", "Boxplots das 30 sementes do PRISM-CC. A linha vermelha é o deadline global, calculado como a média das execuções HEFT clássico. Como o HEFT clássico não possui co-alocação nem interferência, seu resultado é determinístico e aparece como uma linha em cada ambiente."),
         ("02-custo-por-ambiente.png", "Custo por ambiente e algoritmo", "Compara o custo total das 30 execuções. A linha vermelha é o budget global, calculado como a média de todos os custos HEFT. Cenários on-premise aparecem com custo financeiro zero."),
         ("03-factibilidade.png", "Factibilidade conjunta", "Percentual de execuções que respeitaram simultaneamente budget e deadline. É a leitura mais direta de cumprimento do SLA."),
         ("04-custo-versus-makespan.png", "Trade-off custo × makespan", "Cada ponto é uma execução. As linhas vermelhas representam o budget e o deadline globais definidos pelas médias de todas as execuções HEFT."),
-        ("05-ganho-beam-sobre-heft.png", "Ganho pareado das variantes Beam sobre HEFT", "Diferenças calculadas semente a semente para Beam-Time e Beam-Cost. Valores positivos favorecem a variante Beam; negativos favorecem HEFT. O painel esquerdo mede makespan e o direito mede custo."),
+        ("05-ganho-prism-cc-sobre-heft.png", "Ganho pareado das variantes PRISM-CC sobre HEFT", "Diferenças calculadas semente a semente para PRISM-CC Time e PRISM-CC Cost. Valores positivos favorecem a variante PRISM-CC; negativos favorecem o HEFT clássico. O painel esquerdo mede makespan e o direito mede custo."),
         ("06-interferencia-versus-makespan.png", "Interferência × makespan", "Relaciona o tempo total adicionado pela interferência ao makespan, com tendência linear por algoritmo. Indica quanto o atraso de interferência chega ao caminho crítico."),
         ("07-pares-versus-makespan.png", "Pares interferentes × makespan", "Relaciona quantos pares realmente se sobrepuseram na mesma máquina ao makespan. Distingue atividades selecionadas de interferências efetivamente ativadas."),
         ("08-tempo-de-interferencia.png", "Distribuição do tempo de interferência", "Boxplots do overhead total provocado pela interferência. Permite comparar a capacidade de cada escalonador de evitar sobreposições prejudiciais."),
@@ -363,7 +364,7 @@ def generate_all(repo_root: Path) -> list[Path]:
     configure_style()
     df, manifest = load_results(repo_root)
     validate_results(df, manifest)
-    output = repo_root / "experiments" / "results" / "figures"
+    output = repo_root / "experiments" / "results" / EXPERIMENT_RESULT_DIR / "figures"
     output.mkdir(parents=True, exist_ok=True)
     plot_01_makespan(df, manifest, output)
     plot_02_cost(df, manifest, output)

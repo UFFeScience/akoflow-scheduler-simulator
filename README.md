@@ -33,11 +33,11 @@ docker compose run --rm backend go test ./...
 
 ## Montage Experimental Protocol
 
-The backend includes a reproducible batch runner that compares Beam-Time
-(`100% time`), Beam-Cost (`100% cost`), and HEFT across the six machine
+The backend includes a reproducible batch runner that compares PRISM-CC Time
+(`100% time`), PRISM-CC Cost (`100% cost`), and classic HEFT across the six machine
 scenarios in `experiments/machine_simulators.csv`.
 It imports the 58-task Montage DAG and runs the paired interference seeds. HEFT
-is executed first for every scenario and seed. The global mean HEFT makespan
+is executed first for every scenario and seed. The global mean classic HEFT makespan
 becomes the fixed deadline, and the global mean HEFT cost becomes the fixed
 budget for every execution, without any margin.
 
@@ -54,9 +54,9 @@ calculation for the original C3D VM. PlaFRIM active intervals remain free.
 Run the complete protocol:
 
 ```bash
-mkdir -p experiments/results
+mkdir -p experiments/results/prism-cc-topology-order-exp-01
 docker compose run --rm --no-deps \
-  -v "${PWD}/experiments/results:/results" \
+  -v "${PWD}/experiments/results/prism-cc-topology-order-exp-01:/results" \
   backend \
   go run . \
   -experiment-output /results \
@@ -69,7 +69,7 @@ The output directory contains:
 - `manifest.json`: fixed seeds, global HEFT mean limits, algorithms, and scenarios;
 - `raw_results.csv`: one row per algorithm, scenario, and interference seed;
 - `summary.csv`: mean, median, standard deviation, 95% confidence interval,
-  feasibility ratio, and Beam gains over HEFT.
+  feasibility ratio, and PRISM-CC gains over HEFT.
 
 For a quick validation, set `-experiment-repetitions 1`. The structural seed is
 fixed at 42; interference seeds run from 1 through the requested repetition

@@ -17,7 +17,7 @@ var experimentScenarioIDs = []string{
 	"cluster_homo", "cluster_hetero", "cloud_homo", "cloud_hetero", "hybrid_homo", "hybrid_hetero",
 }
 
-var experimentAlgorithms = []string{"beam_time", "beam_cost", "heft"}
+var experimentAlgorithms = []string{"prism_cc_time", "prism_cc_cost", "heft_classic"}
 
 const (
 	c3dStandard16ReferencePricePerHourUSD = 0.726384
@@ -63,6 +63,8 @@ type ExperimentManifest struct {
 	DeadlineLimit      float64  `json:"deadline_limit"`
 	ReferencePolicy    string   `json:"reference_policy"`
 	Calibration        string   `json:"calibration"`
+	HEFTMode           string   `json:"heft_mode"`
+	PRISMCCPriority    string   `json:"prism_cc_priority"`
 	BeamWidth          int      `json:"beam_width"`
 }
 
@@ -105,9 +107,9 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 			if generationErr != nil {
 				return fmt.Errorf("%s seed %d HEFT generation: %w", scenarioID, interferenceSeed, generationErr)
 			}
-			heftGenerated.Experimental.Algorithm = "heft"
+			heftGenerated.Experimental.Algorithm = "heft_classic"
 			runStarted := time.Now()
-			heftResult, scheduleErr := scheduleHEFT(heftGenerated)
+			heftResult, scheduleErr := scheduleHEFTClassic(heftGenerated)
 			if scheduleErr != nil {
 				return fmt.Errorf("%s/heft seed %d: %w", scenarioID, interferenceSeed, scheduleErr)
 			}
@@ -124,7 +126,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	budgetLimit := mean(heftBudgets)
 	for _, heftRun := range heftRuns {
 		records = append(records, experimentRecordFromResult(
-			heftRun.result, "heft", heftRun.scenarioID, heftRun.interferenceSeed,
+			heftRun.result, "heft_classic", heftRun.scenarioID, heftRun.interferenceSeed,
 			budgetLimit, deadlineLimit, heftRun.elapsed,
 		))
 	}
@@ -133,7 +135,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	for repetition := 1; repetition <= options.Repetitions; repetition++ {
 		interferenceSeed := int64(repetition)
 		for _, scenarioID := range experimentScenarioIDs {
-			for _, algorithm := range []string{"beam_time", "beam_cost"} {
+			for _, algorithm := range []string{"prism_cc_time", "prism_cc_cost"} {
 				generated, generationErr := generateExperimentSimulation(scenarioID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth)
 				if generationErr != nil {
 					return fmt.Errorf("%s seed %d generation: %w", scenarioID, interferenceSeed, generationErr)
@@ -142,10 +144,10 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 				generated.SLA.DeadlineLimit = &deadlineLimit
 				generated.Experimental.Algorithm = algorithm
 				switch algorithm {
-				case "beam_time":
+				case "prism_cc_time":
 					generated.SLA.WeightTime = 1
 					generated.SLA.WeightCost = 0
-				case "beam_cost":
+				case "prism_cc_cost":
 					generated.SLA.WeightTime = 0
 					generated.SLA.WeightCost = 1
 				}
@@ -181,8 +183,10 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		InterferenceSeeds: seeds, Scenarios: experimentScenarioIDs, Algorithms: experimentAlgorithms,
 		InterferenceRate: 0.20, SelectedActivities: 29,
 		BudgetLimit: budgetLimit, DeadlineLimit: deadlineLimit,
-		ReferencePolicy: "Global HEFT mean: deadline is the mean makespan and budget is the mean cost across all HEFT scenario/seed executions",
-		Calibration:     "Global mean of all paired HEFT runs, without margin", BeamWidth: options.BeamWidth,
+		ReferencePolicy: "Global classic HEFT mean: deadline is the mean makespan and budget is the mean cost across all classic HEFT scenario/seed executions",
+		Calibration:     "Global mean of all classic HEFT runs, without margin",
+		HEFTMode:        "classic_no_colocation", PRISMCCPriority: "topological_order",
+		BeamWidth: options.BeamWidth,
 	}
 	return writeJSONFile(filepath.Join(options.OutputDirectory, "manifest.json"), manifest)
 }
@@ -351,9 +355,9 @@ func writeExperimentSummaryCSV(path string, records []ExperimentRecord) error {
 			mMean, mMedian, mStd, mCI := descriptiveStats(makespans)
 			bMean, bMedian, bStd, bCI := descriptiveStats(budgets)
 			makespanGain, budgetGain := 0.0, 0.0
-			if algorithm != "heft" {
-				heftMakespan, _, _, _ := descriptiveStats(valuesFor(groups[groupKey{scenario, "heft"}], func(r ExperimentRecord) float64 { return r.Makespan }))
-				heftBudget, _, _, _ := descriptiveStats(valuesFor(groups[groupKey{scenario, "heft"}], func(r ExperimentRecord) float64 { return r.BudgetUsed }))
+			if algorithm != "heft_classic" {
+				heftMakespan, _, _, _ := descriptiveStats(valuesFor(groups[groupKey{scenario, "heft_classic"}], func(r ExperimentRecord) float64 { return r.Makespan }))
+				heftBudget, _, _, _ := descriptiveStats(valuesFor(groups[groupKey{scenario, "heft_classic"}], func(r ExperimentRecord) float64 { return r.BudgetUsed }))
 				makespanGain = 100 * (heftMakespan - mMean) / maxf(heftMakespan, 0.001)
 				budgetGain = 100 * (heftBudget - bMean) / maxf(heftBudget, 0.001)
 			}

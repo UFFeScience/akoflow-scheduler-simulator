@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-func scheduleHEFT(generated GeneratedSimulation) (SimulationResult, error) {
+func scheduleHEFTColocation(generated GeneratedSimulation) (SimulationResult, error) {
 	ranks, err := heftUpwardRanks(generated)
 	if err != nil {
 		return SimulationResult{}, err

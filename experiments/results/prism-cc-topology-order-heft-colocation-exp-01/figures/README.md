@@ -1,4 +1,8 @@
-# Gráficos do protocolo experimental
+# Gráficos do protocolo experimental — HEFT com colocação
+
+Este é o resultado piloto preservado. A referência usada nesta rodada foi a
+implementação HEFT com colocação: atividades podiam executar simultaneamente
+em cores diferentes da mesma máquina e, nesse caso, ativar interferência.
 
 Budget global (média HEFT): `0.5036366833333333`. Deadline global (média HEFT): `170.72955000000016` segundos. Cada combinação possui 30 sementes pareadas.
 
