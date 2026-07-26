@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-26T01:41:22Z",
+  "generated_at": "2026-07-26T04:43:51Z",
   "structural_seed": 42,
   "interference_seeds": [
     1,
@@ -46,13 +46,16 @@
     "prism_cc_cost",
     "heft_classic"
   ],
+  "workflow_id": "montage_050d",
+  "task_count": 58,
   "interference_rate": 0.2,
   "selected_activities": 29,
   "budget_limit": 1.0114725000000009,
-  "deadline_limit": 344.1261666666664,
+  "deadline_limit": 344.126166666666,
   "reference_policy": "Global classic HEFT mean: deadline is the mean makespan and budget is the mean cost across all classic HEFT scenario/seed executions",
   "calibration": "Global mean of all classic HEFT runs, without margin",
   "heft_mode": "classic_no_colocation",
   "prism_cc_priority": "upward_rank",
-  "beam_width": 120
+  "beam_width": 120,
+  "recommendation_count": 100
 }

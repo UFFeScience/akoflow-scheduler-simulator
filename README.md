@@ -63,15 +63,16 @@ docker compose run --rm --no-deps \
   -experiment-output /results \
   -experiment-repetitions 30 \
   -experiment-beam-width 120 \
+  -experiment-recommendations 100 \
   -experiment-prism-priority topological_order
 ```
 
 The output directory contains:
 
 - `manifest.json`: fixed seeds, global HEFT mean limits, algorithms, and scenarios;
-- `raw_results.csv`: one row per algorithm, scenario, and interference seed;
-- `summary.csv`: mean, median, standard deviation, 95% confidence interval,
-  feasibility ratio, and PRISM-CC gains over HEFT.
+- `raw_results.csv`: one row per algorithm, scenario, and interference seed.
+  Each PRISM-CC row contains `recommendations_json`, with the ranked Time or
+  Cost recommendation list, including feasible and infeasible schedules.
 
 For a quick validation, set `-experiment-repetitions 1`. The structural seed is
 fixed at 42; interference seeds run from 1 through the requested repetition

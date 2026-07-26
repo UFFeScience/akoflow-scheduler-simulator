@@ -2,7 +2,7 @@
 
 Prioridade das tarefas do PRISM-CC: **upward rank**.
 
-Budget global (média HEFT): `1.0114725000000009`. Deadline global (média HEFT): `344.1261666666664` segundos. Cada combinação possui 30 sementes pareadas.
+Budget global (média HEFT): `1.0114725000000009`. Deadline global (média HEFT): `344.126166666666` segundos. Cada combinação possui 30 sementes pareadas.
 
 ## Makespan por ambiente e algoritmo
 
@@ -147,3 +147,9 @@ Cada painel representa um ambiente e cada ponto uma opção de escalonamento: HE
 Compara diretamente as duas políticas de prioridade do PRISM-CC, mantendo máquinas, sementes, interferência, Beam Search, budget e deadline constantes. O painel superior mostra makespan e o inferior mostra custo.
 
 ![Comparação Topology × UpRank](13-comparacao-topology-uprank.png)
+
+## Lista N de recomendações por ambiente
+
+Exibe todas as recomendações exportadas pelo Beam para PRISM-CC Time e PRISM-CC Cost, incluindo opções viáveis e inviáveis. Círculos azuis representam Time, quadrados verdes representam Cost e o losango é a referência HEFT. Contorno vermelho indica deadline excedido, laranja budget excedido e roxo violação dos dois limites. Em cada ambiente, os demais pontos aparecem esmaecidos e um ponto maior identifica o vencedor viável de cada objetivo: menor makespan para Time e menor custo para Cost.
+
+![Lista N de recomendações por ambiente](25-lista-n-recomendacoes-por-ambiente.png)

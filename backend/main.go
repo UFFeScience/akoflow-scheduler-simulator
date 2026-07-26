@@ -20,6 +20,7 @@ func main() {
 	experimentOutput := flag.String("experiment-output", "", "run the complete experimental protocol and write CSV results to this directory")
 	experimentRepetitions := flag.Int("experiment-repetitions", 30, "number of paired interference seeds")
 	experimentBeamWidth := flag.Int("experiment-beam-width", minBeamWidth, "beam width used by the experimental protocol")
+	experimentRecommendations := flag.Int("experiment-recommendations", 100, "maximum PRISM-CC recommendations exported per algorithm, environment, and seed")
 	experimentWorkers := flag.Int("experiment-workers", 0, "parallel environment/seed jobs (default: min(4, GOMAXPROCS))")
 	experimentPRISMCCPriority := flag.String("experiment-prism-priority", "topological_order", "PRISM-CC task priority: topological_order or upward_rank")
 	experimentWorkflow := flag.String("experiment-workflow", "montage_050d", "experiment workflow: montage_050d or montage_dss_20d")
@@ -28,9 +29,10 @@ func main() {
 		if err := runExperimentalProtocol(ExperimentRunOptions{
 			OutputDirectory: *experimentOutput, Repetitions: *experimentRepetitions,
 			StructuralSeed: 42, BeamWidth: *experimentBeamWidth,
-			Workers:         *experimentWorkers,
-			PRISMCCPriority: *experimentPRISMCCPriority,
-			WorkflowID:      *experimentWorkflow,
+			RecommendationCount: *experimentRecommendations,
+			Workers:             *experimentWorkers,
+			PRISMCCPriority:     *experimentPRISMCCPriority,
+			WorkflowID:          *experimentWorkflow,
 		}); err != nil {
 			log.Fatal(err)
 		}

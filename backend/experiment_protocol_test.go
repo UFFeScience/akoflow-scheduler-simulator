@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"math"
 	"os"
 	"path/filepath"
@@ -293,6 +294,30 @@ func TestExperimentalRunnerWritesOnePairedRepetition(t *testing.T) {
 	for index, name := range records[0] {
 		header[name] = index
 	}
+	if _, ok := header["recommendations_json"]; !ok {
+		t.Fatal("raw_results.csv must contain recommendations_json")
+	}
+	seenRecommendationAlgorithms := map[string]bool{}
+	for _, row := range records[1:] {
+		algorithm := row[header["algorithm"]]
+		if algorithm == "heft_classic" {
+			if row[header["recommendations_json"]] != "[]" {
+				t.Fatal("HEFT rows must have an empty recommendation list")
+			}
+			continue
+		}
+		var recommendations []ExperimentRecommendationRecord
+		if err := json.Unmarshal([]byte(row[header["recommendations_json"]]), &recommendations); err != nil {
+			t.Fatal(err)
+		}
+		if len(recommendations) == 0 {
+			t.Fatalf("%s row must include recommendations", algorithm)
+		}
+		seenRecommendationAlgorithms[algorithm] = true
+	}
+	if !seenRecommendationAlgorithms["prism_cc_time"] || !seenRecommendationAlgorithms["prism_cc_cost"] {
+		t.Fatalf("expected Time and Cost recommendations, got %v", seenRecommendationAlgorithms)
+	}
 	heftMakespans := []float64{}
 	heftCosts := []float64{}
 	for _, row := range records[1:] {
@@ -315,9 +340,14 @@ func TestExperimentalRunnerWritesOnePairedRepetition(t *testing.T) {
 			t.Fatalf("budget must equal global HEFT mean: got %v, want %v", budget, wantBudget)
 		}
 	}
-	for _, name := range []string{"summary.csv", "manifest.json"} {
+	for _, name := range []string{"manifest.json"} {
 		if _, err := os.Stat(filepath.Join(output, name)); err != nil {
 			t.Fatalf("missing %s: %v", name, err)
+		}
+	}
+	for _, name := range []string{"summary.csv", "recommendations.csv"} {
+		if _, err := os.Stat(filepath.Join(output, name)); !os.IsNotExist(err) {
+			t.Fatalf("%s must not be generated separately", name)
 		}
 	}
 }

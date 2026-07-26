@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -28,13 +29,14 @@ const (
 )
 
 type ExperimentRunOptions struct {
-	OutputDirectory string
-	Repetitions     int
-	StructuralSeed  int64
-	BeamWidth       int
-	Workers         int
-	PRISMCCPriority string
-	WorkflowID      string
+	OutputDirectory     string
+	Repetitions         int
+	StructuralSeed      int64
+	BeamWidth           int
+	RecommendationCount int
+	Workers             int
+	PRISMCCPriority     string
+	WorkflowID          string
 }
 
 type ExperimentRecord struct {
@@ -54,25 +56,40 @@ type ExperimentRecord struct {
 	AlgorithmMilliseconds  float64
 	MachineDistribution    map[string]int
 	MachineUtilization     map[string]float64
+	Recommendations        []ExperimentRecommendationRecord
+}
+
+type ExperimentRecommendationRecord struct {
+	Rank              int     `json:"rank"`
+	Recommended       bool    `json:"recommended"`
+	Feasible          bool    `json:"feasible"`
+	BudgetUsed        float64 `json:"budget_used"`
+	BudgetViolation   float64 `json:"budget_violation"`
+	Makespan          float64 `json:"makespan"`
+	DeadlineViolation float64 `json:"deadline_violation"`
+	MachineSignature  string  `json:"machine_signature"`
+	WeightedScore     float64 `json:"weighted_score"`
+	DiversityScore    float64 `json:"diversity_score"`
 }
 
 type ExperimentManifest struct {
-	GeneratedAt        string   `json:"generated_at"`
-	StructuralSeed     int64    `json:"structural_seed"`
-	InterferenceSeeds  []int64  `json:"interference_seeds"`
-	Scenarios          []string `json:"scenarios"`
-	Algorithms         []string `json:"algorithms"`
-	WorkflowID         string   `json:"workflow_id"`
-	TaskCount          int      `json:"task_count"`
-	InterferenceRate   float64  `json:"interference_rate"`
-	SelectedActivities int      `json:"selected_activities"`
-	BudgetLimit        float64  `json:"budget_limit"`
-	DeadlineLimit      float64  `json:"deadline_limit"`
-	ReferencePolicy    string   `json:"reference_policy"`
-	Calibration        string   `json:"calibration"`
-	HEFTMode           string   `json:"heft_mode"`
-	PRISMCCPriority    string   `json:"prism_cc_priority"`
-	BeamWidth          int      `json:"beam_width"`
+	GeneratedAt         string   `json:"generated_at"`
+	StructuralSeed      int64    `json:"structural_seed"`
+	InterferenceSeeds   []int64  `json:"interference_seeds"`
+	Scenarios           []string `json:"scenarios"`
+	Algorithms          []string `json:"algorithms"`
+	WorkflowID          string   `json:"workflow_id"`
+	TaskCount           int      `json:"task_count"`
+	InterferenceRate    float64  `json:"interference_rate"`
+	SelectedActivities  int      `json:"selected_activities"`
+	BudgetLimit         float64  `json:"budget_limit"`
+	DeadlineLimit       float64  `json:"deadline_limit"`
+	ReferencePolicy     string   `json:"reference_policy"`
+	Calibration         string   `json:"calibration"`
+	HEFTMode            string   `json:"heft_mode"`
+	PRISMCCPriority     string   `json:"prism_cc_priority"`
+	BeamWidth           int      `json:"beam_width"`
+	RecommendationCount int      `json:"recommendation_count"`
 }
 
 func runExperimentalProtocol(options ExperimentRunOptions) error {
@@ -85,6 +102,10 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	if options.BeamWidth == 0 {
 		options.BeamWidth = minBeamWidth
 	}
+	if options.RecommendationCount <= 0 {
+		options.RecommendationCount = 100
+	}
+	options.RecommendationCount = min(options.RecommendationCount, maxScheduleOptions)
 	if options.PRISMCCPriority == "" {
 		options.PRISMCCPriority = "topological_order"
 	}
@@ -190,7 +211,9 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		go func() {
 			for job := range jobs {
 				started := time.Now()
-				jobRecords, jobErr := runPRISMExperimentJob(options, job.scenarioID, job.seed, budgetLimit, deadlineLimit)
+				jobRecords, jobErr := runPRISMExperimentJob(
+					options, job.scenarioID, job.seed, budgetLimit, deadlineLimit,
+				)
 				jobResults <- prismJobResult{
 					scenarioID: job.scenarioID, seed: job.seed, elapsed: time.Since(started),
 					records: jobRecords, err: jobErr,
@@ -244,9 +267,6 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	if err := writeExperimentRawCSV(filepath.Join(options.OutputDirectory, "raw_results.csv"), records); err != nil {
 		return err
 	}
-	if err := writeExperimentSummaryCSV(filepath.Join(options.OutputDirectory, "summary.csv"), records); err != nil {
-		return err
-	}
 	manifest := ExperimentManifest{
 		GeneratedAt: time.Now().UTC().Format(time.RFC3339), StructuralSeed: options.StructuralSeed,
 		InterferenceSeeds: seeds, Scenarios: experimentScenarioIDs, Algorithms: experimentAlgorithms,
@@ -256,7 +276,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		ReferencePolicy: "Global classic HEFT mean: deadline is the mean makespan and budget is the mean cost across all classic HEFT scenario/seed executions",
 		Calibration:     "Global mean of all classic HEFT runs, without margin",
 		HEFTMode:        "classic_no_colocation", PRISMCCPriority: options.PRISMCCPriority,
-		BeamWidth: options.BeamWidth,
+		BeamWidth: options.BeamWidth, RecommendationCount: options.RecommendationCount,
 	}
 	return writeJSONFile(filepath.Join(options.OutputDirectory, "manifest.json"), manifest)
 }
@@ -288,16 +308,35 @@ func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, inte
 		} else {
 			scored.SLA.WeightTime, scored.SLA.WeightCost = 0, 1
 		}
-		response := buildOptions(scored, finalStates, 1, scored.SLA.BudgetLimit, scored.SLA.DeadlineLimit)
+		response := buildOptions(
+			scored, finalStates, options.RecommendationCount,
+			scored.SLA.BudgetLimit, scored.SLA.DeadlineLimit,
+		)
 		if len(response) == 0 {
 			return nil, fmt.Errorf("%s/%s seed %d: beam returned no schedule", scenarioID, algorithm, interferenceSeed)
 		}
-		records = append(records, experimentRecordFromResult(
+		record := experimentRecordFromResult(
 			response[0].Result, algorithm, scenarioID, interferenceSeed, budgetLimit, deadlineLimit,
 			searchMilliseconds,
-		))
+		)
+		for _, option := range response {
+			record.Recommendations = append(record.Recommendations, ExperimentRecommendationRecord{
+				Rank: option.Rank, Recommended: option.Recommended, Feasible: option.Feasible,
+				BudgetUsed: option.BudgetUsed, BudgetViolation: option.BudgetViolation,
+				Makespan: option.Makespan, DeadlineViolation: option.DeadlineViolation,
+				MachineSignature: compactRecommendationSignature(option.MachineSignature),
+				WeightedScore:    option.WeightedScore,
+				DiversityScore:   option.DiversityScore,
+			})
+		}
+		records = append(records, record)
 	}
 	return records, nil
+}
+
+func compactRecommendationSignature(signature string) string {
+	sum := sha256.Sum256([]byte(signature))
+	return fmt.Sprintf("%x", sum[:8])
 }
 
 func generateExperimentSimulation(scenarioID string, structuralSeed, interferenceSeed int64, disabled bool, beamWidth int) (GeneratedSimulation, error) {
@@ -373,6 +412,7 @@ func experimentRecordFromResult(result SimulationResult, algorithm, scenarioID s
 		InterferenceTime:  result.InterferenceVariables.TotalInterferenceTime,
 		InterferencePairs: countEffectiveInterferencePairs(result), AlgorithmMilliseconds: round(elapsed, 3),
 		MachineDistribution: distribution, MachineUtilization: utilization,
+		Recommendations: []ExperimentRecommendationRecord{},
 	}
 }
 
@@ -399,7 +439,7 @@ func writeExperimentRawCSV(path string, records []ExperimentRecord) error {
 		"algorithm", "scenario_id", "interference_seed", "interference_activity_ids", "interference_rate",
 		"makespan", "budget_used", "budget_limit", "deadline_limit", "budget_violation", "deadline_violation",
 		"feasible", "interference_time", "interference_pairs", "algorithm_milliseconds",
-		"machine_distribution", "machine_utilization",
+		"machine_distribution", "machine_utilization", "recommendations_json",
 	}
 	if err := writer.Write(header); err != nil {
 		return err
@@ -407,6 +447,7 @@ func writeExperimentRawCSV(path string, records []ExperimentRecord) error {
 	for _, record := range records {
 		distribution, _ := json.Marshal(record.MachineDistribution)
 		utilization, _ := json.Marshal(record.MachineUtilization)
+		recommendations, _ := json.Marshal(record.Recommendations)
 		row := []string{
 			record.Algorithm, record.ScenarioID, strconv.FormatInt(record.InterferenceSeed, 10),
 			strings.Join(record.InterferenceActivities, "|"), "0.2",
@@ -414,7 +455,7 @@ func writeExperimentRawCSV(path string, records []ExperimentRecord) error {
 			formatFloat(record.DeadlineLimit), formatFloat(record.BudgetViolation), formatFloat(record.DeadlineViolation),
 			strconv.FormatBool(record.Feasible), formatFloat(record.InterferenceTime),
 			strconv.Itoa(record.InterferencePairs), formatFloat(record.AlgorithmMilliseconds),
-			string(distribution), string(utilization),
+			string(distribution), string(utilization), string(recommendations),
 		}
 		if err := writer.Write(row); err != nil {
 			return err

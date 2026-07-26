@@ -1229,6 +1229,188 @@ def plot_24_feasible_options_by_environment(
     plt.close(fig)
 
 
+def plot_25_recommendation_cloud_by_environment(
+    recommendations: pd.DataFrame, df: pd.DataFrame, manifest: dict, output: Path
+) -> None:
+    """Plot every exported Beam recommendation, including infeasible options."""
+    recommendations = recommendations.copy()
+    recommendations["status"] = np.select(
+        [
+            recommendations.deadline_violation.gt(0)
+            & recommendations.budget_violation.gt(0),
+            recommendations.deadline_violation.gt(0),
+            recommendations.budget_violation.gt(0),
+        ],
+        ["Deadline e budget", "Deadline excedido", "Budget excedido"],
+        default="Viável",
+    )
+    marker_by_algorithm = {"prism_cc_time": "o", "prism_cc_cost": "s"}
+    fig, axes = plt.subplots(2, 3, figsize=(16, 10))
+    for ax, scenario in zip(axes.flat, SCENARIO_ORDER):
+        data = recommendations[recommendations.scenario_id == scenario]
+        heft = df[
+            (df.scenario_id == scenario) & (df.algorithm == "heft_classic")
+        ].iloc[0]
+        x_max = max(
+            manifest["budget_limit"] * 1.18,
+            data.budget_used.max() * 1.08,
+            heft.budget_used * 1.08,
+            0.05,
+        )
+        y_max = max(
+            manifest["deadline_limit"] * 1.18,
+            data.makespan.max() * 1.08,
+            heft.makespan * 1.08,
+        )
+        ax.fill_between(
+            [0, manifest["budget_limit"]], [0, 0],
+            [manifest["deadline_limit"], manifest["deadline_limit"]],
+            color="#59A14F", alpha=0.08,
+        )
+        for algorithm in ["prism_cc_time", "prism_cc_cost"]:
+            algorithm_options = data[data.algorithm == algorithm]
+            feasible_options = algorithm_options[
+                algorithm_options.feasible.astype(bool)
+            ]
+            exceeded_options = algorithm_options[
+                ~algorithm_options.feasible.astype(bool)
+            ]
+            ax.scatter(
+                exceeded_options.budget_used, exceeded_options.makespan,
+                s=13, marker=marker_by_algorithm[algorithm],
+                color="#8F8F8F", alpha=0.18, edgecolor="none",
+                rasterized=True, zorder=1,
+            )
+            ax.scatter(
+                feasible_options.budget_used, feasible_options.makespan,
+                s=18, marker=marker_by_algorithm[algorithm],
+                color=PALETTE[algorithm], alpha=0.24,
+                edgecolor="none", rasterized=True, zorder=2,
+            )
+            frontier = (
+                feasible_options.groupby("budget_used", as_index=False)
+                .makespan.min().sort_values("budget_used")
+            )
+            frontier_rows = []
+            best_makespan = float("inf")
+            for row in frontier.itertuples():
+                if row.makespan < best_makespan - 1e-9:
+                    frontier_rows.append(row)
+                    best_makespan = row.makespan
+            if frontier_rows:
+                ax.plot(
+                    [row.budget_used for row in frontier_rows],
+                    [row.makespan for row in frontier_rows],
+                    color=PALETTE[algorithm], linewidth=2.2,
+                    marker=marker_by_algorithm[algorithm], markersize=4,
+                    alpha=0.95, zorder=3,
+                )
+            winner_pool = (
+                feasible_options if not feasible_options.empty
+                else algorithm_options
+            )
+            if algorithm == "prism_cc_time":
+                winner = winner_pool.sort_values(
+                    ["makespan", "budget_used", "rank"]
+                ).iloc[0]
+            else:
+                winner = winner_pool.sort_values(
+                    ["budget_used", "makespan", "rank"]
+                ).iloc[0]
+            ax.scatter(
+                winner.budget_used, winner.makespan,
+                s=230, marker=marker_by_algorithm[algorithm],
+                facecolor=PALETTE[algorithm],
+                edgecolor="#111111",
+                linewidth=2.2,
+                alpha=1, zorder=5,
+            )
+        ax.scatter(
+            heft.budget_used, heft.makespan, s=105, marker="D",
+            color=PALETTE["heft_classic"], edgecolor="#111111",
+            linewidth=1, zorder=5,
+        )
+        ax.annotate(
+            f"HEFT\nUS$ {heft.budget_used:.2f} · {heft.makespan:.1f}s",
+            (heft.budget_used, heft.makespan),
+            xytext=(6, 6), textcoords="offset points", fontsize=8,
+        )
+        ax.axvline(
+            manifest["budget_limit"], color="#B33A3A",
+            linestyle="--", linewidth=1.1,
+        )
+        ax.axhline(
+            manifest["deadline_limit"], color="#B33A3A",
+            linestyle="--", linewidth=1.1,
+        )
+        ax.set_xlim(left=-0.025 * x_max, right=x_max)
+        ax.set_ylim(bottom=-0.025 * y_max, top=y_max)
+        ax.set_title(SCENARIO_LABELS[scenario].replace("\n", " "))
+        ax.set_xlabel("Custo da recomendação (USD)")
+        ax.set_ylabel("Makespan da recomendação (s)")
+        feasible_count = int(data.feasible.astype(bool).sum())
+        ax.text(
+            0.98, 0.04,
+            f"{feasible_count}/{len(data)} recomendações viáveis",
+            transform=ax.transAxes, ha="right", va="bottom", fontsize=8,
+        )
+    shape_handles = [
+        Line2D(
+            [], [], linestyle="-", marker="o",
+            color=PALETTE["prism_cc_time"],
+            markersize=5, linewidth=2, label="Time — fronteira viável",
+        ),
+        Line2D(
+            [], [], linestyle="none", marker="o",
+            markerfacecolor=PALETTE["prism_cc_time"],
+            markeredgecolor="#111111", markeredgewidth=1.8,
+            markersize=11, label="Time — melhor opção viável",
+        ),
+        Line2D(
+            [], [], linestyle="-", marker="s",
+            color=PALETTE["prism_cc_cost"],
+            markersize=5, linewidth=2, label="Cost — fronteira viável",
+        ),
+        Line2D(
+            [], [], linestyle="none", marker="s",
+            markerfacecolor=PALETTE["prism_cc_cost"],
+            markeredgecolor="#111111", markeredgewidth=1.8,
+            markersize=11, label="Cost — melhor opção viável",
+        ),
+        Line2D(
+            [], [], linestyle="none", marker="D",
+            markerfacecolor=PALETTE["heft_classic"], markeredgecolor="#111111",
+            markersize=8, label="HEFT clássico",
+        ),
+        Line2D(
+            [], [], linestyle="none", marker="o",
+            markerfacecolor="#8F8F8F", markeredgecolor="none",
+            alpha=0.35, markersize=6,
+            label="Recomendação que excedeu o SLA",
+        ),
+        Line2D(
+            [], [], linestyle="none", marker="o",
+            markerfacecolor="#59A14F", markeredgecolor="none",
+            alpha=0.3, markersize=6, label="Recomendação viável",
+        ),
+    ]
+    fig.legend(
+        handles=shape_handles,
+        loc="lower center", ncol=4, bbox_to_anchor=(0.5, -0.025),
+        frameon=False,
+    )
+    fig.suptitle(
+        "Recomendações por ambiente — linhas mostram as fronteiras viáveis",
+        y=1.01,
+    )
+    fig.subplots_adjust(bottom=0.13, hspace=0.32, wspace=0.22)
+    fig.savefig(
+        output / "25-lista-n-recomendacoes-por-ambiente.png",
+        dpi=180, bbox_inches="tight",
+    )
+    plt.close(fig)
+
+
 def plot_13_priority_comparison(repo_root: Path, df: pd.DataFrame, output: Path) -> bool:
     if EXPERIMENT_RESULT_DIR != "prism-cc-uprank-order-exp-01":
         return False
@@ -1298,7 +1480,10 @@ def plot_13_priority_comparison(repo_root: Path, df: pd.DataFrame, output: Path)
     return True
 
 
-def write_report(output: Path, manifest: dict, has_priority_comparison: bool = False) -> None:
+def write_report(
+    output: Path, manifest: dict, has_priority_comparison: bool = False,
+    has_recommendation_cloud: bool = False,
+) -> None:
     priority_label = {
         "topological_order": "ordem topológica",
         "upward_rank": "upward rank",
@@ -1334,6 +1519,14 @@ def write_report(output: Path, manifest: dict, has_priority_comparison: bool = F
                 "13-comparacao-topology-uprank.png",
                 "Comparação Topology × UpRank",
                 "Compara diretamente as duas políticas de prioridade do PRISM-CC, mantendo máquinas, sementes, interferência, Beam Search, budget e deadline constantes. O painel superior mostra makespan e o inferior mostra custo.",
+            )
+        )
+    if has_recommendation_cloud:
+        descriptions.append(
+            (
+                "25-lista-n-recomendacoes-por-ambiente.png",
+                "Lista N de recomendações por ambiente",
+                "Exibe todas as recomendações exportadas pelo Beam para PRISM-CC Time e PRISM-CC Cost. Recomendações que excederam budget ou deadline aparecem em cinza ao fundo. As opções viáveis permanecem nas cores de seus algoritmos, e as linhas azul e verde conectam somente as soluções não dominadas das respectivas fronteiras Time e Cost. Um marcador maior identifica a melhor opção viável de cada objetivo; o losango é a referência HEFT.",
             )
         )
     lines = [
@@ -1402,5 +1595,26 @@ def generate_all(repo_root: Path) -> list[Path]:
     )
     plot_23_recommendation_frontier(recommendations, manifest, output)
     plot_24_feasible_options_by_environment(recommendations, manifest, output)
-    write_report(output, manifest, has_priority_comparison)
+    has_recommendation_cloud = "recommendations_json" in df.columns
+    if has_recommendation_cloud:
+        recommendation_rows = []
+        for row in df[df.algorithm.isin(["prism_cc_time", "prism_cc_cost"])].itertuples():
+            for recommendation in json.loads(row.recommendations_json):
+                recommendation_rows.append(
+                    {
+                        **recommendation,
+                        "algorithm": row.algorithm,
+                        "scenario_id": row.scenario_id,
+                        "interference_seed": row.interference_seed,
+                    }
+                )
+        exported_recommendations = pd.DataFrame(recommendation_rows)
+        has_recommendation_cloud = not exported_recommendations.empty
+    if has_recommendation_cloud:
+        plot_25_recommendation_cloud_by_environment(
+            exported_recommendations, df, manifest, output
+        )
+    write_report(
+        output, manifest, has_priority_comparison, has_recommendation_cloud
+    )
     return sorted(output.glob("*.png"))
