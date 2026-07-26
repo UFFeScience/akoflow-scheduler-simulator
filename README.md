@@ -61,7 +61,8 @@ docker compose run --rm --no-deps \
   go run . \
   -experiment-output /results \
   -experiment-repetitions 30 \
-  -experiment-beam-width 120
+  -experiment-beam-width 120 \
+  -experiment-prism-priority topological_order
 ```
 
 The output directory contains:
@@ -81,6 +82,14 @@ The notebooks validate `raw_results.csv` and generate the complete chart set:
 
 ```bash
 sh experiments/notebooks/run-with-docker.sh
+```
+
+For the upward-rank PRISM-CC variant, use
+`-experiment-prism-priority upward_rank` and generate its charts with:
+
+```bash
+EXPERIMENT_RESULT_DIR=prism-cc-uprank-order-exp-01 \
+  sh experiments/notebooks/run-with-docker.sh
 ```
 
 The script builds the `scheduler-simulator-notebooks` image and executes both

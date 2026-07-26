@@ -182,6 +182,34 @@ func TestClassicHEFTIsIndependentOfInterferenceSeed(t *testing.T) {
 	}
 }
 
+func TestPRISMCCUpwardRankOrderRespectsDependencies(t *testing.T) {
+	generated, err := generateExperimentSimulation("hybrid_hetero", 42, 1, false, minBeamWidth)
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated.Experimental.PriorityPolicy = "upward_rank"
+	order, err := prismCCPriorityOrder(generated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	position := map[string]int{}
+	for index, taskID := range order {
+		position[taskID] = index
+	}
+	for _, dependency := range generated.Workflow.Dependencies {
+		if position[dependency.Source] >= position[dependency.Target] {
+			t.Fatalf("upward-rank order violates %s -> %s", dependency.Source, dependency.Target)
+		}
+	}
+	topological, err := topologicalOrder(generated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reflect.DeepEqual(order, topological) {
+		t.Fatal("expected upward-rank order to differ from the lexicographic topological order")
+	}
+}
+
 func TestExperimentalRunnerWritesOnePairedRepetition(t *testing.T) {
 	output := t.TempDir()
 	if err := runExperimentalProtocol(ExperimentRunOptions{

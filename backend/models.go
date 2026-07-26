@@ -254,6 +254,7 @@ type SimulationResult struct {
 type ExperimentMetadata struct {
 	Algorithm               string   `json:"algorithm"`
 	ScenarioID              string   `json:"scenario_id"`
+	PriorityPolicy          string   `json:"priority_policy,omitempty"`
 	InterferenceSeed        int64    `json:"interference_seed"`
 	InterferenceActivityIDs []string `json:"interference_activity_ids"`
 	InterferenceRate        float64  `json:"interference_rate"`

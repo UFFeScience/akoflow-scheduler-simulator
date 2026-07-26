@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import matplotlib
@@ -36,7 +37,9 @@ ALGORITHM_LABELS = {
     "heft_classic": "HEFT clássico",
 }
 PALETTE = {"prism_cc_time": "#2878B5", "prism_cc_cost": "#59A14F", "heft_classic": "#E07A2D"}
-EXPERIMENT_RESULT_DIR = "prism-cc-topology-order-exp-01"
+EXPERIMENT_RESULT_DIR = os.environ.get(
+    "EXPERIMENT_RESULT_DIR", "prism-cc-topology-order-exp-01"
+)
 
 
 def configure_style() -> None:
@@ -333,6 +336,10 @@ def plot_12_seed_stability(df: pd.DataFrame, output: Path) -> None:
 
 
 def write_report(output: Path, manifest: dict) -> None:
+    priority_label = {
+        "topological_order": "ordem topológica",
+        "upward_rank": "upward rank",
+    }.get(manifest.get("prism_cc_priority"), manifest.get("prism_cc_priority", "não informada"))
     descriptions = [
         ("01-makespan-por-ambiente.png", "Makespan por ambiente e algoritmo", "Boxplots das 30 sementes do PRISM-CC. A linha vermelha é o deadline global, calculado como a média das execuções HEFT clássico. Como o HEFT clássico não possui co-alocação nem interferência, seu resultado é determinístico e aparece como uma linha em cada ambiente."),
         ("02-custo-por-ambiente.png", "Custo por ambiente e algoritmo", "Compara o custo total das 30 execuções. A linha vermelha é o budget global, calculado como a média de todos os custos HEFT. Cenários on-premise aparecem com custo financeiro zero."),
@@ -349,6 +356,8 @@ def write_report(output: Path, manifest: dict) -> None:
     ]
     lines = [
         "# Gráficos do protocolo experimental",
+        "",
+        f"Prioridade das tarefas do PRISM-CC: **{priority_label}**.",
         "",
         f"Budget global (média HEFT): `{manifest['budget_limit']}`. "
         f"Deadline global (média HEFT): `{manifest['deadline_limit']}` segundos. "

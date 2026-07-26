@@ -11,5 +11,6 @@ docker build \
 docker run --rm \
   --user "$(id -u):$(id -g)" \
   -e MPLCONFIGDIR=/tmp/matplotlib \
+  -e EXPERIMENT_RESULT_DIR="${EXPERIMENT_RESULT_DIR:-prism-cc-topology-order-exp-01}" \
   -v "$repo_root:/workspace" \
   scheduler-simulator-notebooks

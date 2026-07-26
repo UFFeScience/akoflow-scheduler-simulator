@@ -30,6 +30,7 @@ type ExperimentRunOptions struct {
 	Repetitions     int
 	StructuralSeed  int64
 	BeamWidth       int
+	PRISMCCPriority string
 }
 
 type ExperimentRecord struct {
@@ -77,6 +78,12 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	}
 	if options.BeamWidth == 0 {
 		options.BeamWidth = minBeamWidth
+	}
+	if options.PRISMCCPriority == "" {
+		options.PRISMCCPriority = "topological_order"
+	}
+	if options.PRISMCCPriority != "topological_order" && options.PRISMCCPriority != "upward_rank" {
+		return fmt.Errorf("unsupported PRISM-CC priority policy %q", options.PRISMCCPriority)
 	}
 	if options.OutputDirectory == "" {
 		options.OutputDirectory = filepath.Join("experiments", "results")
@@ -143,6 +150,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 				generated.SLA.BudgetLimit = &budgetLimit
 				generated.SLA.DeadlineLimit = &deadlineLimit
 				generated.Experimental.Algorithm = algorithm
+				generated.Experimental.PriorityPolicy = options.PRISMCCPriority
 				switch algorithm {
 				case "prism_cc_time":
 					generated.SLA.WeightTime = 1
@@ -185,7 +193,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		BudgetLimit: budgetLimit, DeadlineLimit: deadlineLimit,
 		ReferencePolicy: "Global classic HEFT mean: deadline is the mean makespan and budget is the mean cost across all classic HEFT scenario/seed executions",
 		Calibration:     "Global mean of all classic HEFT runs, without margin",
-		HEFTMode:        "classic_no_colocation", PRISMCCPriority: "topological_order",
+		HEFTMode:        "classic_no_colocation", PRISMCCPriority: options.PRISMCCPriority,
 		BeamWidth: options.BeamWidth,
 	}
 	return writeJSONFile(filepath.Join(options.OutputDirectory, "manifest.json"), manifest)

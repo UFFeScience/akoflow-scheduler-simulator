@@ -73,7 +73,7 @@ func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, erro
 	hasBooted, ready, last := initialNodeState(generated.Resources)
 	initialBeam := []beamState{{Assignments: []Assignment{}, AssignmentByTask: map[string]Assignment{}, CoreAvail: coreAvail, NodeHasBooted: hasBooted, NodeReadyTime: ready, NodeLastActive: last, StopIntervals: []MachineStopInterval{}}}
 	ctx := optimizerContext{Tasks: taskMap(generated.Workflow.Tasks), Resources: resourceMap(generated.Resources), DepsByTarget: dependenciesByTarget(generated.Workflow.Dependencies)}
-	order, err := topologicalOrder(generated)
+	order, err := prismCCPriorityOrder(generated)
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +103,31 @@ func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, erro
 		finalStates = append(finalStates, beams[index]...)
 	}
 	return dedupeStates(finalStates), nil
+}
+
+func prismCCPriorityOrder(generated GeneratedSimulation) ([]string, error) {
+	if generated.Experimental == nil || generated.Experimental.PriorityPolicy == "" ||
+		generated.Experimental.PriorityPolicy == "topological_order" {
+		return topologicalOrder(generated)
+	}
+	if generated.Experimental.PriorityPolicy != "upward_rank" {
+		return nil, fmt.Errorf("unsupported PRISM-CC priority policy %q", generated.Experimental.PriorityPolicy)
+	}
+	ranks, err := heftUpwardRanks(generated)
+	if err != nil {
+		return nil, err
+	}
+	order := make([]string, 0, len(generated.Workflow.Tasks))
+	for _, task := range generated.Workflow.Tasks {
+		order = append(order, task.ID)
+	}
+	sort.SliceStable(order, func(i, j int) bool {
+		if ranks[order[i]] != ranks[order[j]] {
+			return ranks[order[i]] > ranks[order[j]]
+		}
+		return order[i] < order[j]
+	})
+	return order, nil
 }
 
 func beamFrontiers() []beamFrontier {
