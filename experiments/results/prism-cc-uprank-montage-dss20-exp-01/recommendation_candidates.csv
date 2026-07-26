@@ -1,0 +1,19 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+cluster_hetero,prism_cc_cost,On-prem heterogêneo · PRISM-CC - Cost,735.8372,778.0754,0.0,0.0,3.710241232314379,100.0,0.0,0.0,True,True,1,,,
+hybrid_hetero,prism_cc_time,Híbrido heterogêneo · PRISM-CC - Time,352.29083333333335,368.9688,4.0547527,4.1927716,2.8871968450843455,100.0,0.0,0.0,True,True,2,4.1927716,409.10659999999996,97.57426328684346
+cloud_hetero,prism_cc_time,Nuvem heterogênea · PRISM-CC - Time,346.90936666666664,362.71855,10.349009933333333,10.5727268,2.311034209912433,100.0,0.0,0.0,True,True,3,6.3799551999999995,6.250249999999994,0.9796698885910664
+cloud_homo,prism_cc_time,Nuvem homogênea · PRISM-CC - Time,333.42313333333345,359.26509999999996,11.226596233333336,11.781458950000001,6.135774691910419,100.0,0.0,0.0,True,True,4,1.2087321500000012,3.453450000000032,2.857084590659749
+cluster_hetero,heft_classic,On-prem heterogêneo · HEFT clássico,17155.12,17155.12,0.0,0.0,0.0,0.0,29.464549287285923,0.0,False,False,,,,
+cluster_hetero,prism_cc_time,On-prem heterogêneo · PRISM-CC - Time,735.8372,778.0754,0.0,0.0,3.710241232314379,100.0,0.0,0.0,True,False,,,,
+cluster_homo,heft_classic,On-prem homogêneo · HEFT clássico,16393.044999999995,16393.045,0.0,0.0,2.2571590476646015e-14,0.0,23.713397654530887,0.0,False,False,,,,
+cluster_homo,prism_cc_cost,On-prem homogêneo · PRISM-CC - Cost,740.8228666666666,781.5118,0.0,0.0,3.4491165780977493,100.0,0.0,0.0,True,False,,,,
+cluster_homo,prism_cc_time,On-prem homogêneo · PRISM-CC - Time,740.8228666666666,781.5118,0.0,0.0,3.4491165780977493,100.0,0.0,0.0,True,False,,,,
+hybrid_hetero,prism_cc_cost,Híbrido heterogêneo · PRISM-CC - Cost,1603.7491,1725.9432,0.0,0.0,4.509138267394175,100.0,0.0,0.0,True,False,,,,
+hybrid_homo,prism_cc_cost,Híbrido homogêneo · PRISM-CC - Cost,1733.4401333333333,1850.0021499999998,0.0,0.0,3.9618801948681535,100.0,0.0,0.0,True,False,,,,
+hybrid_homo,prism_cc_time,Híbrido homogêneo · PRISM-CC - Time,357.1643000000001,380.63295,5.9969204,6.124180849999999,4.322647576510752,100.0,0.0,0.0,True,False,,,,
+cloud_hetero,prism_cc_cost,Nuvem heterogênea · PRISM-CC - Cost,786.5518666666668,1254.38445,8.333786966666667,9.181473449999999,33.16060158206122,100.0,0.0,0.0,True,False,,,,
+cloud_homo,prism_cc_cost,Nuvem homogênea · PRISM-CC - Cost,508.7540333333333,977.9137499999997,10.531429666666666,10.95402735,41.365482696513666,100.0,0.0,0.0,True,False,,,,
+hybrid_hetero,heft_classic,Híbrido heterogêneo · HEFT clássico,12374.908999999996,12374.909,46.21722,46.21722,2.99005914633578e-14,100.0,0.0,0.0,True,False,,,,
+hybrid_homo,heft_classic,Híbrido homogêneo · HEFT clássico,11771.617000000006,11771.617,53.76064799999999,53.760648,4.714948231902583e-14,0.0,0.0,10.075065778664971,False,False,,,,
+cloud_hetero,heft_classic,Nuvem heterogênea · HEFT clássico,11116.815,11116.815,90.84211300000003,90.842113,0.0,0.0,0.0,85.9994612406442,False,False,,,,
+cloud_homo,heft_classic,Nuvem homogênea · HEFT clássico,10693.44,10693.44,102.21994200000003,102.219942,0.0,0.0,0.0,109.2955955356289,False,False,,,,
