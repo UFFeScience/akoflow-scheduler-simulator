@@ -1,0 +1,4 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+cluster_homo,prism_cc_cost,On-prem homogêneo · PRISM-CC - Cost,292.98300000000006,292.983,0.0,0.0,1.973328542127601e-14,100.0,0.0,0.0,True,True,1,,,
+cloud_homo,prism_cc_cost,Nuvem homogênea · PRISM-CC - Cost,114.22256666666668,125.655,0.2591453,0.32540749999999974,5.217744898237172,100.0,0.0,0.0,True,True,2,0.32540749999999974,167.328,514.2106435776684
+hybrid_homo,prism_cc_time,Híbrido homogêneo · PRISM-CC - Time,108.64450000000001,111.95909999999999,0.5550759999999999,0.5809012,1.8769450885541057,100.0,0.0,0.0,True,True,3,0.25549370000000027,13.695900000000009,53.605627066342514

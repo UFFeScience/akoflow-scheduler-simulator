@@ -1,0 +1,5 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+cluster_hetero,prism_cc_time,On-prem heterogêneo · PRISM-CC - Time,735.8372,778.0754,0.0,0.0,3.710241232314379,100.0,0.0,0.0,True,True,1,,,
+hybrid_hetero,prism_cc_time,Híbrido heterogêneo · PRISM-CC - Time,352.29083333333335,368.9688,4.0749398999999995,4.20320435,2.8871968450843455,100.0,0.0,0.0,True,True,2,4.20320435,409.10659999999996,97.33207475387199
+cloud_hetero,prism_cc_time,Nuvem heterogênea · PRISM-CC - Time,346.90936666666664,362.71855,10.361469999999999,10.57733425,2.311034209912433,100.0,0.0,0.0,True,True,3,6.3741299,6.250249999999994,0.9805652062409325
+cloud_homo,prism_cc_time,Nuvem homogênea · PRISM-CC - Time,333.42313333333345,359.26509999999996,11.228066966666665,11.78216635,6.135774691910419,100.0,0.0,0.0,True,True,4,1.2048321000000008,3.453450000000032,2.8663329936179736

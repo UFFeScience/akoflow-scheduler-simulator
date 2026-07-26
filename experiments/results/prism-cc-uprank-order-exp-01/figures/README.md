@@ -76,6 +76,72 @@ Acompanha o makespan nas 30 seleções pareadas de atividades interferentes. Osc
 
 ![Estabilidade entre sementes](12-estabilidade-por-semente.png)
 
+## Makespan agregado por ambiente
+
+Cada painel apresenta um algoritmo. O círculo é a média das repetições, a barra horizontal é o intervalo de confiança de 95% e o losango vazado é a mediana. As sementes não são exibidas individualmente; elas servem para estimar a incerteza.
+
+![Makespan agregado por ambiente](14-makespan-agregado-ic95.png)
+
+## Custo agregado por ambiente
+
+Resume o custo das repetições com média, intervalo de confiança de 95% e mediana. A proximidade entre média e mediana indica estabilidade; diferenças maiores sugerem assimetria ou execuções atípicas.
+
+![Custo agregado por ambiente](15-custo-agregado-ic95.png)
+
+## Relação agregada entre custo e makespan
+
+Cada ambiente contém somente um ponto por algoritmo. A posição representa as médias de custo e makespan e as barras mostram os respectivos intervalos de confiança de 95%.
+
+![Relação agregada entre custo e makespan](16-relacao-agregada-custo-makespan.png)
+
+## Placar PRISM-CC versus HEFT
+
+Resume quem apresentou menor makespan e menor custo usando as médias das 30 execuções. Verde indica vitória do PRISM-CC, vermelho vitória do HEFT e células neutras indicam empate. O percentual quantifica a redução relativa em relação ao HEFT.
+
+![Placar PRISM-CC versus HEFT](17-placar-prism-cc-versus-heft.png)
+
+## Barras e linhas PRISM-CC versus HEFT
+
+As barras mostram as médias reais de makespan e custo, com intervalo de confiança de 95%. As linhas usam o segundo eixo para mostrar a redução percentual de PRISM-CC Time e Cost em relação ao HEFT. O eixo de makespan é logarítmico para manter visíveis algoritmos com ordens de grandeza diferentes.
+
+![Barras e linhas PRISM-CC versus HEFT](18-barras-e-linhas-prism-cc-versus-heft.png)
+
+## Mapa multidimensional de ganhos
+
+Combina redução de custo, redução de makespan, interferência média por atividade e desequilíbrio de utilização. Pontos no quadrante superior direito favorecem o PRISM-CC nas duas métricas.
+
+![Mapa multidimensional de ganhos](19-mapa-multidimensional-ganhos.png)
+
+## Preço da economia
+
+Mostra quantos segundos são adicionados ao makespan e quantos dólares são economizados ao escolher PRISM-CC Cost no lugar de PRISM-CC Time. As barras de erro representam IC 95% e os rótulos apresentam segundos adicionais por dólar.
+
+![Preço da economia](20-preco-da-economia.png)
+
+## Alocação explicando o resultado
+
+As barras empilhadas mostram a parcela média das atividades atribuída a cada família de máquinas. A linha mostra o makespan médio, o tamanho dos marcadores representa o custo e os rótulos apresentam ambos os valores.
+
+![Alocação explicando o resultado](21-alocacao-explica-resultado.png)
+
+## Risco versus desempenho
+
+Relaciona makespan médio e coeficiente de variação. O tamanho da bolha representa o custo médio e a cor representa a interferência média por atividade.
+
+![Risco versus desempenho](22-risco-versus-desempenho.png)
+
+## Fronteira de recomendações e concessões
+
+Apresenta somente as recomendações não dominadas usando custo e makespan no percentil 95, evitando decidir apenas pela média. O primeiro painel mostra a fronteira robusta, a factibilidade e a variabilidade. O segundo transforma a fronteira em uma sequência de concessões: quanto custo adicional é necessário aceitar e quantos segundos são economizados ao migrar para a próxima recomendação.
+
+![Fronteira de recomendações e concessões](23-fronteira-recomendacoes-concessoes.png)
+
+## Opções viáveis por ambiente
+
+Cada painel representa um ambiente e cada ponto uma opção de escalonamento: HEFT clássico, PRISM-CC Time ou PRISM-CC Cost. A área verde é delimitada pelo budget e pelo deadline globais derivados do HEFT. Para considerar a incerteza das repetições, custo e makespan são apresentados no percentil 95; pontos com uma marca vermelha ficaram fora de pelo menos um dos limites.
+
+![Opções viáveis por ambiente](24-opcoes-viaveis-por-ambiente.png)
+
 ## Comparação Topology × UpRank
 
 Compara diretamente as duas políticas de prioridade do PRISM-CC, mantendo máquinas, sementes, interferência, Beam Search, budget e deadline constantes. O painel superior mostra makespan e o inferior mostra custo.

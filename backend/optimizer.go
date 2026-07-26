@@ -9,25 +9,25 @@ import (
 )
 
 type beamState struct {
-	Assignments       []Assignment
-	AssignmentByTask  map[string]Assignment
-	AssignmentTrace   *assignmentTrace
-	AssignmentIndex   *assignmentIndexNode
-	SelectedIntervals map[string]*intervalIndexNode
-	BillingStart      map[string]float64
-	BillingFinish     map[string]float64
-	Compact           bool
-	SignatureHash     uint64
-	CoreAvail         map[string]float64
-	CoreIndexes       map[string]*coreAvailabilityNode
-	NodeHasBooted     map[string]bool
-	NodeReadyTime     map[string]float64
-	NodeLastActive    map[string]float64
-	StopIntervals     []MachineStopInterval
-	StepTrace         *scheduleStepTrace
-	PartialBudgetUsed float64
-	PartialMakespan   float64
-	PartialScore      float64
+	Assignments        []Assignment
+	AssignmentByTask   map[string]Assignment
+	AssignmentTrace    *assignmentTrace
+	AssignmentIndex    *assignmentIndexNode
+	SelectedIntervals  map[string]*intervalIndexNode
+	BillingStart       map[string]float64
+	BillingFinish      map[string]float64
+	Compact            bool
+	SignatureHash      uint64
+	CoreAvail          map[string]float64
+	CoreIndexes        map[string]*coreAvailabilityNode
+	NodeHasBooted      map[string]bool
+	NodeReadyTime      map[string]float64
+	NodeLastActive     map[string]float64
+	StopIntervals      []MachineStopInterval
+	StepTrace          *scheduleStepTrace
+	PartialBudgetUsed  float64
+	PartialMakespan    float64
+	PartialScore       float64
 }
 
 type scheduleStepTrace struct {
