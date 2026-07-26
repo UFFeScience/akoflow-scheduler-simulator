@@ -72,7 +72,14 @@ def validate_results(df: pd.DataFrame, manifest: dict) -> pd.DataFrame:
     assert len(df) == expected, f"esperadas {expected} linhas, encontradas {len(df)}"
     assert set(df["scenario_id"]) == set(SCENARIO_ORDER)
     assert set(df["algorithm"]) == set(ALGORITHM_ORDER)
-    assert df["interference_activity_ids"].str.split("|", regex=False).str.len().eq(29).all()
+    expected_selected = manifest["selected_activities"]
+    assert (
+        df["interference_activity_ids"]
+        .str.split("|", regex=False)
+        .str.len()
+        .eq(expected_selected)
+        .all()
+    )
     counts = (
         df.groupby(["scenario_id", "algorithm"], observed=True)
         .size()
@@ -419,7 +426,7 @@ def write_report(output: Path, manifest: dict, has_priority_comparison: bool = F
         ("07-pares-versus-makespan.png", "Pares interferentes × makespan", "Relaciona quantos pares realmente se sobrepuseram na mesma máquina ao makespan. Distingue atividades selecionadas de interferências efetivamente ativadas."),
         ("08-tempo-de-interferencia.png", "Distribuição do tempo de interferência", "Boxplots do overhead total provocado pela interferência. Permite comparar a capacidade de cada escalonador de evitar sobreposições prejudiciais."),
         ("09-heatmap-utilizacao.png", "Heatmap de utilização", "Utilização média de cada máquina considerando seus cores e o makespan. Células escuras indicam maior ocupação relativa."),
-        ("10-distribuicao-atividades.png", "Distribuição das atividades", "Barras empilhadas com a parcela média das 58 atividades destinada às famílias Bora, Diablo, H3 e H4D."),
+        ("10-distribuicao-atividades.png", "Distribuição das atividades", f"Barras empilhadas com a parcela média das {manifest['task_count']} atividades destinada às famílias Bora, Diablo, H3 e H4D."),
         ("11-tempo-computacional.png", "Tempo dos algoritmos", "Custo computacional do escalonamento em escala logarítmica. Evidencia a diferença de tempo entre a busca Beam e o HEFT."),
         ("12-estabilidade-por-semente.png", "Estabilidade entre sementes", "Acompanha o makespan nas 30 seleções pareadas de atividades interferentes. Oscilações mostram sensibilidade à composição da interferência."),
     ]

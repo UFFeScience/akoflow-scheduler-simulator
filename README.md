@@ -36,8 +36,9 @@ docker compose run --rm backend go test ./...
 The backend includes a reproducible batch runner that compares PRISM-CC Time
 (`100% time`), PRISM-CC Cost (`100% cost`), and classic HEFT across the six machine
 scenarios in `experiments/machine_simulators.csv`.
-It imports the 58-task Montage DAG and runs the paired interference seeds. HEFT
-is executed first for every scenario and seed. The global mean classic HEFT makespan
+It imports the selected Montage DAG and runs the paired interference seeds. HEFT
+is executed once per scenario because classic HEFT has no co-location and is
+therefore independent of the interference selection. The global mean classic HEFT makespan
 becomes the fixed deadline, and the global mean HEFT cost becomes the fixed
 budget for every execution, without any margin.
 
@@ -137,10 +138,32 @@ docker run --rm --user "$(id -u):$(id -g)" \
 
 Select the large workflow in the experimental runner with:
 
-```text
--experiment-workflow montage_dss_20d
+```bash
+mkdir -p experiments/results/prism-cc-uprank-montage-dss20-exp-01
+set -o pipefail
+docker compose run --rm --no-deps \
+  -v "${PWD}/experiments/results/prism-cc-uprank-montage-dss20-exp-01:/results" \
+  backend \
+  go run . \
+  -experiment-output /results \
+  -experiment-repetitions 30 \
+  -experiment-beam-width 120 \
+  -experiment-workers 6 \
+  -experiment-prism-priority upward_rank \
+  -experiment-workflow montage_dss_20d \
+  2>&1 | tee experiments/results/prism-cc-uprank-montage-dss20-exp-01/run.log
 ```
 
 For 6,448 tasks, controlled interference is represented sparsely and evaluated
-only for actually co-located tasks, avoiding a quadratic in-memory matrix.
+only for actually co-located tasks, avoiding a quadratic in-memory matrix. The
+runner uses four workers and logs each completed environment/seed pair with its
+duration, completed percentage, remaining count, and estimated time to finish.
+
+Generate and execute the large-workflow notebooks through Docker after the
+runner finishes:
+
+```bash
+EXPERIMENT_RESULT_DIR=prism-cc-uprank-montage-dss20-exp-01 \
+  sh experiments/notebooks/run-with-docker.sh
+```
 # akoflow-scheduler-simulator

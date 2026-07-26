@@ -11,7 +11,15 @@ import (
 type beamState struct {
 	Assignments       []Assignment
 	AssignmentByTask  map[string]Assignment
+	AssignmentTrace   *assignmentTrace
+	AssignmentIndex   *assignmentIndexNode
+	SelectedIntervals map[string]*intervalIndexNode
+	BillingStart      map[string]float64
+	BillingFinish     map[string]float64
+	Compact           bool
+	SignatureHash     uint64
 	CoreAvail         map[string]float64
+	CoreIndexes       map[string]*coreAvailabilityNode
 	NodeHasBooted     map[string]bool
 	NodeReadyTime     map[string]float64
 	NodeLastActive    map[string]float64
@@ -65,13 +73,16 @@ func normalizedBeamWidth(value int) int {
 
 func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, error) {
 	coreAvail := map[string]float64{}
+	coreIndexes := map[string]*coreAvailabilityNode{}
 	for _, resource := range generated.Resources {
 		for _, core := range resource.Cores {
 			coreAvail[core.ID] = 0
+			coreIndexes[resource.ID] = coreIndexInsert(coreIndexes[resource.ID], core.ID, 0)
 		}
 	}
 	hasBooted, ready, last := initialNodeState(generated.Resources)
-	initialBeam := []beamState{{Assignments: []Assignment{}, AssignmentByTask: map[string]Assignment{}, CoreAvail: coreAvail, NodeHasBooted: hasBooted, NodeReadyTime: ready, NodeLastActive: last, StopIntervals: []MachineStopInterval{}}}
+	compact := len(generated.Workflow.Tasks) > 1000
+	initialBeam := []beamState{{Assignments: []Assignment{}, AssignmentByTask: map[string]Assignment{}, SelectedIntervals: map[string]*intervalIndexNode{}, BillingStart: map[string]float64{}, BillingFinish: map[string]float64{}, Compact: compact, CoreAvail: coreAvail, CoreIndexes: coreIndexes, NodeHasBooted: hasBooted, NodeReadyTime: ready, NodeLastActive: last, StopIntervals: []MachineStopInterval{}}}
 	ctx := optimizerContext{Tasks: taskMap(generated.Workflow.Tasks), Resources: resourceMap(generated.Resources), DepsByTarget: dependenciesByTarget(generated.Workflow.Dependencies)}
 	order, err := prismCCPriorityOrder(generated)
 	if err != nil {
@@ -212,14 +223,14 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 		if task.CPU > resource.CPU || task.Memory > resource.Memory {
 			continue
 		}
-		predecessorFloor, transferTotal := predecessorTiming(ctx.DepsByTarget[task.ID], state.AssignmentByTask, generated, resource.ID)
+		predecessorFloor, transferTotal := predecessorTimingForState(ctx.DepsByTarget[task.ID], state, generated, resource.ID)
 		networkCost := 0.0
 		for _, dep := range ctx.DepsByTarget[task.ID] {
-			predecessor := state.AssignmentByTask[dep.Source]
+			predecessor, _ := stateAssignment(state, dep.Source)
 			networkCost += dep.DataMB * generated.Matrices.FinancialNetworkCost[predecessor.ResourceID][resource.ID]
 		}
-		for _, core := range []Core{earliestAvailableCore(resource, state.CoreAvail)} {
-			readyFloor := maxf(predecessorFloor, state.CoreAvail[core.ID], state.NodeReadyTime[resource.ID])
+		for _, core := range []Core{earliestAvailableCoreForState(resource, state)} {
+			readyFloor := maxf(predecessorFloor, coreAvailabilityForState(state, resource.ID, core.ID), state.NodeReadyTime[resource.ID])
 			stopBoot := resource.Kind == "cloud" && state.NodeHasBooted[resource.ID] && resource.BootOverhead > 0 && readyFloor-state.NodeLastActive[resource.ID] >= resource.BootOverhead
 			coldBoot := !state.NodeHasBooted[resource.ID]
 			boot := 0.0
@@ -233,12 +244,12 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 			}
 			start := round(bootReady+container, 3)
 			baseRuntime := generated.Matrices.ET0[task.ID][resource.ID]
-			phi, pairwise := candidatePairwiseInterference(generated, task.ID, resource.ID, state.Assignments, start, start+baseRuntime)
+			phi, pairwise := candidatePairwiseInterferenceForState(generated, task.ID, resource.ID, state, start, start+baseRuntime)
 			effective := round(baseRuntime*(1+phi), 3)
 			finish := round(start+effective, 3)
 			score := ScoreBreakdown{}
 			assignment := Assignment{TaskID: task.ID, ResourceID: resource.ID, CoreID: core.ID, StartTime: start, FinishTime: finish, EffectiveRuntime: effective, TransferDelay: round(transferTotal, 3), BootOverhead: boot, ContainerOverhead: container, PhiN: phi, PredecessorFinishFloor: round(predecessorFloor, 3), Score: score}
-			rawCost := incrementalMachineActiveCost(state.Assignments, assignment, resource)
+			rawCost := incrementalMachineActiveCostForState(state, assignment, resource)
 			candidate := CandidateEvaluation{TaskID: task.ID, ResourceID: resource.ID, CoreID: core.ID, StartTime: start, FinishTime: finish, BaseRuntime: baseRuntime, EffectiveRuntime: effective, InterferenceTime: round(effective-baseRuntime, 3), TransferDelay: round(transferTotal, 3), BootOverhead: boot, ContainerOverhead: container, PredecessorFinishFloor: round(predecessorFloor, 3), RawCost: round(rawCost, 4), PhiN: phi, PairwiseInterference: pairwise, Score: score}
 			rows = append(rows, candidateRow{assignment: assignment, candidate: candidate, finish: finish, rawCost: rawCost, phi: phi, incBudget: rawCost + networkCost})
 		}
@@ -284,27 +295,38 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 		frontierRankBySlot[row.assignment.ResourceID+"|"+row.assignment.CoreID] = i + 1
 	}
 	rankedCandidates := []CandidateEvaluation{}
-	for _, row := range rows {
-		rankedCandidates = append(rankedCandidates, row.candidate)
-	}
-	sortCandidates(rankedCandidates)
 	displayRankBySlot := map[string]int{}
-	for i, candidate := range rankedCandidates {
-		displayRankBySlot[candidate.ResourceID+"|"+candidate.CoreID] = i + 1
+	if !state.Compact {
+		for _, row := range rows {
+			rankedCandidates = append(rankedCandidates, row.candidate)
+		}
+		sortCandidates(rankedCandidates)
+		for i, candidate := range rankedCandidates {
+			displayRankBySlot[candidate.ResourceID+"|"+candidate.CoreID] = i + 1
+		}
 	}
 	nextStates := []beamState{}
 	for _, row := range rows {
 		selectedCandidates := []CandidateEvaluation{}
-		for _, ranked := range rankedCandidates {
-			item := ranked
-			item.Rank = displayRankBySlot[item.ResourceID+"|"+item.CoreID]
-			item.Selected = item.ResourceID == row.assignment.ResourceID && item.CoreID == row.assignment.CoreID
-			selectedCandidates = append(selectedCandidates, item)
+		if !state.Compact {
+			for _, ranked := range rankedCandidates {
+				item := ranked
+				item.Rank = displayRankBySlot[item.ResourceID+"|"+item.CoreID]
+				item.Selected = item.ResourceID == row.assignment.ResourceID && item.CoreID == row.assignment.CoreID
+				selectedCandidates = append(selectedCandidates, item)
+			}
 		}
 		selectedRank := frontierRankBySlot[row.assignment.ResourceID+"|"+row.assignment.CoreID]
 		step := ScheduleStep{Step: stepIndex, TaskID: task.ID, SelectedResourceID: row.assignment.ResourceID, SelectedCoreID: row.assignment.CoreID, SelectedTotalScore: row.assignment.Score.TotalScore, Candidates: selectedCandidates}
-		coreAvail := copyFloatMap(state.CoreAvail)
-		coreAvail[row.assignment.CoreID] = row.assignment.FinishTime
+		coreAvail := state.CoreAvail
+		coreIndexes := state.CoreIndexes
+		if state.Compact {
+			coreIndexes = copyCoreRootMap(state.CoreIndexes)
+			coreIndexes[row.assignment.ResourceID] = coreIndexInsert(coreIndexes[row.assignment.ResourceID], row.assignment.CoreID, row.assignment.FinishTime)
+		} else {
+			coreAvail = copyFloatMap(state.CoreAvail)
+			coreAvail[row.assignment.CoreID] = row.assignment.FinishTime
+		}
 		nodeHasBooted := copyBoolMap(state.NodeHasBooted)
 		nodeReady := copyFloatMap(state.NodeReadyTime)
 		nodeLast := copyFloatMap(state.NodeLastActive)
@@ -313,13 +335,32 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 		partialBudget := round(state.PartialBudgetUsed+row.incBudget, 4)
 		partialMakespan := round(maxf(state.PartialMakespan, row.assignment.FinishTime), 3)
 		partialScore := round(state.PartialScore+beamFrontierScore(row.assignment.Score, frontier)+float64(selectedRank)*0.0001, 6)
-		assignments := append(append([]Assignment{}, state.Assignments...), row.assignment)
-		byTask := map[string]Assignment{}
-		for key, value := range state.AssignmentByTask {
-			byTask[key] = value
+		assignments, byTask := state.Assignments, state.AssignmentByTask
+		trace, index := state.AssignmentTrace, state.AssignmentIndex
+		selectedIntervals := state.SelectedIntervals
+		billingStart, billingFinish := state.BillingStart, state.BillingFinish
+		if state.Compact {
+			trace = appendAssignmentTrace(trace, row.assignment)
+			index = assignmentIndexInsert(index, row.assignment.TaskID, row.assignment)
+			selectedIntervals = copyIntervalRootMap(selectedIntervals)
+			if generated.Experimental != nil && generated.Experimental.interferenceActivitySet[row.assignment.TaskID] {
+				selectedIntervals[row.assignment.ResourceID] = intervalIndexInsert(selectedIntervals[row.assignment.ResourceID], row.assignment)
+			}
+			billingStart, billingFinish = updatedBillingBounds(state, row.assignment)
+		} else {
+			assignments = append(append([]Assignment{}, state.Assignments...), row.assignment)
+			byTask = map[string]Assignment{}
+			for key, value := range state.AssignmentByTask {
+				byTask[key] = value
+			}
+			byTask[row.assignment.TaskID] = row.assignment
 		}
-		byTask[row.assignment.TaskID] = row.assignment
-		nextStates = append(nextStates, beamState{Assignments: assignments, AssignmentByTask: byTask, CoreAvail: coreAvail, NodeHasBooted: nodeHasBooted, NodeReadyTime: nodeReady, NodeLastActive: nodeLast, StopIntervals: intervals, StepTrace: appendStepTrace(state.StepTrace, step), PartialBudgetUsed: partialBudget, PartialMakespan: partialMakespan, PartialScore: partialScore})
+		signatureHash := state.SignatureHash*1099511628211 ^ stablePriority(row.assignment.TaskID+":"+row.assignment.ResourceID)
+		stepTrace := state.StepTrace
+		if !state.Compact {
+			stepTrace = appendStepTrace(state.StepTrace, step)
+		}
+		nextStates = append(nextStates, beamState{Assignments: assignments, AssignmentByTask: byTask, AssignmentTrace: trace, AssignmentIndex: index, SelectedIntervals: selectedIntervals, BillingStart: billingStart, BillingFinish: billingFinish, Compact: state.Compact, SignatureHash: signatureHash, CoreAvail: coreAvail, CoreIndexes: coreIndexes, NodeHasBooted: nodeHasBooted, NodeReadyTime: nodeReady, NodeLastActive: nodeLast, StopIntervals: intervals, StepTrace: stepTrace, PartialBudgetUsed: partialBudget, PartialMakespan: partialMakespan, PartialScore: partialScore})
 	}
 	return nextStates
 }
@@ -442,6 +483,9 @@ func dedupeStates(states []beamState) []beamState {
 }
 
 func stateSignature(state beamState) string {
+	if state.Compact {
+		return fmt.Sprintf("%016x", state.SignatureHash)
+	}
 	parts := []string{}
 	for _, assignment := range state.Assignments {
 		parts = append(parts, assignment.TaskID+":"+assignment.ResourceID)
@@ -451,6 +495,9 @@ func stateSignature(state beamState) string {
 
 func buildOptions(generated GeneratedSimulation, states []beamState, optionCount int, budgetLimit, deadlineLimit *float64) []ScheduleOption {
 	unique := dedupeStates(states)
+	if len(generated.Workflow.Tasks) > 1000 && optionCount == 1 {
+		unique = selectCompactFinalState(unique, generated, budgetLimit, deadlineLimit)
+	}
 	built := buildOptionsParallel(generated, unique, budgetLimit, deadlineLimit)
 	annotateOptionScores(built, generated)
 	ranked := rankOptions(built, optionCount, generated.SLA.WeightTime, generated.SLA.WeightCost)
@@ -465,6 +512,59 @@ func buildOptions(generated GeneratedSimulation, states []beamState, optionCount
 		ranked[i].Recommended = i == 0
 	}
 	return ranked
+}
+
+func selectCompactFinalState(states []beamState, generated GeneratedSimulation, budgetLimit, deadlineLimit *float64) []beamState {
+	if len(states) == 0 {
+		return states
+	}
+	ranked := append([]beamState{}, states...)
+	sort.SliceStable(ranked, func(i, j int) bool {
+		a, b := ranked[i], ranked[j]
+		aBudget := violationRatio(a.PartialBudgetUsed, budgetLimit)
+		bBudget := violationRatio(b.PartialBudgetUsed, budgetLimit)
+		aDeadline := violationRatio(a.PartialMakespan, deadlineLimit)
+		bDeadline := violationRatio(b.PartialMakespan, deadlineLimit)
+		aFeasible, bFeasible := aBudget == 0 && aDeadline == 0, bBudget == 0 && bDeadline == 0
+		if aFeasible != bFeasible {
+			return aFeasible
+		}
+		if !aFeasible {
+			if generated.SLA.WeightTime > generated.SLA.WeightCost {
+				if aDeadline != bDeadline {
+					return aDeadline < bDeadline
+				}
+				if aBudget != bBudget {
+					return aBudget < bBudget
+				}
+			} else if generated.SLA.WeightCost > generated.SLA.WeightTime {
+				if aBudget != bBudget {
+					return aBudget < bBudget
+				}
+				if aDeadline != bDeadline {
+					return aDeadline < bDeadline
+				}
+			}
+		}
+		if aBudget+aDeadline != bBudget+bDeadline {
+			return aBudget+aDeadline < bBudget+bDeadline
+		}
+		if generated.SLA.WeightTime > generated.SLA.WeightCost && a.PartialMakespan != b.PartialMakespan {
+			return a.PartialMakespan < b.PartialMakespan
+		}
+		if generated.SLA.WeightCost > generated.SLA.WeightTime && a.PartialBudgetUsed != b.PartialBudgetUsed {
+			return a.PartialBudgetUsed < b.PartialBudgetUsed
+		}
+		return beamStateLess(a, b)
+	})
+	return ranked[:1]
+}
+
+func violationRatio(value float64, limit *float64) float64 {
+	if limit == nil {
+		return 0
+	}
+	return maxf(0, value-*limit) / maxf(*limit, 0.000001)
 }
 
 func buildOptionsParallel(generated GeneratedSimulation, states []beamState, budgetLimit, deadlineLimit *float64) []ScheduleOption {
@@ -497,7 +597,8 @@ func buildOptionsParallel(generated GeneratedSimulation, states []beamState, bud
 
 func buildOption(generated GeneratedSimulation, state beamState, budgetLimit, deadlineLimit *float64) ScheduleOption {
 	copyGenerated := cloneGeneratedForOption(generated)
-	result := buildResult(copyGenerated, append([]Assignment{}, state.Assignments...), append([]MachineStopInterval{}, state.StopIntervals...), traceSteps(state.StepTrace))
+	assignments := stateAssignments(state)
+	result := buildResult(copyGenerated, assignments, append([]MachineStopInterval{}, state.StopIntervals...), traceSteps(state.StepTrace))
 	budgetUsed, makespan := result.CostVariables.BUsed, result.TimingVariables.Makespan
 	budgetViolation, deadlineViolation := 0.0, 0.0
 	if budgetLimit != nil {
@@ -531,7 +632,7 @@ func copyNestedFloatMap(in map[string]map[string]float64) map[string]map[string]
 
 func machineDistribution(state beamState) map[string]int {
 	out := map[string]int{}
-	for _, assignment := range state.Assignments {
+	for _, assignment := range stateAssignments(state) {
 		out[assignment.ResourceID]++
 	}
 	return out

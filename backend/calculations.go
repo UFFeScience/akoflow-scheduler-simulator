@@ -129,20 +129,15 @@ func incrementalMachineActiveCost(assignments []Assignment, candidate Assignment
 }
 
 func calculateInterference(generated GeneratedSimulation, assignments []Assignment) InterferenceVariables {
-	phi, etStar, colocated := map[string]float64{}, map[string]float64{}, map[string][]string{}
+	phi, etStar := map[string]float64{}, map[string]float64{}
 	total := 0.0
 	for _, assignment := range assignments {
 		phi[assignment.TaskID] = assignment.PhiN
 		etStar[assignment.TaskID] = assignment.EffectiveRuntime
 		baseRuntime := generated.Matrices.ET0[assignment.TaskID][assignment.ResourceID]
 		total += maxf(0, assignment.EffectiveRuntime-baseRuntime)
-		colocated[assignment.TaskID] = []string{}
-		for _, other := range assignments {
-			if other.TaskID != assignment.TaskID && other.ResourceID == assignment.ResourceID && maxf(assignment.StartTime, other.StartTime) < minf(assignment.FinishTime, other.FinishTime) {
-				colocated[assignment.TaskID] = append(colocated[assignment.TaskID], other.TaskID)
-			}
-		}
 	}
+	colocated, _ := analyzeAssignmentOverlaps(assignments, nil)
 	sum := 0.0
 	for _, value := range phi {
 		sum += value

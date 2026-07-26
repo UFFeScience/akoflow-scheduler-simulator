@@ -4,9 +4,11 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -30,6 +32,7 @@ type ExperimentRunOptions struct {
 	Repetitions     int
 	StructuralSeed  int64
 	BeamWidth       int
+	Workers         int
 	PRISMCCPriority string
 	WorkflowID      string
 }
@@ -116,24 +119,35 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	records := make([]ExperimentRecord, 0, len(experimentScenarioIDs)*len(experimentAlgorithms)*options.Repetitions)
 	seeds := make([]int64, 0, options.Repetitions)
 	for repetition := 1; repetition <= options.Repetitions; repetition++ {
-		interferenceSeed := int64(repetition)
-		seeds = append(seeds, interferenceSeed)
-		for _, scenarioID := range experimentScenarioIDs {
+		seeds = append(seeds, int64(repetition))
+	}
+	for _, scenarioID := range experimentScenarioIDs {
+		var referenceResult SimulationResult
+		referenceElapsed := 0.0
+		for repetition := 1; repetition <= options.Repetitions; repetition++ {
+			interferenceSeed := int64(repetition)
 			heftGenerated, generationErr := generateExperimentSimulationForWorkflow(
 				scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth,
 			)
 			if generationErr != nil {
 				return fmt.Errorf("%s seed %d HEFT generation: %w", scenarioID, interferenceSeed, generationErr)
 			}
-			heftGenerated.Experimental.Algorithm = "heft_classic"
-			runStarted := time.Now()
-			heftResult, scheduleErr := scheduleHEFTClassic(heftGenerated)
-			if scheduleErr != nil {
-				return fmt.Errorf("%s/heft seed %d: %w", scenarioID, interferenceSeed, scheduleErr)
+			var heftResult SimulationResult
+			if repetition == 1 {
+				heftGenerated.Experimental.Algorithm = "heft_classic"
+				runStarted := time.Now()
+				var scheduleErr error
+				referenceResult, scheduleErr = scheduleHEFTClassic(heftGenerated)
+				if scheduleErr != nil {
+					return fmt.Errorf("%s/heft seed %d: %w", scenarioID, interferenceSeed, scheduleErr)
+				}
+				referenceElapsed = float64(time.Since(runStarted).Microseconds()) / 1000
 			}
+			heftResult = referenceResult
+			heftResult.Experimental = heftGenerated.Experimental
 			heftRuns = append(heftRuns, calibratedHEFTRun{
 				scenarioID: scenarioID, interferenceSeed: interferenceSeed, result: heftResult,
-				elapsed: float64(time.Since(runStarted).Microseconds()) / 1000,
+				elapsed: referenceElapsed,
 			})
 			heftMakespans = append(heftMakespans, heftResult.TimingVariables.Makespan)
 			heftBudgets = append(heftBudgets, heftResult.CostVariables.BUsed)
@@ -153,49 +167,79 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		))
 	}
 
-	var err error
-	for repetition := 1; repetition <= options.Repetitions; repetition++ {
-		interferenceSeed := int64(repetition)
-		for _, scenarioID := range experimentScenarioIDs {
-			for _, algorithm := range []string{"prism_cc_time", "prism_cc_cost"} {
-				generated, generationErr := generateExperimentSimulationForWorkflow(
-					scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth,
-				)
-				if generationErr != nil {
-					return fmt.Errorf("%s seed %d generation: %w", scenarioID, interferenceSeed, generationErr)
-				}
-				generated.SLA.BudgetLimit = &budgetLimit
-				generated.SLA.DeadlineLimit = &deadlineLimit
-				generated.Experimental.Algorithm = algorithm
-				generated.Experimental.PriorityPolicy = options.PRISMCCPriority
-				switch algorithm {
-				case "prism_cc_time":
-					generated.SLA.WeightTime = 1
-					generated.SLA.WeightCost = 0
-				case "prism_cc_cost":
-					generated.SLA.WeightTime = 0
-					generated.SLA.WeightCost = 1
-				}
-				runStarted := time.Now()
-				var response ScheduleOptimizationResponse
-				response, err = optimizeSchedule(generated)
-				if err == nil {
-					if len(response.Options) == 0 {
-						err = fmt.Errorf("beam returned no schedule")
-					} else {
-						result := response.Options[0].Result
-						records = append(records, experimentRecordFromResult(
-							result, algorithm, scenarioID, interferenceSeed, budgetLimit, deadlineLimit,
-							float64(time.Since(runStarted).Microseconds())/1000,
-						))
-					}
-				}
-				if err != nil {
-					return fmt.Errorf("%s/%s seed %d: %w", scenarioID, algorithm, interferenceSeed, err)
+	type prismJob struct {
+		scenarioID string
+		seed       int64
+	}
+	type prismJobResult struct {
+		scenarioID string
+		seed       int64
+		elapsed    time.Duration
+		records    []ExperimentRecord
+		err        error
+	}
+	jobs := make(chan prismJob)
+	jobResults := make(chan prismJobResult)
+	jobCount := options.Repetitions * len(experimentScenarioIDs)
+	workerCount := options.Workers
+	if workerCount <= 0 {
+		workerCount = min(4, runtime.GOMAXPROCS(0))
+	}
+	workerCount = min(workerCount, runtime.GOMAXPROCS(0), jobCount)
+	for worker := 0; worker < workerCount; worker++ {
+		go func() {
+			for job := range jobs {
+				started := time.Now()
+				jobRecords, jobErr := runPRISMExperimentJob(options, job.scenarioID, job.seed, budgetLimit, deadlineLimit)
+				jobResults <- prismJobResult{
+					scenarioID: job.scenarioID, seed: job.seed, elapsed: time.Since(started),
+					records: jobRecords, err: jobErr,
 				}
 			}
-		}
+		}()
 	}
+	protocolStarted := time.Now()
+	log.Printf(
+		"PRISM-CC experiment started: %d environment/seed combinations, %d workers, %d result rows expected",
+		jobCount, workerCount, jobCount*2,
+	)
+	go func() {
+		for repetition := 1; repetition <= options.Repetitions; repetition++ {
+			for _, scenarioID := range experimentScenarioIDs {
+				jobs <- prismJob{scenarioID: scenarioID, seed: int64(repetition)}
+			}
+		}
+		close(jobs)
+	}()
+	for completed := 0; completed < jobCount; completed++ {
+		jobResult := <-jobResults
+		if jobResult.err != nil {
+			return jobResult.err
+		}
+		records = append(records, jobResult.records...)
+		done := completed + 1
+		remaining := jobCount - done
+		totalElapsed := time.Since(protocolStarted)
+		eta := time.Duration(0)
+		if done > 0 {
+			eta = time.Duration(float64(totalElapsed) / float64(done) * float64(remaining))
+		}
+		log.Printf(
+			"completed %d/%d (%.1f%%): scenario=%s seed=%d PRISM-CC-Time+Cost duration=%s remaining=%d ETA=%s",
+			done, jobCount, 100*float64(done)/float64(jobCount),
+			jobResult.scenarioID, jobResult.seed, jobResult.elapsed.Round(time.Second),
+			remaining, eta.Round(time.Second),
+		)
+	}
+	sort.SliceStable(records, func(i, j int) bool {
+		if records[i].InterferenceSeed != records[j].InterferenceSeed {
+			return records[i].InterferenceSeed < records[j].InterferenceSeed
+		}
+		if records[i].ScenarioID != records[j].ScenarioID {
+			return records[i].ScenarioID < records[j].ScenarioID
+		}
+		return records[i].Algorithm < records[j].Algorithm
+	})
 
 	if err := writeExperimentRawCSV(filepath.Join(options.OutputDirectory, "raw_results.csv"), records); err != nil {
 		return err
@@ -215,6 +259,45 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		BeamWidth: options.BeamWidth,
 	}
 	return writeJSONFile(filepath.Join(options.OutputDirectory, "manifest.json"), manifest)
+}
+
+func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, interferenceSeed int64, budgetLimit, deadlineLimit float64) ([]ExperimentRecord, error) {
+	generated, generationErr := generateExperimentSimulationForWorkflow(
+		scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth,
+	)
+	if generationErr != nil {
+		return nil, fmt.Errorf("%s seed %d generation: %w", scenarioID, interferenceSeed, generationErr)
+	}
+	generated.SLA.BudgetLimit = &budgetLimit
+	generated.SLA.DeadlineLimit = &deadlineLimit
+	generated.Experimental.PriorityPolicy = options.PRISMCCPriority
+	runStarted := time.Now()
+	finalStates, searchErr := beamSearch(generated, normalizedBeamWidth(generated.SLA.BeamWidth))
+	searchMilliseconds := float64(time.Since(runStarted).Microseconds()) / 1000
+	if searchErr != nil {
+		return nil, fmt.Errorf("%s/PRISM-CC seed %d: %w", scenarioID, interferenceSeed, searchErr)
+	}
+	records := make([]ExperimentRecord, 0, 2)
+	for _, algorithm := range []string{"prism_cc_time", "prism_cc_cost"} {
+		scored := generated
+		metadataCopy := *generated.Experimental
+		scored.Experimental = &metadataCopy
+		scored.Experimental.Algorithm = algorithm
+		if algorithm == "prism_cc_time" {
+			scored.SLA.WeightTime, scored.SLA.WeightCost = 1, 0
+		} else {
+			scored.SLA.WeightTime, scored.SLA.WeightCost = 0, 1
+		}
+		response := buildOptions(scored, finalStates, 1, scored.SLA.BudgetLimit, scored.SLA.DeadlineLimit)
+		if len(response) == 0 {
+			return nil, fmt.Errorf("%s/%s seed %d: beam returned no schedule", scenarioID, algorithm, interferenceSeed)
+		}
+		records = append(records, experimentRecordFromResult(
+			response[0].Result, algorithm, scenarioID, interferenceSeed, budgetLimit, deadlineLimit,
+			searchMilliseconds,
+		))
+	}
+	return records, nil
 }
 
 func generateExperimentSimulation(scenarioID string, structuralSeed, interferenceSeed int64, disabled bool, beamWidth int) (GeneratedSimulation, error) {
@@ -300,18 +383,7 @@ func countEffectiveInterferencePairs(result SimulationResult) int {
 			selected[id] = true
 		}
 	}
-	count := 0
-	for i, left := range result.Assignments {
-		if !selected[left.TaskID] {
-			continue
-		}
-		for _, right := range result.Assignments[i+1:] {
-			if selected[right.TaskID] && left.ResourceID == right.ResourceID &&
-				maxf(left.StartTime, right.StartTime) < minf(left.FinishTime, right.FinishTime) {
-				count++
-			}
-		}
-	}
+	_, count := analyzeAssignmentOverlaps(result.Assignments, selected)
 	return count
 }
 
