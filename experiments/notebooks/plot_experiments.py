@@ -335,7 +335,76 @@ def plot_12_seed_stability(df: pd.DataFrame, output: Path) -> None:
     save(fig, output, "12-estabilidade-por-semente.png")
 
 
-def write_report(output: Path, manifest: dict) -> None:
+def plot_13_priority_comparison(repo_root: Path, df: pd.DataFrame, output: Path) -> bool:
+    if EXPERIMENT_RESULT_DIR != "prism-cc-uprank-order-exp-01":
+        return False
+    topology_path = (
+        repo_root / "experiments" / "results"
+        / "prism-cc-topology-order-exp-01" / "raw_results.csv"
+    )
+    if not topology_path.exists():
+        return False
+    topology = pd.read_csv(topology_path)
+    algorithms = ["prism_cc_time", "prism_cc_cost"]
+    topology = topology[topology["algorithm"].isin(algorithms)].copy()
+    uprank = df[df["algorithm"].isin(algorithms)].copy()
+    topology["priority"] = "Topology"
+    uprank["priority"] = "UpRank"
+    combined = pd.concat([topology, uprank], ignore_index=True)
+    combined["series"] = combined["algorithm"].map(ALGORITHM_LABELS) + " / " + combined["priority"]
+
+    series_order = [
+        "PRISM-CC - Time / Topology",
+        "PRISM-CC - Time / UpRank",
+        "PRISM-CC - Cost / Topology",
+        "PRISM-CC - Cost / UpRank",
+    ]
+    colors = {
+        series_order[0]: "#8AB8D8",
+        series_order[1]: "#2878B5",
+        series_order[2]: "#9BC493",
+        series_order[3]: "#3F7F36",
+    }
+    fig, axes = plt.subplots(2, 1, figsize=(13, 11))
+    for ax, metric, ylabel in [
+        (axes[0], "makespan", "Makespan (s)"),
+        (axes[1], "budget_used", "Custo total (USD)"),
+    ]:
+        sns.boxplot(
+            data=combined, x="scenario_id", y=metric, hue="series",
+            order=SCENARIO_ORDER, hue_order=series_order, palette=colors, ax=ax,
+        )
+        ax.set(xlabel="", ylabel=ylabel)
+        ax.set_xticklabels([SCENARIO_LABELS[item] for item in SCENARIO_ORDER])
+        ax.legend(title="", ncol=2)
+    axes[0].set_title("Efeito da prioridade no makespan")
+    axes[1].set_title("Efeito da prioridade no custo")
+    fig.suptitle("PRISM-CC: ordem topológica × upward rank", y=1.01, fontweight="bold")
+    save(fig, output, "13-comparacao-topology-uprank.png")
+
+    pivot = combined.pivot(
+        index=["scenario_id", "interference_seed", "algorithm"],
+        columns="priority", values=["makespan", "budget_used"],
+    )
+    comparison = pd.DataFrame({
+        "topology_makespan": pivot[("makespan", "Topology")],
+        "uprank_makespan": pivot[("makespan", "UpRank")],
+        "topology_cost": pivot[("budget_used", "Topology")],
+        "uprank_cost": pivot[("budget_used", "UpRank")],
+    }).reset_index()
+    comparison["makespan_gain_uprank_percent"] = (
+        100 * (comparison["topology_makespan"] - comparison["uprank_makespan"])
+        / comparison["topology_makespan"].clip(lower=1e-9)
+    )
+    comparison["cost_gain_uprank_percent"] = (
+        100 * (comparison["topology_cost"] - comparison["uprank_cost"])
+        / comparison["topology_cost"].clip(lower=1e-9)
+    )
+    comparison.to_csv(output.parent / "priority_comparison.csv", index=False)
+    return True
+
+
+def write_report(output: Path, manifest: dict, has_priority_comparison: bool = False) -> None:
     priority_label = {
         "topological_order": "ordem topológica",
         "upward_rank": "upward rank",
@@ -354,6 +423,14 @@ def write_report(output: Path, manifest: dict) -> None:
         ("11-tempo-computacional.png", "Tempo dos algoritmos", "Custo computacional do escalonamento em escala logarítmica. Evidencia a diferença de tempo entre a busca Beam e o HEFT."),
         ("12-estabilidade-por-semente.png", "Estabilidade entre sementes", "Acompanha o makespan nas 30 seleções pareadas de atividades interferentes. Oscilações mostram sensibilidade à composição da interferência."),
     ]
+    if has_priority_comparison:
+        descriptions.append(
+            (
+                "13-comparacao-topology-uprank.png",
+                "Comparação Topology × UpRank",
+                "Compara diretamente as duas políticas de prioridade do PRISM-CC, mantendo máquinas, sementes, interferência, Beam Search, budget e deadline constantes. O painel superior mostra makespan e o inferior mostra custo.",
+            )
+        )
     lines = [
         "# Gráficos do protocolo experimental",
         "",
@@ -387,5 +464,6 @@ def generate_all(repo_root: Path) -> list[Path]:
     plot_10_distribution(df, output)
     plot_11_algorithm_time(df, output)
     plot_12_seed_stability(df, output)
-    write_report(output, manifest)
+    has_priority_comparison = plot_13_priority_comparison(repo_root, df, output)
+    write_report(output, manifest, has_priority_comparison)
     return sorted(output.glob("*.png"))
