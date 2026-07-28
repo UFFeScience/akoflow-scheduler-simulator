@@ -63,7 +63,7 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 			if resource.Speedup > 0 {
 				speed = resource.Speedup
 			}
-			et0[task.ID][resource.ID] = round(task.BaseRuntime/speed+rng.Float64()*4.0, 3)
+			et0[task.ID][resource.ID] = round(task.BaseRuntime/speed, 6)
 			baseOverhead := 3.5
 			if imageHit {
 				baseOverhead = 0.4

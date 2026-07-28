@@ -68,6 +68,47 @@ func TestExperimentScenariosHaveFourMachinesAndUpdatedSpeedups(t *testing.T) {
 	}
 }
 
+func TestHomogeneousScenarioUsesIdenticalET0ForEveryMachine(t *testing.T) {
+	generated, err := generateExperimentSimulation("cluster_homo", 42, 1, false, minBeamWidth)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(generated.Resources) == 0 {
+		t.Fatal("expected resources in homogeneous scenario")
+	}
+	speedup := generated.Resources[0].Speedup
+	for _, resource := range generated.Resources[1:] {
+		if resource.Speedup != speedup {
+			t.Fatalf("scenario is not homogeneous: %s speedup=%v, want %v", resource.ID, resource.Speedup, speedup)
+		}
+	}
+	for _, task := range generated.Workflow.Tasks {
+		want := round(task.BaseRuntime/speedup, 6)
+		for _, resource := range generated.Resources {
+			got := generated.Matrices.ET0[task.ID][resource.ID]
+			if got != want {
+				t.Fatalf("ET0 mismatch for task %s on %s: got %v, want %v", task.ID, resource.ID, got, want)
+			}
+		}
+	}
+}
+
+func TestET0IsDerivedOnlyFromRuntimeAndResourceSpeedup(t *testing.T) {
+	generated, err := generateExperimentSimulation("cluster_hetero", 42, 1, false, minBeamWidth)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, task := range generated.Workflow.Tasks {
+		for _, resource := range generated.Resources {
+			want := round(task.BaseRuntime/resource.Speedup, 6)
+			got := generated.Matrices.ET0[task.ID][resource.ID]
+			if got != want {
+				t.Fatalf("ET0 mismatch for task %s on %s: got %v, want %v", task.ID, resource.ID, got, want)
+			}
+		}
+	}
+}
+
 func TestControlledInterferenceSelectionIsPairedAndReproducible(t *testing.T) {
 	first, err := generateExperimentSimulation("cluster_homo", 42, 7, false, minBeamWidth)
 	if err != nil {
@@ -318,37 +359,99 @@ func TestExperimentalRunnerWritesOnePairedRepetition(t *testing.T) {
 	if !seenRecommendationAlgorithms["prism_cc_time"] || !seenRecommendationAlgorithms["prism_cc_cost"] {
 		t.Fatalf("expected Time and Cost recommendations, got %v", seenRecommendationAlgorithms)
 	}
-	heftMakespans := []float64{}
-	heftCosts := []float64{}
+	heftMakespans := map[string][]float64{}
+	heftCosts := map[string][]float64{}
 	for _, row := range records[1:] {
 		if row[header["algorithm"]] == "heft_classic" {
+			scenarioID := row[header["scenario_id"]]
 			makespan, _ := strconv.ParseFloat(row[header["makespan"]], 64)
 			cost, _ := strconv.ParseFloat(row[header["budget_used"]], 64)
-			heftMakespans = append(heftMakespans, makespan)
-			heftCosts = append(heftCosts, cost)
+			heftMakespans[scenarioID] = append(heftMakespans[scenarioID], makespan)
+			heftCosts[scenarioID] = append(heftCosts[scenarioID], cost)
 		}
 	}
-	wantDeadline := mean(heftMakespans)
-	wantBudget := mean(heftCosts)
 	for _, row := range records[1:] {
+		scenarioID := row[header["scenario_id"]]
+		wantDeadline := round(mean(heftMakespans[scenarioID])*experimentSLAMargin, 6)
+		wantBudget := round(mean(heftCosts[scenarioID])*experimentSLAMargin, 6)
 		deadline, _ := strconv.ParseFloat(row[header["deadline_limit"]], 64)
 		budget, _ := strconv.ParseFloat(row[header["budget_limit"]], 64)
 		if math.Abs(deadline-wantDeadline) > 1e-6 {
-			t.Fatalf("deadline must equal global HEFT mean: got %v, want %v", deadline, wantDeadline)
+			t.Fatalf("%s deadline must equal HEFT mean times margin: got %v, want %v", scenarioID, deadline, wantDeadline)
 		}
 		if math.Abs(budget-wantBudget) > 1e-6 {
-			t.Fatalf("budget must equal global HEFT mean: got %v, want %v", budget, wantBudget)
+			t.Fatalf("%s budget must equal HEFT mean times margin: got %v, want %v", scenarioID, budget, wantBudget)
 		}
 	}
-	for _, name := range []string{"manifest.json"} {
+	var manifest ExperimentManifest
+	data, err := os.ReadFile(filepath.Join(output, "manifest.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	if manifest.SLAMargin != experimentSLAMargin {
+		t.Fatalf("unexpected SLA margin: got %v, want %v", manifest.SLAMargin, experimentSLAMargin)
+	}
+	if len(manifest.ScenarioSLAs) != len(experimentScenarioIDs) {
+		t.Fatalf("expected one SLA per scenario, got %v", manifest.ScenarioSLAs)
+	}
+	for _, name := range []string{"manifest.json", "summary.csv"} {
 		if _, err := os.Stat(filepath.Join(output, name)); err != nil {
 			t.Fatalf("missing %s: %v", name, err)
 		}
 	}
-	for _, name := range []string{"summary.csv", "recommendations.csv"} {
+	for _, name := range []string{"recommendations.csv"} {
 		if _, err := os.Stat(filepath.Join(output, name)); !os.IsNotExist(err) {
 			t.Fatalf("%s must not be generated separately", name)
 		}
+	}
+}
+
+func TestExperimentalRunnerSupportsColocatedHEFTBaseline(t *testing.T) {
+	output := t.TempDir()
+	if err := runExperimentalProtocol(ExperimentRunOptions{
+		OutputDirectory: output, Repetitions: 1, StructuralSeed: 42,
+		BeamWidth: minBeamWidth, HEFTMode: "colocation",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	file, err := os.Open(filepath.Join(output, "raw_results.csv"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	records, err := csv.NewReader(file).ReadAll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	header := map[string]int{}
+	for index, name := range records[0] {
+		header[name] = index
+	}
+	baselineRows := 0
+	for _, row := range records[1:] {
+		if row[header["algorithm"]] == "heft_colocation" {
+			baselineRows++
+		}
+	}
+	if baselineRows != len(experimentScenarioIDs) {
+		t.Fatalf("expected %d colocated HEFT rows, got %d", len(experimentScenarioIDs), baselineRows)
+	}
+	var manifest ExperimentManifest
+	data, err := os.ReadFile(filepath.Join(output, "manifest.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	if manifest.HEFTMode != "colocation" {
+		t.Fatalf("unexpected HEFT mode %q", manifest.HEFTMode)
+	}
+	if !reflect.DeepEqual(manifest.Algorithms, []string{"prism_cc_time", "prism_cc_cost", "heft_colocation"}) {
+		t.Fatalf("unexpected algorithms: %v", manifest.Algorithms)
 	}
 }
 

@@ -20,12 +20,11 @@ var experimentScenarioIDs = []string{
 	"cluster_homo", "cluster_hetero", "cloud_homo", "cloud_hetero", "hybrid_homo", "hybrid_hetero",
 }
 
-var experimentAlgorithms = []string{"prism_cc_time", "prism_cc_cost", "heft_classic"}
-
 const (
 	c3dStandard16ReferencePricePerHourUSD = 0.726384
 	c3dStandard16ReferenceMakespanSeconds = 2815.0
 	c3dStandard16ReferenceBudgetUSD       = c3dStandard16ReferencePricePerHourUSD * c3dStandard16ReferenceMakespanSeconds / 3600
+	experimentSLAMargin                   = 1.20
 )
 
 type ExperimentRunOptions struct {
@@ -37,6 +36,7 @@ type ExperimentRunOptions struct {
 	Workers             int
 	PRISMCCPriority     string
 	WorkflowID          string
+	HEFTMode            string
 }
 
 type ExperimentRecord struct {
@@ -73,23 +73,28 @@ type ExperimentRecommendationRecord struct {
 }
 
 type ExperimentManifest struct {
-	GeneratedAt         string   `json:"generated_at"`
-	StructuralSeed      int64    `json:"structural_seed"`
-	InterferenceSeeds   []int64  `json:"interference_seeds"`
-	Scenarios           []string `json:"scenarios"`
-	Algorithms          []string `json:"algorithms"`
-	WorkflowID          string   `json:"workflow_id"`
-	TaskCount           int      `json:"task_count"`
-	InterferenceRate    float64  `json:"interference_rate"`
-	SelectedActivities  int      `json:"selected_activities"`
-	BudgetLimit         float64  `json:"budget_limit"`
-	DeadlineLimit       float64  `json:"deadline_limit"`
-	ReferencePolicy     string   `json:"reference_policy"`
-	Calibration         string   `json:"calibration"`
-	HEFTMode            string   `json:"heft_mode"`
-	PRISMCCPriority     string   `json:"prism_cc_priority"`
-	BeamWidth           int      `json:"beam_width"`
-	RecommendationCount int      `json:"recommendation_count"`
+	GeneratedAt         string                 `json:"generated_at"`
+	StructuralSeed      int64                  `json:"structural_seed"`
+	InterferenceSeeds   []int64                `json:"interference_seeds"`
+	Scenarios           []string               `json:"scenarios"`
+	Algorithms          []string               `json:"algorithms"`
+	WorkflowID          string                 `json:"workflow_id"`
+	TaskCount           int                    `json:"task_count"`
+	InterferenceRate    float64                `json:"interference_rate"`
+	SelectedActivities  int                    `json:"selected_activities"`
+	SLAMargin           float64                `json:"sla_margin"`
+	ScenarioSLAs        map[string]ScenarioSLA `json:"scenario_slas"`
+	ReferencePolicy     string                 `json:"reference_policy"`
+	Calibration         string                 `json:"calibration"`
+	HEFTMode            string                 `json:"heft_mode"`
+	PRISMCCPriority     string                 `json:"prism_cc_priority"`
+	BeamWidth           int                    `json:"beam_width"`
+	RecommendationCount int                    `json:"recommendation_count"`
+}
+
+type ScenarioSLA struct {
+	BudgetLimit   float64 `json:"budget_limit"`
+	DeadlineLimit float64 `json:"deadline_limit"`
 }
 
 func runExperimentalProtocol(options ExperimentRunOptions) error {
@@ -102,6 +107,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	if options.BeamWidth == 0 {
 		options.BeamWidth = minBeamWidth
 	}
+	options.BeamWidth = normalizedBeamWidth(options.BeamWidth)
 	if options.RecommendationCount <= 0 {
 		options.RecommendationCount = 100
 	}
@@ -112,12 +118,20 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	if options.WorkflowID == "" {
 		options.WorkflowID = "montage_050d"
 	}
+	if options.HEFTMode == "" {
+		options.HEFTMode = "classic_no_colocation"
+	}
 	if options.WorkflowID != "montage_050d" && options.WorkflowID != montageDSS20WorkflowID {
 		return fmt.Errorf("unsupported experiment workflow %q", options.WorkflowID)
 	}
 	if options.PRISMCCPriority != "topological_order" && options.PRISMCCPriority != "upward_rank" {
 		return fmt.Errorf("unsupported PRISM-CC priority policy %q", options.PRISMCCPriority)
 	}
+	if options.HEFTMode != "classic_no_colocation" && options.HEFTMode != "colocation" {
+		return fmt.Errorf("unsupported HEFT mode %q", options.HEFTMode)
+	}
+	baselineAlgorithm := heftAlgorithmForMode(options.HEFTMode)
+	experimentAlgorithms := []string{"prism_cc_time", "prism_cc_cost", baselineAlgorithm}
 	if options.OutputDirectory == "" {
 		options.OutputDirectory = filepath.Join("experiments", "results")
 	}
@@ -131,14 +145,14 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	type calibratedHEFTRun struct {
 		scenarioID       string
 		interferenceSeed int64
-		result           SimulationResult
-		elapsed          float64
+		record           ExperimentRecord
 	}
 	heftRuns := make([]calibratedHEFTRun, 0, len(experimentScenarioIDs)*options.Repetitions)
-	heftMakespans := make([]float64, 0, cap(heftRuns))
-	heftBudgets := make([]float64, 0, cap(heftRuns))
+	heftMakespans := map[string][]float64{}
+	heftBudgets := map[string][]float64{}
 	records := make([]ExperimentRecord, 0, len(experimentScenarioIDs)*len(experimentAlgorithms)*options.Repetitions)
 	seeds := make([]int64, 0, options.Repetitions)
+	taskCount := 0
 	for repetition := 1; repetition <= options.Repetitions; repetition++ {
 		seeds = append(seeds, int64(repetition))
 	}
@@ -153,12 +167,15 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 			if generationErr != nil {
 				return fmt.Errorf("%s seed %d HEFT generation: %w", scenarioID, interferenceSeed, generationErr)
 			}
+			if taskCount == 0 {
+				taskCount = len(heftGenerated.Workflow.Tasks)
+			}
 			var heftResult SimulationResult
-			if repetition == 1 {
-				heftGenerated.Experimental.Algorithm = "heft_classic"
+			if repetition == 1 || options.HEFTMode == "colocation" {
+				heftGenerated.Experimental.Algorithm = baselineAlgorithm
 				runStarted := time.Now()
 				var scheduleErr error
-				referenceResult, scheduleErr = scheduleHEFTClassic(heftGenerated)
+				referenceResult, scheduleErr = scheduleHEFTBaseline(heftGenerated, options.HEFTMode)
 				if scheduleErr != nil {
 					return fmt.Errorf("%s/heft seed %d: %w", scenarioID, interferenceSeed, scheduleErr)
 				}
@@ -167,25 +184,32 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 			heftResult = referenceResult
 			heftResult.Experimental = heftGenerated.Experimental
 			heftRuns = append(heftRuns, calibratedHEFTRun{
-				scenarioID: scenarioID, interferenceSeed: interferenceSeed, result: heftResult,
-				elapsed: referenceElapsed,
+				scenarioID: scenarioID, interferenceSeed: interferenceSeed,
+				record: experimentRecordFromResult(
+					heftResult, baselineAlgorithm, scenarioID, interferenceSeed, 0, 0, referenceElapsed,
+				),
 			})
-			heftMakespans = append(heftMakespans, heftResult.TimingVariables.Makespan)
-			heftBudgets = append(heftBudgets, heftResult.CostVariables.BUsed)
+			heftMakespans[scenarioID] = append(heftMakespans[scenarioID], heftResult.TimingVariables.Makespan)
+			heftBudgets[scenarioID] = append(heftBudgets[scenarioID], heftResult.CostVariables.BUsed)
 		}
 	}
 
-	deadlineLimit := mean(heftMakespans)
-	budgetLimit := mean(heftBudgets)
-	taskCount := 0
-	if len(heftRuns) > 0 {
-		taskCount = len(heftRuns[0].result.Workflow.Tasks)
+	scenarioSLAs := map[string]ScenarioSLA{}
+	for _, scenarioID := range experimentScenarioIDs {
+		scenarioSLAs[scenarioID] = ScenarioSLA{
+			BudgetLimit:   round(mean(heftBudgets[scenarioID])*experimentSLAMargin, 6),
+			DeadlineLimit: round(mean(heftMakespans[scenarioID])*experimentSLAMargin, 6),
+		}
 	}
 	for _, heftRun := range heftRuns {
-		records = append(records, experimentRecordFromResult(
-			heftRun.result, "heft_classic", heftRun.scenarioID, heftRun.interferenceSeed,
-			budgetLimit, deadlineLimit, heftRun.elapsed,
-		))
+		sla := scenarioSLAs[heftRun.scenarioID]
+		record := heftRun.record
+		record.BudgetLimit = sla.BudgetLimit
+		record.DeadlineLimit = sla.DeadlineLimit
+		record.BudgetViolation = round(maxf(0, record.BudgetUsed-sla.BudgetLimit), 4)
+		record.DeadlineViolation = round(maxf(0, record.Makespan-sla.DeadlineLimit), 3)
+		record.Feasible = record.BudgetViolation == 0 && record.DeadlineViolation == 0
+		records = append(records, record)
 	}
 
 	type prismJob struct {
@@ -212,7 +236,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 			for job := range jobs {
 				started := time.Now()
 				jobRecords, jobErr := runPRISMExperimentJob(
-					options, job.scenarioID, job.seed, budgetLimit, deadlineLimit,
+					options, job.scenarioID, job.seed, scenarioSLAs[job.scenarioID],
 				)
 				jobResults <- prismJobResult{
 					scenarioID: job.scenarioID, seed: job.seed, elapsed: time.Since(started),
@@ -267,29 +291,46 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	if err := writeExperimentRawCSV(filepath.Join(options.OutputDirectory, "raw_results.csv"), records); err != nil {
 		return err
 	}
+	if err := writeExperimentSummaryCSV(filepath.Join(options.OutputDirectory, "summary.csv"), records); err != nil {
+		return err
+	}
 	manifest := ExperimentManifest{
 		GeneratedAt: time.Now().UTC().Format(time.RFC3339), StructuralSeed: options.StructuralSeed,
 		InterferenceSeeds: seeds, Scenarios: experimentScenarioIDs, Algorithms: experimentAlgorithms,
 		WorkflowID: options.WorkflowID, TaskCount: taskCount,
 		InterferenceRate: 0.20, SelectedActivities: taskCount / 2,
-		BudgetLimit: budgetLimit, DeadlineLimit: deadlineLimit,
-		ReferencePolicy: "Global classic HEFT mean: deadline is the mean makespan and budget is the mean cost across all classic HEFT scenario/seed executions",
-		Calibration:     "Global mean of all classic HEFT runs, without margin",
-		HEFTMode:        "classic_no_colocation", PRISMCCPriority: options.PRISMCCPriority,
+		SLAMargin: experimentSLAMargin, ScenarioSLAs: scenarioSLAs,
+		ReferencePolicy: fmt.Sprintf("Per-scenario %s mean multiplied by an explicit %.2fx margin for both deadline and budget", baselineAlgorithm, experimentSLAMargin),
+		Calibration:     "Per-scenario mean of the selected HEFT baseline runs",
+		HEFTMode:        options.HEFTMode, PRISMCCPriority: options.PRISMCCPriority,
 		BeamWidth: options.BeamWidth, RecommendationCount: options.RecommendationCount,
 	}
 	return writeJSONFile(filepath.Join(options.OutputDirectory, "manifest.json"), manifest)
 }
 
-func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, interferenceSeed int64, budgetLimit, deadlineLimit float64) ([]ExperimentRecord, error) {
+func heftAlgorithmForMode(mode string) string {
+	if mode == "colocation" {
+		return "heft_colocation"
+	}
+	return "heft_classic"
+}
+
+func scheduleHEFTBaseline(generated GeneratedSimulation, mode string) (SimulationResult, error) {
+	if mode == "colocation" {
+		return scheduleHEFTColocation(generated)
+	}
+	return scheduleHEFTClassic(generated)
+}
+
+func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, interferenceSeed int64, sla ScenarioSLA) ([]ExperimentRecord, error) {
 	generated, generationErr := generateExperimentSimulationForWorkflow(
 		scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth,
 	)
 	if generationErr != nil {
 		return nil, fmt.Errorf("%s seed %d generation: %w", scenarioID, interferenceSeed, generationErr)
 	}
-	generated.SLA.BudgetLimit = &budgetLimit
-	generated.SLA.DeadlineLimit = &deadlineLimit
+	generated.SLA.BudgetLimit = &sla.BudgetLimit
+	generated.SLA.DeadlineLimit = &sla.DeadlineLimit
 	generated.Experimental.PriorityPolicy = options.PRISMCCPriority
 	runStarted := time.Now()
 	finalStates, searchErr := beamSearch(generated, normalizedBeamWidth(generated.SLA.BeamWidth))
@@ -316,7 +357,7 @@ func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, inte
 			return nil, fmt.Errorf("%s/%s seed %d: beam returned no schedule", scenarioID, algorithm, interferenceSeed)
 		}
 		record := experimentRecordFromResult(
-			response[0].Result, algorithm, scenarioID, interferenceSeed, budgetLimit, deadlineLimit,
+			response[0].Result, algorithm, scenarioID, interferenceSeed, sla.BudgetLimit, sla.DeadlineLimit,
 			searchMilliseconds,
 		)
 		for _, option := range response {
@@ -467,10 +508,15 @@ func writeExperimentRawCSV(path string, records []ExperimentRecord) error {
 func writeExperimentSummaryCSV(path string, records []ExperimentRecord) error {
 	type groupKey struct{ Scenario, Algorithm string }
 	groups := map[groupKey][]ExperimentRecord{}
+	baselineAlgorithm := "heft_classic"
 	for _, record := range records {
 		key := groupKey{record.ScenarioID, record.Algorithm}
 		groups[key] = append(groups[key], record)
+		if record.Algorithm == "heft_colocation" {
+			baselineAlgorithm = record.Algorithm
+		}
 	}
+	experimentAlgorithms := []string{"prism_cc_time", "prism_cc_cost", baselineAlgorithm}
 	file, err := os.Create(path)
 	if err != nil {
 		return err
@@ -480,6 +526,7 @@ func writeExperimentSummaryCSV(path string, records []ExperimentRecord) error {
 	defer writer.Flush()
 	if err := writer.Write([]string{
 		"scenario_id", "algorithm", "runs", "feasible_ratio",
+		"budget_limit", "deadline_limit",
 		"makespan_mean", "makespan_median", "makespan_stddev", "makespan_ci95",
 		"budget_mean", "budget_median", "budget_stddev", "budget_ci95",
 		"interference_time_mean", "algorithm_milliseconds_mean",
@@ -504,14 +551,15 @@ func writeExperimentSummaryCSV(path string, records []ExperimentRecord) error {
 			mMean, mMedian, mStd, mCI := descriptiveStats(makespans)
 			bMean, bMedian, bStd, bCI := descriptiveStats(budgets)
 			makespanGain, budgetGain := 0.0, 0.0
-			if algorithm != "heft_classic" {
-				heftMakespan, _, _, _ := descriptiveStats(valuesFor(groups[groupKey{scenario, "heft_classic"}], func(r ExperimentRecord) float64 { return r.Makespan }))
-				heftBudget, _, _, _ := descriptiveStats(valuesFor(groups[groupKey{scenario, "heft_classic"}], func(r ExperimentRecord) float64 { return r.BudgetUsed }))
+			if algorithm != baselineAlgorithm {
+				heftMakespan, _, _, _ := descriptiveStats(valuesFor(groups[groupKey{scenario, baselineAlgorithm}], func(r ExperimentRecord) float64 { return r.Makespan }))
+				heftBudget, _, _, _ := descriptiveStats(valuesFor(groups[groupKey{scenario, baselineAlgorithm}], func(r ExperimentRecord) float64 { return r.BudgetUsed }))
 				makespanGain = 100 * (heftMakespan - mMean) / maxf(heftMakespan, 0.001)
 				budgetGain = 100 * (heftBudget - bMean) / maxf(heftBudget, 0.001)
 			}
 			row := []string{
 				scenario, algorithm, strconv.Itoa(len(items)), formatFloat(float64(feasible) / float64(max(1, len(items)))),
+				formatFloat(items[0].BudgetLimit), formatFloat(items[0].DeadlineLimit),
 				formatFloat(mMean), formatFloat(mMedian), formatFloat(mStd), formatFloat(mCI),
 				formatFloat(bMean), formatFloat(bMedian), formatFloat(bStd), formatFloat(bCI),
 				formatFloat(mean(interference)), formatFloat(mean(elapsed)),

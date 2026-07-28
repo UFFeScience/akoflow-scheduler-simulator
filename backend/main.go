@@ -24,6 +24,7 @@ func main() {
 	experimentWorkers := flag.Int("experiment-workers", 0, "parallel environment/seed jobs (default: min(4, GOMAXPROCS))")
 	experimentPRISMCCPriority := flag.String("experiment-prism-priority", "topological_order", "PRISM-CC task priority: topological_order or upward_rank")
 	experimentWorkflow := flag.String("experiment-workflow", "montage_050d", "experiment workflow: montage_050d or montage_dss_20d")
+	experimentHEFTMode := flag.String("experiment-heft-mode", "classic_no_colocation", "HEFT baseline: classic_no_colocation or colocation")
 	flag.Parse()
 	if *experimentOutput != "" {
 		if err := runExperimentalProtocol(ExperimentRunOptions{
@@ -33,6 +34,7 @@ func main() {
 			Workers:             *experimentWorkers,
 			PRISMCCPriority:     *experimentPRISMCCPriority,
 			WorkflowID:          *experimentWorkflow,
+			HEFTMode:            *experimentHEFTMode,
 		}); err != nil {
 			log.Fatal(err)
 		}

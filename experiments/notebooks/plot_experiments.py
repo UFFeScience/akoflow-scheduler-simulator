@@ -61,6 +61,9 @@ def load_results(repo_root: Path) -> tuple[pd.DataFrame, dict]:
     results_dir = repo_root / "experiments" / "results" / EXPERIMENT_RESULT_DIR
     df = pd.read_csv(results_dir / "raw_results.csv")
     manifest = json.loads((results_dir / "manifest.json").read_text())
+    if manifest.get("heft_mode") == "colocation":
+        df["algorithm"] = df["algorithm"].replace({"heft_colocation": "heft_classic"})
+        ALGORITHM_LABELS["heft_classic"] = "HEFT coalocado"
     df["algorithm_label"] = df["algorithm"].map(ALGORITHM_LABELS)
     df["scenario_label"] = df["scenario_id"].map(SCENARIO_LABELS)
     df["interference_percent"] = 100 * df["interference_time"] / (
@@ -89,11 +92,23 @@ def validate_results(df: pd.DataFrame, manifest: dict) -> pd.DataFrame:
         .reset_index()
     )
     assert counts["runs"].eq(len(manifest["interference_seeds"])).all()
-    assert df["deadline_limit"].nunique() == 1
-    assert df["budget_limit"].nunique() == 1
     heft = df[df["algorithm"] == "heft_classic"]
-    assert np.isclose(df["deadline_limit"].iloc[0], heft["makespan"].mean(), atol=1e-6)
-    assert np.isclose(df["budget_limit"].iloc[0], heft["budget_used"].mean(), atol=1e-6)
+    margin = manifest.get("sla_margin", 1.0)
+    for scenario in SCENARIO_ORDER:
+        scenario_rows = df[df["scenario_id"] == scenario]
+        scenario_heft = heft[heft["scenario_id"] == scenario]
+        assert scenario_rows["deadline_limit"].nunique() == 1
+        assert scenario_rows["budget_limit"].nunique() == 1
+        assert np.isclose(
+            scenario_rows["deadline_limit"].iloc[0],
+            scenario_heft["makespan"].mean() * margin,
+            atol=1e-6,
+        )
+        assert np.isclose(
+            scenario_rows["budget_limit"].iloc[0],
+            scenario_heft["budget_used"].mean() * margin,
+            atol=1e-6,
+        )
     return counts
 
 
@@ -105,6 +120,23 @@ def save(fig: plt.Figure, output_dir: Path, filename: str) -> None:
 
 def add_sla_line(ax: plt.Axes, value: float, label: str) -> None:
     ax.axhline(value, color="#B33A3A", linestyle="--", linewidth=1.4, label=label)
+
+def scenario_sla(manifest: dict, scenario: str) -> dict:
+    if "scenario_slas" in manifest:
+        return manifest["scenario_slas"][scenario]
+    return {
+        "budget_limit": manifest["budget_limit"],
+        "deadline_limit": manifest["deadline_limit"],
+    }
+
+
+def add_sla_segments(ax: plt.Axes, manifest: dict, key: str) -> None:
+    for index, scenario in enumerate(SCENARIO_ORDER):
+        value = scenario_sla(manifest, scenario)[key]
+        ax.hlines(
+            value, index - 0.43, index + 0.43,
+            color="#B33A3A", linestyle="--", linewidth=1.4, zorder=5,
+        )
 
 
 def relabel_algorithm_legend(ax: plt.Axes, extra_labels: dict[str, str] | None = None) -> None:
@@ -119,7 +151,7 @@ def plot_01_makespan(df: pd.DataFrame, manifest: dict, output: Path) -> None:
         data=df, x="scenario_id", y="makespan", hue="algorithm",
         order=SCENARIO_ORDER, hue_order=ALGORITHM_ORDER, palette=PALETTE, ax=ax,
     )
-    add_sla_line(ax, manifest["deadline_limit"], f"Deadline médio HEFT = {manifest['deadline_limit']:.3f} s")
+    add_sla_segments(ax, manifest, "deadline_limit")
     ax.set(
         title="Makespan por ambiente e algoritmo",
         xlabel="", ylabel="Makespan (s)",
@@ -135,7 +167,7 @@ def plot_02_cost(df: pd.DataFrame, manifest: dict, output: Path) -> None:
         data=df, x="scenario_id", y="budget_used", hue="algorithm",
         order=SCENARIO_ORDER, hue_order=ALGORITHM_ORDER, palette=PALETTE, ax=ax,
     )
-    add_sla_line(ax, manifest["budget_limit"], f"Budget médio HEFT = {manifest['budget_limit']:.4f} USD")
+    add_sla_segments(ax, manifest, "budget_limit")
     ax.set(
         title="Custo por ambiente e algoritmo",
         xlabel="", ylabel="Custo total (USD)",
@@ -167,18 +199,19 @@ def plot_04_cost_makespan(df: pd.DataFrame, manifest: dict, output: Path) -> Non
     fig, axes = plt.subplots(2, 3, figsize=(15, 9), sharex=True, sharey=True)
     for ax, scenario in zip(axes.flat, SCENARIO_ORDER):
         subset = df[df["scenario_id"] == scenario]
+        sla = scenario_sla(manifest, scenario)
         sns.scatterplot(
             data=subset, x="budget_used", y="makespan", hue="algorithm",
             style="algorithm", hue_order=ALGORITHM_ORDER, palette=PALETTE, s=55, alpha=.75, ax=ax,
         )
-        ax.axvline(manifest["budget_limit"], color="#B33A3A", linestyle="--", linewidth=1)
-        ax.axhline(manifest["deadline_limit"], color="#B33A3A", linestyle="--", linewidth=1)
+        ax.axvline(sla["budget_limit"], color="#B33A3A", linestyle="--", linewidth=1)
+        ax.axhline(sla["deadline_limit"], color="#B33A3A", linestyle="--", linewidth=1)
         ax.set_title(SCENARIO_LABELS[scenario].replace("\n", " "))
         if ax.get_legend():
             ax.get_legend().remove()
     handles, labels = axes.flat[0].get_legend_handles_labels()
     fig.legend(handles, [ALGORITHM_LABELS.get(x, x) for x in labels], loc="upper center", ncol=2)
-    fig.suptitle("Trade-off custo × makespan — limites definidos pelas médias globais do HEFT", y=1.02, fontweight="bold")
+    fig.suptitle("Trade-off custo × makespan — SLA específico por ambiente", y=1.02, fontweight="bold")
     save(fig, output, "04-custo-versus-makespan.png")
 
 
@@ -933,6 +966,7 @@ def recommendation_candidates(
     for (scenario, algorithm), group in df.groupby(
         ["scenario_id", "algorithm"], observed=True
     ):
+        sla = scenario_sla(manifest, scenario)
         makespan_mean = group.makespan.mean()
         cost_mean = group.budget_used.mean()
         makespan_p95 = group.makespan.quantile(0.95)
@@ -953,24 +987,28 @@ def recommendation_candidates(
                     100 * group.makespan.std(ddof=1) / max(makespan_mean, 1e-9)
                 ),
                 "strict_feasibility_percent": 100 * group.feasible.mean(),
+                "budget_limit": sla["budget_limit"],
+                "deadline_limit": sla["deadline_limit"],
+                "cost_sla_percent": 100 * cost_p95 / max(sla["budget_limit"], 1e-9),
+                "makespan_sla_percent": 100 * makespan_p95 / max(sla["deadline_limit"], 1e-9),
                 "required_deadline_margin_percent": max(
-                    0, 100 * (makespan_p95 / manifest["deadline_limit"] - 1)
+                    0, 100 * (makespan_p95 / max(sla["deadline_limit"], 1e-9) - 1)
                 ),
                 "required_budget_margin_percent": max(
-                    0, 100 * (cost_p95 / manifest["budget_limit"] - 1)
+                    0, 100 * (cost_p95 / max(sla["budget_limit"], 1e-9) - 1)
                 ),
             }
         )
     candidates = pd.DataFrame(rows)
     candidates["robust_feasible"] = (
-        (candidates.cost_p95 <= manifest["budget_limit"])
-        & (candidates.makespan_p95 <= manifest["deadline_limit"])
+        (candidates.cost_p95 <= candidates.budget_limit)
+        & (candidates.makespan_p95 <= candidates.deadline_limit)
     )
     candidates["pareto"] = False
     representatives = (
         candidates.assign(
-            cost_key=candidates.cost_p95.round(6),
-            makespan_key=candidates.makespan_p95.round(6),
+            cost_key=candidates.cost_sla_percent.round(6),
+            makespan_key=candidates.makespan_sla_percent.round(6),
         )
         .sort_values(
             ["strict_feasibility_percent", "makespan_cv_percent"],
@@ -980,16 +1018,16 @@ def recommendation_candidates(
     )
     for index, row in representatives.iterrows():
         dominated = (
-            (representatives.cost_p95 <= row.cost_p95 + 1e-6)
-            & (representatives.makespan_p95 <= row.makespan_p95 + 1e-6)
+            (representatives.cost_sla_percent <= row.cost_sla_percent + 1e-6)
+            & (representatives.makespan_sla_percent <= row.makespan_sla_percent + 1e-6)
             & (
-                (representatives.cost_p95 < row.cost_p95 - 1e-6)
-                | (representatives.makespan_p95 < row.makespan_p95 - 1e-6)
+                (representatives.cost_sla_percent < row.cost_sla_percent - 1e-6)
+                | (representatives.makespan_sla_percent < row.makespan_sla_percent - 1e-6)
             )
         ).any()
         candidates.loc[index, "pareto"] = not dominated
     frontier = candidates[candidates.pareto].sort_values(
-        ["cost_p95", "makespan_p95"], ascending=[True, False]
+        ["cost_sla_percent", "makespan_sla_percent"], ascending=[True, False]
     )
     candidates["frontier_order"] = pd.NA
     candidates["extra_cost_from_previous"] = np.nan
@@ -999,8 +1037,8 @@ def recommendation_candidates(
     for order, (index, row) in enumerate(frontier.iterrows(), start=1):
         candidates.loc[index, "frontier_order"] = order
         if previous is not None:
-            extra_cost = row.cost_p95 - previous.cost_p95
-            time_saved = previous.makespan_p95 - row.makespan_p95
+            extra_cost = row.cost_sla_percent - previous.cost_sla_percent
+            time_saved = previous.makespan_sla_percent - row.makespan_sla_percent
             candidates.loc[index, "extra_cost_from_previous"] = extra_cost
             candidates.loc[index, "time_saved_from_previous"] = time_saved
             if extra_cost > 1e-9:
@@ -1009,7 +1047,7 @@ def recommendation_candidates(
                 )
         previous = row
     return candidates.sort_values(
-        ["pareto", "frontier_order", "cost_p95"],
+        ["pareto", "frontier_order", "cost_sla_percent"],
         ascending=[False, True, True],
     )
 
@@ -1024,43 +1062,40 @@ def plot_23_recommendation_frontier(
 
     ax = axes[0]
     ax.scatter(
-        dominated.cost_p95, dominated.makespan_p95,
+        dominated.cost_sla_percent, dominated.makespan_sla_percent,
         s=45, color="#B7B7B7", marker="x", alpha=0.65,
         label="Opção dominada",
     )
     sizes = 90 + 5 * frontier.strict_feasibility_percent
     points = ax.scatter(
-        frontier.cost_p95, frontier.makespan_p95,
+        frontier.cost_sla_percent, frontier.makespan_sla_percent,
         s=sizes, c=frontier.makespan_cv_percent, cmap="viridis",
         edgecolor="#222222", linewidth=0.7, zorder=3,
     )
     ax.plot(
-        frontier.cost_p95, frontier.makespan_p95,
+        frontier.cost_sla_percent, frontier.makespan_sla_percent,
         color="#555555", linewidth=1.2, zorder=2,
     )
     for row in frontier.itertuples():
         ax.annotate(
-            str(int(row.frontier_order)), (row.cost_p95, row.makespan_p95),
+            str(int(row.frontier_order)),
+            (row.cost_sla_percent, row.makespan_sla_percent),
             ha="center", va="center", fontsize=8, fontweight="bold",
         )
-    ax.axvline(
-        manifest["budget_limit"], color="#B33A3A", linestyle="--", linewidth=1
-    )
-    ax.axhline(
-        manifest["deadline_limit"], color="#B33A3A", linestyle="--", linewidth=1
-    )
+    ax.axvline(100, color="#B33A3A", linestyle="--", linewidth=1)
+    ax.axhline(100, color="#B33A3A", linestyle="--", linewidth=1)
     ax.set(
         title="Opções robustas e fronteira de recomendação",
-        xlabel="Custo P95 (USD)",
-        ylabel="Makespan P95 (s)",
+        xlabel="Uso do budget do ambiente no P95 (%)",
+        ylabel="Uso do deadline do ambiente no P95 (%)",
     )
     ax.legend(loc="upper right")
     colorbar = fig.colorbar(points, ax=ax, shrink=0.82)
     colorbar.set_label("Variabilidade do makespan — CV (%)")
 
     ax = axes[1]
-    x = 100 * frontier.cost_p95 / manifest["budget_limit"]
-    y = 100 * frontier.makespan_p95 / manifest["deadline_limit"]
+    x = frontier.cost_sla_percent
+    y = frontier.makespan_sla_percent
     ax.plot(x, y, color="#2878B5", linewidth=2, marker="o", markersize=8)
     ax.fill_between([0, 100], 0, 100, color="#59A14F", alpha=0.10)
     for position, row in enumerate(frontier.itertuples()):
@@ -1070,8 +1105,8 @@ def plot_23_recommendation_frontier(
         )
         if position:
             label = (
-                f"+US$ {row.extra_cost_from_previous:.2f}\n"
-                f"−{row.time_saved_from_previous:.0f} s"
+                f"+{row.extra_cost_from_previous:.1f} pp custo\n"
+                f"−{row.time_saved_from_previous:.1f} pp tempo"
             )
             midpoint = (
                 (x.iloc[position - 1] + x.iloc[position]) / 2,
@@ -1085,8 +1120,8 @@ def plot_23_recommendation_frontier(
     ax.axhline(100, color="#B33A3A", linestyle="--", linewidth=1)
     ax.set(
         title="Concessões marginais: quanto abrir para quanto ganhar",
-        xlabel="Uso do budget global (%)",
-        ylabel="Uso do deadline global (%)",
+        xlabel="Uso do budget específico do ambiente (%)",
+        ylabel="Uso do deadline específico do ambiente (%)",
     )
 
     recommendation_handles = [
@@ -1129,23 +1164,24 @@ def plot_24_feasible_options_by_environment(
     }
     fig, axes = plt.subplots(2, 3, figsize=(16, 10))
     for ax, scenario in zip(axes.flat, SCENARIO_ORDER):
+        sla = scenario_sla(manifest, scenario)
         data = (
             candidates[candidates.scenario_id == scenario]
             .set_index("algorithm").reindex(ALGORITHM_ORDER).reset_index()
         )
         x_max = max(
-            manifest["budget_limit"] * 1.18,
+            sla["budget_limit"] * 1.18,
             data.cost_p95.max() * 1.12,
             0.05,
         )
         y_max = max(
-            manifest["deadline_limit"] * 1.18,
+            sla["deadline_limit"] * 1.18,
             data.makespan_p95.max() * 1.12,
         )
         ax.fill_between(
-            [0, manifest["budget_limit"]],
+            [0, sla["budget_limit"]],
             [0, 0],
-            [manifest["deadline_limit"], manifest["deadline_limit"]],
+            [sla["deadline_limit"], sla["deadline_limit"]],
             color="#59A14F", alpha=0.12, label="Região viável",
         )
         for row in data.itertuples():
@@ -1178,11 +1214,11 @@ def plot_24_feasible_options_by_environment(
                 xytext=label_offset, textcoords="offset points", fontsize=8,
             )
         ax.axvline(
-            manifest["budget_limit"], color="#B33A3A",
+            sla["budget_limit"], color="#B33A3A",
             linestyle="--", linewidth=1.2,
         )
         ax.axhline(
-            manifest["deadline_limit"], color="#B33A3A",
+            sla["deadline_limit"], color="#B33A3A",
             linestyle="--", linewidth=1.2,
         )
         ax.set_xlim(left=-0.025 * x_max, right=x_max)
@@ -1218,7 +1254,7 @@ def plot_24_feasible_options_by_environment(
         bbox_to_anchor=(0.5, -0.01), frameon=False,
     )
     fig.suptitle(
-        "Opções viáveis por ambiente — limites globais derivados do HEFT",
+        "Opções viáveis por ambiente — SLA específico derivado do HEFT",
         y=1.01,
     )
     fig.subplots_adjust(bottom=0.09, hspace=0.32, wspace=0.22)
@@ -1247,24 +1283,25 @@ def plot_25_recommendation_cloud_by_environment(
     marker_by_algorithm = {"prism_cc_time": "o", "prism_cc_cost": "s"}
     fig, axes = plt.subplots(2, 3, figsize=(16, 10))
     for ax, scenario in zip(axes.flat, SCENARIO_ORDER):
+        sla = scenario_sla(manifest, scenario)
         data = recommendations[recommendations.scenario_id == scenario]
         heft = df[
             (df.scenario_id == scenario) & (df.algorithm == "heft_classic")
         ].iloc[0]
         x_max = max(
-            manifest["budget_limit"] * 1.18,
+            sla["budget_limit"] * 1.18,
             data.budget_used.max() * 1.08,
             heft.budget_used * 1.08,
             0.05,
         )
         y_max = max(
-            manifest["deadline_limit"] * 1.18,
+            sla["deadline_limit"] * 1.18,
             data.makespan.max() * 1.08,
             heft.makespan * 1.08,
         )
         ax.fill_between(
-            [0, manifest["budget_limit"]], [0, 0],
-            [manifest["deadline_limit"], manifest["deadline_limit"]],
+            [0, sla["budget_limit"]], [0, 0],
+            [sla["deadline_limit"], sla["deadline_limit"]],
             color="#59A14F", alpha=0.08,
         )
         for algorithm in ["prism_cc_time", "prism_cc_cost"]:
@@ -1318,11 +1355,11 @@ def plot_25_recommendation_cloud_by_environment(
             xytext=(6, 6), textcoords="offset points", fontsize=8,
         )
         ax.axvline(
-            manifest["budget_limit"], color="#B33A3A",
+            sla["budget_limit"], color="#B33A3A",
             linestyle="--", linewidth=1.1,
         )
         ax.axhline(
-            manifest["deadline_limit"], color="#B33A3A",
+            sla["deadline_limit"], color="#B33A3A",
             linestyle="--", linewidth=1.1,
         )
         ax.set_xlim(left=-0.025 * x_max, right=x_max)
@@ -1471,10 +1508,10 @@ def write_report(
         "upward_rank": "upward rank",
     }.get(manifest.get("prism_cc_priority"), manifest.get("prism_cc_priority", "não informada"))
     descriptions = [
-        ("01-makespan-por-ambiente.png", "Makespan por ambiente e algoritmo", "Boxplots das 30 sementes do PRISM-CC. A linha vermelha é o deadline global, calculado como a média das execuções HEFT clássico. Como o HEFT clássico não possui co-alocação nem interferência, seu resultado é determinístico e aparece como uma linha em cada ambiente."),
-        ("02-custo-por-ambiente.png", "Custo por ambiente e algoritmo", "Compara o custo total das 30 execuções. A linha vermelha é o budget global, calculado como a média de todos os custos HEFT. Cenários on-premise aparecem com custo financeiro zero."),
+        ("01-makespan-por-ambiente.png", "Makespan por ambiente e algoritmo", "Boxplots das 30 sementes do PRISM-CC. Cada segmento vermelho indica o deadline específico do ambiente, definido como 1,2× a média do HEFT usado como baseline naquele ambiente."),
+        ("02-custo-por-ambiente.png", "Custo por ambiente e algoritmo", "Compara o custo total das 30 execuções. Cada segmento vermelho indica o budget específico do ambiente, definido como 1,2× a média do HEFT usado como baseline. Cenários on-premise aparecem com custo financeiro zero."),
         ("03-factibilidade.png", "Factibilidade conjunta", "Percentual de execuções que respeitaram simultaneamente budget e deadline. É a leitura mais direta de cumprimento do SLA."),
-        ("04-custo-versus-makespan.png", "Trade-off custo × makespan", "Cada ponto é uma execução. As linhas vermelhas representam o budget e o deadline globais definidos pelas médias de todas as execuções HEFT."),
+        ("04-custo-versus-makespan.png", "Trade-off custo × makespan", "Cada ponto é uma execução. Em cada painel, as linhas vermelhas representam o budget e o deadline específicos daquele ambiente."),
         ("05-ganho-prism-cc-sobre-heft.png", "Ganho pareado das variantes PRISM-CC sobre HEFT", "Diferenças calculadas semente a semente para PRISM-CC Time e PRISM-CC Cost. Valores positivos favorecem a variante PRISM-CC; negativos favorecem o HEFT clássico. O painel esquerdo mede makespan e o direito mede custo."),
         ("06-interferencia-versus-makespan.png", "Interferência × makespan", "Relaciona o tempo total adicionado pela interferência ao makespan, com tendência linear por algoritmo. Indica quanto o atraso de interferência chega ao caminho crítico."),
         ("07-pares-versus-makespan.png", "Pares interferentes × makespan", "Relaciona quantos pares realmente se sobrepuseram na mesma máquina ao makespan. Distingue atividades selecionadas de interferências efetivamente ativadas."),
@@ -1493,7 +1530,7 @@ def write_report(
         ("21-alocacao-explica-resultado.png", "Alocação explicando o resultado", "As barras empilhadas mostram a parcela média das atividades atribuída a cada família de máquinas. A linha mostra o makespan médio, o tamanho dos marcadores representa o custo e os rótulos apresentam ambos os valores."),
         ("22-risco-versus-desempenho.png", "Risco versus desempenho", "Relaciona makespan médio e coeficiente de variação. O tamanho da bolha representa o custo médio e a cor representa a interferência média por atividade."),
         ("23-fronteira-recomendacoes-concessoes.png", "Fronteira de recomendações e concessões", "Apresenta somente as recomendações não dominadas usando custo e makespan no percentil 95, evitando decidir apenas pela média. O primeiro painel mostra a fronteira robusta, a factibilidade e a variabilidade. O segundo transforma a fronteira em uma sequência de concessões: quanto custo adicional é necessário aceitar e quantos segundos são economizados ao migrar para a próxima recomendação."),
-        ("24-opcoes-viaveis-por-ambiente.png", "Opções viáveis por ambiente", "Cada painel representa um ambiente e cada ponto uma opção de escalonamento: HEFT clássico, PRISM-CC Time ou PRISM-CC Cost. A área verde é delimitada pelo budget e pelo deadline globais derivados do HEFT. Para considerar a incerteza das repetições, custo e makespan são apresentados no percentil 95; pontos com uma marca vermelha ficaram fora de pelo menos um dos limites."),
+        ("24-opcoes-viaveis-por-ambiente.png", "Opções viáveis por ambiente", "Cada painel representa um ambiente e cada ponto uma opção de escalonamento: HEFT, PRISM-CC Time ou PRISM-CC Cost. A área verde é delimitada pelo budget e pelo deadline específicos daquele ambiente. Para considerar a incerteza das repetições, custo e makespan são apresentados no percentil 95; pontos com uma marca vermelha ficaram fora de pelo menos um dos limites."),
     ]
     if has_priority_comparison:
         descriptions.append(
@@ -1516,9 +1553,12 @@ def write_report(
         "",
         f"Prioridade das tarefas do PRISM-CC: **{priority_label}**.",
         "",
-        f"Budget global (média HEFT): `{manifest['budget_limit']}`. "
-        f"Deadline global (média HEFT): `{manifest['deadline_limit']}` segundos. "
-        f"Cada combinação possui {len(manifest['interference_seeds'])} sementes pareadas.",
+        (
+            f"SLA definido por ambiente com margem explícita de "
+            f"`{manifest.get('sla_margin', 1.0)}x` sobre a média do HEFT usado "
+            f"como baseline. Cada combinação possui "
+            f"{len(manifest['interference_seeds'])} sementes pareadas."
+        ),
         "",
     ]
     for filename, title, description in descriptions:
