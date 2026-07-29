@@ -1,0 +1,2 @@
+scenario_id,extra_time_mean,extra_time_ci95,saved_cost_mean,saved_cost_ci95,extra_time_cv,seconds_per_dollar
+edge_cloud_interference_aware,14.337666666666667,6.750120904970643,6.904796433333333,2.9106131708147642,1.3156416945397644,2.076479271344003

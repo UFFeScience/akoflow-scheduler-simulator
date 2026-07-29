@@ -1,0 +1,5 @@
+scenario_id,variant,metric,prism_mean,heft_mean,prism_gain_percent,winner
+edge_cloud_interference_aware,prism_cc_time,makespan,241.09493333333336,241.1326,0.015620727627304683,PRISM-CC
+edge_cloud_interference_aware,prism_cc_cost,makespan,255.4326,241.1326,-5.930347037273273,HEFT
+edge_cloud_interference_aware,prism_cc_time,budget_used,40.77688956666666,41.16000879999999,0.9308045467019727,PRISM-CC
+edge_cloud_interference_aware,prism_cc_cost,budget_used,33.87209313333333,41.16000879999999,17.70630249881449,PRISM-CC

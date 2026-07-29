@@ -1,105 +1,161 @@
 # Gráficos do protocolo experimental
 
-## Makespan
+Prioridade das tarefas do PRISM-CC: **adaptive_ready**.
 
-![Makespan](01-makespan.png)
+SLA definido por ambiente com margem explícita de `1.2x` sobre a média do HEFT usado como baseline. Cada combinação possui 30 sementes pareadas.
 
-## Custo
+## Makespan por ambiente e algoritmo
 
-![Custo](02-custo.png)
+Boxplots das 30 sementes do PRISM-CC. Cada segmento vermelho indica o deadline específico do ambiente, definido como 1,2× a média do HEFT usado como baseline naquele ambiente.
 
-## Factibilidade
+![Makespan por ambiente e algoritmo](01-makespan-por-ambiente.png)
 
-![Factibilidade](03-factibilidade.png)
+## Custo por ambiente e algoritmo
 
-## Tempo algoritmo
+Compara o custo total das 30 execuções. Cada segmento vermelho indica o budget específico do ambiente, definido como 1,2× a média do HEFT usado como baseline. Cenários on-premise aparecem com custo financeiro zero.
 
-![Tempo algoritmo](04-tempo-algoritmo.png)
+![Custo por ambiente e algoritmo](02-custo-por-ambiente.png)
 
-## Custo vs makespan
+## Factibilidade conjunta
 
-![Custo vs makespan](05-custo-vs-makespan.png)
+Percentual de execuções que respeitaram simultaneamente budget e deadline. É a leitura mais direta de cumprimento do SLA.
 
-## Distribuicao maquinas
+![Factibilidade conjunta](03-factibilidade.png)
 
-![Distribuicao maquinas](06-distribuicao-maquinas.png)
+## Trade-off custo × makespan
 
-## Utilizacao maquinas
+Cada ponto é uma execução. Em cada painel, as linhas vermelhas representam o budget e o deadline específicos daquele ambiente.
 
-![Utilizacao maquinas](07-utilizacao-maquinas.png)
+![Trade-off custo × makespan](04-custo-versus-makespan.png)
 
-## Ganhos vs heft
+## Ganho pareado das variantes PRISM-CC sobre HEFT
 
-![Ganhos vs heft](08-ganhos-vs-heft.png)
+Diferenças calculadas semente a semente para PRISM-CC Time e PRISM-CC Cost. Valores positivos favorecem a variante PRISM-CC; negativos favorecem o HEFT clássico. O painel esquerdo mede makespan e o direito mede custo.
 
-## Tempo interferencia
+![Ganho pareado das variantes PRISM-CC sobre HEFT](05-ganho-prism-cc-sobre-heft.png)
 
-![Tempo interferencia](09-tempo-interferencia.png)
+## Interferência × makespan
 
-## Pares interferentes
+Relaciona o tempo total adicionado pela interferência ao makespan, com tendência linear por algoritmo. Indica quanto o atraso de interferência chega ao caminho crítico.
 
-![Pares interferentes](10-pares-interferentes.png)
+![Interferência × makespan](06-interferencia-versus-makespan.png)
 
-## Violacoes sla
+## Pares interferentes × makespan
 
-![Violacoes sla](11-violacoes-sla.png)
+Relaciona quantos pares realmente se sobrepuseram na mesma máquina ao makespan. Distingue atividades selecionadas de interferências efetivamente ativadas.
 
-## Makespan por semente
+![Pares interferentes × makespan](07-pares-versus-makespan.png)
 
-![Makespan por semente](12-makespan-por-semente.png)
+## Distribuição do tempo de interferência
 
-## Custo por semente
+Boxplots do overhead total provocado pela interferência. Permite comparar a capacidade de cada escalonador de evitar sobreposições prejudiciais.
 
-![Custo por semente](13-custo-por-semente.png)
+![Distribuição do tempo de interferência](08-tempo-de-interferencia.png)
 
-## Ecdf makespan
+## Heatmap de utilização
 
-![Ecdf makespan](14-ecdf-makespan.png)
+Utilização média de cada máquina considerando seus cores e o makespan. Células escuras indicam maior ocupação relativa.
 
-## Ecdf custo
+![Heatmap de utilização](09-heatmap-utilizacao.png)
 
-![Ecdf custo](15-ecdf-custo.png)
+## Distribuição das atividades
 
-## Metricas normalizadas
+Barras empilhadas com a parcela média das 6448 atividades destinada às famílias Bora, Diablo, H3 e H4D.
 
-![Metricas normalizadas](16-metricas-normalizadas.png)
+![Distribuição das atividades](10-distribuicao-atividades.png)
 
-## Risco makespan
+## Tempo dos algoritmos
 
-![Risco makespan](17-risco-makespan.png)
+Custo computacional do escalonamento em escala logarítmica. Evidencia a diferença de tempo entre a busca Beam e o HEFT.
 
-## Ganho pareado makespan
+![Tempo dos algoritmos](11-tempo-computacional.png)
 
-![Ganho pareado makespan](18-ganho-pareado-makespan.png)
+## Estabilidade entre sementes
 
-## Ganho pareado custo
+Acompanha o makespan nas 30 seleções pareadas de atividades interferentes. Oscilações mostram sensibilidade à composição da interferência.
 
-![Ganho pareado custo](19-ganho-pareado-custo.png)
+![Estabilidade entre sementes](12-estabilidade-por-semente.png)
 
-## Heatmap utilizacao
+## Makespan agregado por ambiente
 
-![Heatmap utilizacao](20-heatmap-utilizacao.png)
+Cada painel apresenta um algoritmo. O círculo é a média das repetições, a barra horizontal é o intervalo de confiança de 95% e o losango vazado é a mediana. As sementes não são exibidas individualmente; elas servem para estimar a incerteza.
 
-## Heatmap alocacao
+![Makespan agregado por ambiente](14-makespan-agregado-ic95.png)
 
-![Heatmap alocacao](21-heatmap-alocacao.png)
+## Custo agregado por ambiente
 
-## Custo por atividade
+Resume o custo das repetições com média, intervalo de confiança de 95% e mediana. A proximidade entre média e mediana indica estabilidade; diferenças maiores sugerem assimetria ou execuções atípicas.
 
-![Custo por atividade](22-custo-por-atividade.png)
+![Custo agregado por ambiente](15-custo-agregado-ic95.png)
 
-## Makespan por atividade
+## Relação agregada entre custo e makespan
 
-![Makespan por atividade](23-makespan-por-atividade.png)
+Cada ambiente contém somente um ponto por algoritmo. A posição representa as médias de custo e makespan e as barras mostram os respectivos intervalos de confiança de 95%.
 
-## Folga budget
+![Relação agregada entre custo e makespan](16-relacao-agregada-custo-makespan.png)
 
-![Folga budget](24-folga-budget.png)
+## Placar PRISM-CC versus HEFT
 
-## Folga deadline
+Resume quem apresentou menor makespan e menor custo usando as médias das 30 execuções. Verde indica vitória do PRISM-CC, vermelho vitória do HEFT e células neutras indicam empate. O percentual quantifica a redução relativa em relação ao HEFT.
 
-![Folga deadline](25-folga-deadline.png)
+![Placar PRISM-CC versus HEFT](17-placar-prism-cc-versus-heft.png)
 
-## Resumo executivo
+## Barras e linhas PRISM-CC versus HEFT
 
-![Resumo executivo](26-resumo-executivo.png)
+As barras mostram as médias reais de makespan e custo, com intervalo de confiança de 95%. As linhas usam o segundo eixo para mostrar a redução percentual de PRISM-CC Time e Cost em relação ao HEFT. O eixo de makespan é logarítmico para manter visíveis algoritmos com ordens de grandeza diferentes.
+
+![Barras e linhas PRISM-CC versus HEFT](18-barras-e-linhas-prism-cc-versus-heft.png)
+
+## Mapa multidimensional de ganhos
+
+Combina redução de custo, redução de makespan, interferência média por atividade e desequilíbrio de utilização. Pontos no quadrante superior direito favorecem o PRISM-CC nas duas métricas.
+
+![Mapa multidimensional de ganhos](19-mapa-multidimensional-ganhos.png)
+
+## Preço da economia
+
+Mostra quantos segundos são adicionados ao makespan e quantos dólares são economizados ao escolher PRISM-CC Cost no lugar de PRISM-CC Time. As barras de erro representam IC 95% e os rótulos apresentam segundos adicionais por dólar.
+
+![Preço da economia](20-preco-da-economia.png)
+
+## Alocação explicando o resultado
+
+As barras empilhadas mostram a parcela média das atividades atribuída a cada família de máquinas. A linha mostra o makespan médio, o tamanho dos marcadores representa o custo e os rótulos apresentam ambos os valores.
+
+![Alocação explicando o resultado](21-alocacao-explica-resultado.png)
+
+## Risco versus desempenho
+
+Relaciona makespan médio e coeficiente de variação. O tamanho da bolha representa o custo médio e a cor representa a interferência média por atividade.
+
+![Risco versus desempenho](22-risco-versus-desempenho.png)
+
+## Fronteira de recomendações e concessões
+
+Apresenta somente as recomendações não dominadas usando custo e makespan no percentil 95, evitando decidir apenas pela média. O primeiro painel mostra a fronteira robusta, a factibilidade e a variabilidade. O segundo transforma a fronteira em uma sequência de concessões: quanto custo adicional é necessário aceitar e quantos segundos são economizados ao migrar para a próxima recomendação.
+
+![Fronteira de recomendações e concessões](23-fronteira-recomendacoes-concessoes.png)
+
+## Opções viáveis por ambiente
+
+Cada painel representa um ambiente e cada ponto uma opção de escalonamento: HEFT, PRISM-CC Time ou PRISM-CC Cost. A área verde é delimitada pelo budget e pelo deadline específicos daquele ambiente. Para considerar a incerteza das repetições, custo e makespan são apresentados no percentil 95; pontos com uma marca vermelha ficaram fora de pelo menos um dos limites.
+
+![Opções viáveis por ambiente](24-opcoes-viaveis-por-ambiente.png)
+
+## Resumo executivo relativo ao HEFT
+
+Normaliza makespan, custo e tempo computacional pela média do HEFT usado como baseline. Valores abaixo de 1 favorecem o algoritmo; valores acima de 1 representam aumento relativo.
+
+![Resumo executivo relativo ao HEFT](26-resumo-executivo.png)
+
+## Violações do SLA
+
+Mostra, separadamente, o percentual de execuções que violou o deadline e o budget em cada ambiente e algoritmo.
+
+![Violações do SLA](13-violacoes-sla.png)
+
+## Lista N de recomendações por ambiente
+
+Exibe todas as recomendações exportadas pelo Beam para PRISM-CC Time e PRISM-CC Cost. Recomendações que excederam budget ou deadline aparecem em cinza ao fundo. Se o resultado não tiver exportado `recommendations_json`, o próprio gráfico registra explicitamente que a lista N está indisponível.
+
+![Lista N de recomendações por ambiente](25-lista-n-recomendacoes-por-ambiente.png)

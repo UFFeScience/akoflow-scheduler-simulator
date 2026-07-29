@@ -307,6 +307,19 @@ func intervalOverlapCount(root *intervalIndexNode, start, finish float64) int {
 	return count
 }
 
+func intervalOverlapKeys(root *intervalIndexNode, start, finish float64, keys *[]string) {
+	if root == nil || root.MaxFinish <= start {
+		return
+	}
+	intervalOverlapKeys(root.Left, start, finish, keys)
+	if maxf(start, root.Start) < minf(finish, root.Finish) {
+		*keys = append(*keys, root.Key)
+	}
+	if root.Start < finish {
+		intervalOverlapKeys(root.Right, start, finish, keys)
+	}
+}
+
 func stateAssignments(state beamState) []Assignment {
 	if state.Compact {
 		return traceAssignments(state.AssignmentTrace)
@@ -352,6 +365,15 @@ func candidatePairwiseInterferenceForState(generated GeneratedSimulation, taskID
 		return 0, []PairwiseInterference{}
 	}
 	if state.Compact {
+		if metadata.ScenarioID == "edge_cloud_interference_aware" {
+			keys := []string{}
+			intervalOverlapKeys(state.SelectedIntervals[resourceID], start, finish, &keys)
+			total := 0.0
+			for _, otherID := range keys {
+				total += controlledPairInterference(metadata, resourceID, otherID, taskID)
+			}
+			return round(total, 4), nil
+		}
 		count := intervalOverlapCount(state.SelectedIntervals[resourceID], start, finish)
 		return round(float64(count)*metadata.InterferenceRate, 4), nil
 	}

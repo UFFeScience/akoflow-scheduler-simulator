@@ -36,6 +36,10 @@ def scenario_label(manifest: dict) -> str:
     scenarios = manifest.get("scenarios", [])
     if scenarios == ["edge_cloud_extreme"]:
         return "cenário edge–cloud extremo"
+    if scenarios == ["edge_cloud_communication_dominant"]:
+        return "cenário edge–cloud com comunicação dominante"
+    if scenarios == ["edge_cloud_interference_aware"]:
+        return "cenário edge–cloud com interferência previsível"
     return "ambiente híbrido heterogêneo"
 
 
@@ -313,6 +317,8 @@ def main() -> None:
     data.to_csv(args.result_dir / "interference_sweep_results.csv", index=False)
     figures = args.result_dir / "figures"
     figures.mkdir(exist_ok=True)
+    for stale in figures.glob("*.png"):
+        stale.unlink()
     policy = priority_label(args.result_dir)
     with (args.result_dir / "rate-10" / "manifest.json").open() as handle:
         manifest = json.load(handle)

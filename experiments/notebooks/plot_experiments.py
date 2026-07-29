@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from pathlib import Path
 
@@ -31,6 +32,9 @@ SCENARIO_LABELS = {
     "cloud_hetero": "Nuvem\nheterogênea",
     "hybrid_homo": "Híbrido\nhomogêneo",
     "hybrid_hetero": "Híbrido\nheterogêneo",
+    "edge_cloud_extreme": "Edge–cloud\nextremo",
+    "edge_cloud_communication_dominant": "Edge–cloud\ncomunicação dominante",
+    "edge_cloud_interference_aware": "Edge–cloud\ninterferência previsível",
 }
 ALGORITHM_ORDER = ["prism_cc_time", "prism_cc_cost", "heft_classic"]
 ALGORITHM_LABELS = {
@@ -58,9 +62,11 @@ def configure_style() -> None:
 
 
 def load_results(repo_root: Path) -> tuple[pd.DataFrame, dict]:
+    global SCENARIO_ORDER
     results_dir = repo_root / "experiments" / "results" / EXPERIMENT_RESULT_DIR
     df = pd.read_csv(results_dir / "raw_results.csv")
     manifest = json.loads((results_dir / "manifest.json").read_text())
+    SCENARIO_ORDER = list(manifest.get("scenarios") or df["scenario_id"].unique())
     if manifest.get("heft_mode") == "colocation":
         df["algorithm"] = df["algorithm"].replace({"heft_colocation": "heft_classic"})
         ALGORITHM_LABELS["heft_classic"] = "HEFT coalocado"
@@ -116,6 +122,25 @@ def save(fig: plt.Figure, output_dir: Path, filename: str) -> None:
     fig.tight_layout()
     fig.savefig(output_dir / filename)
     plt.close(fig)
+
+
+def scenario_grid(
+    figsize_per_panel: tuple[float, float] = (5.2, 4.5),
+    sharex: bool = False,
+    sharey: bool = False,
+) -> tuple[plt.Figure, np.ndarray]:
+    count = len(SCENARIO_ORDER)
+    columns = min(3, max(1, count))
+    rows = max(1, math.ceil(count / columns))
+    fig, axes = plt.subplots(
+        rows, columns,
+        figsize=(figsize_per_panel[0] * columns, figsize_per_panel[1] * rows),
+        sharex=sharex, sharey=sharey, squeeze=False,
+    )
+    flat = axes.flat
+    for ax in list(flat)[count:]:
+        ax.set_visible(False)
+    return fig, axes
 
 
 def add_sla_line(ax: plt.Axes, value: float, label: str) -> None:
@@ -196,7 +221,7 @@ def plot_03_feasibility(df: pd.DataFrame, output: Path) -> None:
 
 
 def plot_04_cost_makespan(df: pd.DataFrame, manifest: dict, output: Path) -> None:
-    fig, axes = plt.subplots(2, 3, figsize=(15, 9), sharex=True, sharey=True)
+    fig, axes = scenario_grid((7.5, 6.0), sharex=True, sharey=True)
     for ax, scenario in zip(axes.flat, SCENARIO_ORDER):
         subset = df[df["scenario_id"] == scenario]
         sla = scenario_sla(manifest, scenario)
@@ -207,11 +232,19 @@ def plot_04_cost_makespan(df: pd.DataFrame, manifest: dict, output: Path) -> Non
         ax.axvline(sla["budget_limit"], color="#B33A3A", linestyle="--", linewidth=1)
         ax.axhline(sla["deadline_limit"], color="#B33A3A", linestyle="--", linewidth=1)
         ax.set_title(SCENARIO_LABELS[scenario].replace("\n", " "))
+        ax.set_xlabel("Custo (USD)")
+        ax.set_ylabel("Makespan (s)")
         if ax.get_legend():
             ax.get_legend().remove()
     handles, labels = axes.flat[0].get_legend_handles_labels()
-    fig.legend(handles, [ALGORITHM_LABELS.get(x, x) for x in labels], loc="upper center", ncol=2)
-    fig.suptitle("Trade-off custo × makespan — SLA específico por ambiente", y=1.02, fontweight="bold")
+    fig.legend(
+        handles, [ALGORITHM_LABELS.get(x, x) for x in labels],
+        loc="lower center", bbox_to_anchor=(0.5, -0.08), ncol=3,
+    )
+    fig.suptitle(
+        "Trade-off custo × makespan — SLA específico por ambiente",
+        y=1.01, fontweight="bold",
+    )
     save(fig, output, "04-custo-versus-makespan.png")
 
 
@@ -256,7 +289,7 @@ def plot_05_gain(df: pd.DataFrame, output: Path) -> None:
 
 
 def faceted_scatter(df: pd.DataFrame, x: str, filename: str, title: str, xlabel: str, output: Path) -> None:
-    fig, axes = plt.subplots(2, 3, figsize=(15, 9), sharey=False)
+    fig, axes = scenario_grid()
     for ax, scenario in zip(axes.flat, SCENARIO_ORDER):
         subset = df[df["scenario_id"] == scenario]
         for algorithm in ALGORITHM_ORDER:
@@ -329,7 +362,7 @@ def plot_10_distribution(df: pd.DataFrame, output: Path) -> None:
     distribution = expand_json_metric(df, "machine_distribution", "activities")
     grouped = distribution.groupby(["scenario_id", "algorithm", "family"], observed=True)["activities"].mean().reset_index()
     grouped["share"] = grouped["activities"] / grouped.groupby(["scenario_id", "algorithm"], observed=True)["activities"].transform("sum")
-    families = ["Bora", "Diablo", "H3", "H4D"]
+    families = sorted(grouped["family"].unique())
     labels, values = [], []
     for scenario in SCENARIO_ORDER:
         for algorithm in ALGORITHM_ORDER:
@@ -339,7 +372,7 @@ def plot_10_distribution(df: pd.DataFrame, output: Path) -> None:
     values = np.asarray(values)
     fig, ax = plt.subplots(figsize=(16, 6))
     bottom = np.zeros(len(labels))
-    colors = ["#4C78A8", "#72B7B2", "#F58518", "#E45756"]
+    colors = sns.color_palette("tab10", n_colors=len(families))
     for index, family in enumerate(families):
         ax.bar(labels, values[:, index] * 100, bottom=bottom * 100, label=family, color=colors[index])
         bottom += values[:, index]
@@ -363,7 +396,7 @@ def plot_11_algorithm_time(df: pd.DataFrame, output: Path) -> None:
 
 
 def plot_12_seed_stability(df: pd.DataFrame, output: Path) -> None:
-    fig, axes = plt.subplots(2, 3, figsize=(16, 9), sharex=True)
+    fig, axes = scenario_grid((5.3, 4.5), sharex=True)
     for ax, scenario in zip(axes.flat, SCENARIO_ORDER):
         subset = df[df.scenario_id == scenario]
         for algorithm in ALGORITHM_ORDER:
@@ -441,7 +474,7 @@ def plot_14_aggregate_forest(
 def plot_16_aggregate_cost_makespan(
     aggregate: pd.DataFrame, output: Path
 ) -> None:
-    fig, axes = plt.subplots(2, 3, figsize=(15, 9))
+    fig, axes = scenario_grid()
     markers = {"prism_cc_time": "o", "prism_cc_cost": "s", "heft_classic": "X"}
     for ax, scenario in zip(axes.flat, SCENARIO_ORDER):
         subset = aggregate[aggregate["scenario_id"] == scenario]
@@ -851,8 +884,8 @@ def plot_21_allocation_explains_result(
     grouped["share"] = grouped.activities / grouped.groupby(
         ["scenario_id", "algorithm"], observed=True
     ).activities.transform("sum")
-    families = ["Bora", "Diablo", "H3", "H4D"]
-    colors = ["#4C78A8", "#72B7B2", "#F58518", "#E45756"]
+    families = sorted(grouped["family"].unique())
+    colors = sns.color_palette("tab10", n_colors=len(families))
     fig, axes = plt.subplots(1, 2, figsize=(16, 7), sharey=True)
     for ax, algorithm in zip(axes, ["prism_cc_time", "prism_cc_cost"]):
         bottom = np.zeros(len(SCENARIO_ORDER))
@@ -1162,7 +1195,7 @@ def plot_24_feasible_options_by_environment(
         "prism_cc_time": "Time",
         "prism_cc_cost": "Cost",
     }
-    fig, axes = plt.subplots(2, 3, figsize=(16, 10))
+    fig, axes = scenario_grid((7.0, 6.0))
     for ax, scenario in zip(axes.flat, SCENARIO_ORDER):
         sla = scenario_sla(manifest, scenario)
         data = (
@@ -1281,7 +1314,7 @@ def plot_25_recommendation_cloud_by_environment(
         default="Viável",
     )
     marker_by_algorithm = {"prism_cc_time": "o", "prism_cc_cost": "s"}
-    fig, axes = plt.subplots(2, 3, figsize=(16, 10))
+    fig, axes = scenario_grid((8.0, 7.0))
     for ax, scenario in zip(axes.flat, SCENARIO_ORDER):
         sla = scenario_sla(manifest, scenario)
         data = recommendations[recommendations.scenario_id == scenario]
@@ -1399,7 +1432,7 @@ def plot_25_recommendation_cloud_by_environment(
         Line2D(
             [], [], linestyle="none", marker="D",
             markerfacecolor=PALETTE["heft_classic"], markeredgecolor="#111111",
-            markersize=8, label="HEFT clássico",
+            markersize=8, label=ALGORITHM_LABELS["heft_classic"],
         ),
         Line2D(
             [], [], linestyle="none", marker="o",
@@ -1415,7 +1448,7 @@ def plot_25_recommendation_cloud_by_environment(
     ]
     fig.legend(
         handles=shape_handles,
-        loc="lower center", ncol=4, bbox_to_anchor=(0.5, -0.025),
+        loc="lower center", ncol=4, bbox_to_anchor=(0.5, -0.13),
         frameon=False,
     )
     fig.suptitle(
@@ -1428,6 +1461,53 @@ def plot_25_recommendation_cloud_by_environment(
         dpi=180, bbox_inches="tight",
     )
     plt.close(fig)
+
+
+def plot_26_executive_summary(df: pd.DataFrame, output: Path) -> None:
+    means = (
+        df.groupby("algorithm")[["makespan", "budget_used", "algorithm_milliseconds"]]
+        .mean().reindex(ALGORITHM_ORDER)
+    )
+    baseline = means.loc["heft_classic"]
+    relative = means.div(baseline).rename(
+        columns={
+            "makespan": "Makespan relativo",
+            "budget_used": "Custo relativo",
+            "algorithm_milliseconds": "Tempo do algoritmo relativo",
+        }
+    )
+    relative.index = [ALGORITHM_LABELS[item] for item in relative.index]
+    fig, ax = plt.subplots(figsize=(11, 7))
+    relative.T.plot(
+        kind="bar", ax=ax,
+        color=[PALETTE[item] for item in ALGORITHM_ORDER],
+    )
+    ax.axhline(
+        1, color="#222222", linestyle="--", linewidth=1.2,
+        label="Referência HEFT = 1",
+    )
+    ax.set_title("Resumo executivo relativo ao HEFT")
+    ax.set_xlabel("")
+    ax.set_ylabel("Razão em relação ao baseline")
+    ax.set_xticklabels(relative.columns, rotation=0)
+    ax.legend(frameon=False)
+    save(fig, output, "26-resumo-executivo.png")
+
+
+def plot_25_no_recommendations(output: Path) -> None:
+    fig, ax = plt.subplots(figsize=(12, 7))
+    ax.axis("off")
+    ax.text(
+        0.5, 0.55, "Lista N de recomendações indisponível",
+        ha="center", va="center", fontsize=18, fontweight="bold",
+    )
+    ax.text(
+        0.5, 0.43,
+        "Este resultado não exportou recomendações_json.\n"
+        "Execute novamente o protocolo com recomendações habilitadas para preencher este gráfico.",
+        ha="center", va="center", fontsize=12,
+    )
+    save(fig, output, "25-lista-n-recomendacoes-por-ambiente.png")
 
 
 def plot_13_priority_comparison(repo_root: Path, df: pd.DataFrame, output: Path) -> bool:
@@ -1576,6 +1656,7 @@ def write_report(
         ("22-risco-versus-desempenho.png", "Risco versus desempenho", "Relaciona makespan médio e coeficiente de variação. O tamanho da bolha representa o custo médio e a cor representa a interferência média por atividade."),
         ("23-fronteira-recomendacoes-concessoes.png", "Fronteira de recomendações e concessões", "Apresenta somente as recomendações não dominadas usando custo e makespan no percentil 95, evitando decidir apenas pela média. O primeiro painel mostra a fronteira robusta, a factibilidade e a variabilidade. O segundo transforma a fronteira em uma sequência de concessões: quanto custo adicional é necessário aceitar e quantos segundos são economizados ao migrar para a próxima recomendação."),
         ("24-opcoes-viaveis-por-ambiente.png", "Opções viáveis por ambiente", "Cada painel representa um ambiente e cada ponto uma opção de escalonamento: HEFT, PRISM-CC Time ou PRISM-CC Cost. A área verde é delimitada pelo budget e pelo deadline específicos daquele ambiente. Para considerar a incerteza das repetições, custo e makespan são apresentados no percentil 95; pontos com uma marca vermelha ficaram fora de pelo menos um dos limites."),
+        ("26-resumo-executivo.png", "Resumo executivo relativo ao HEFT", "Normaliza makespan, custo e tempo computacional pela média do HEFT usado como baseline. Valores abaixo de 1 favorecem o algoritmo; valores acima de 1 representam aumento relativo."),
     ]
     if has_priority_comparison:
         descriptions.append(
@@ -1593,14 +1674,18 @@ def write_report(
                 "Mostra, separadamente, o percentual de execuções que violou o deadline e o budget em cada ambiente e algoritmo.",
             )
         )
-    if has_recommendation_cloud:
-        descriptions.append(
+    descriptions.append(
+        (
+            "25-lista-n-recomendacoes-por-ambiente.png",
+            "Lista N de recomendações por ambiente",
             (
-                "25-lista-n-recomendacoes-por-ambiente.png",
-                "Lista N de recomendações por ambiente",
-                "Exibe todas as recomendações exportadas pelo Beam para PRISM-CC Time e PRISM-CC Cost. Recomendações que excederam budget ou deadline aparecem em cinza ao fundo. As opções viáveis permanecem azuis para Time e verdes para Cost. Um marcador maior identifica a melhor opção viável de cada objetivo; o losango é a referência HEFT.",
-            )
+                "Exibe todas as recomendações exportadas pelo Beam para PRISM-CC Time e PRISM-CC Cost. "
+                "Recomendações que excederam budget ou deadline aparecem em cinza ao fundo. "
+                "Se o resultado não tiver exportado `recommendations_json`, o próprio gráfico registra "
+                "explicitamente que a lista N está indisponível."
+            ),
         )
+    )
     lines = [
         "# Gráficos do protocolo experimental",
         "",
@@ -1625,6 +1710,8 @@ def generate_all(repo_root: Path) -> list[Path]:
     validate_results(df, manifest)
     output = repo_root / "experiments" / "results" / EXPERIMENT_RESULT_DIR / "figures"
     output.mkdir(parents=True, exist_ok=True)
+    for stale in output.glob("*.png"):
+        stale.unlink()
     plot_01_makespan(df, manifest, output)
     plot_02_cost(df, manifest, output)
     plot_03_feasibility(df, output)
@@ -1637,9 +1724,8 @@ def generate_all(repo_root: Path) -> list[Path]:
     plot_10_distribution(df, output)
     plot_11_algorithm_time(df, output)
     plot_12_seed_stability(df, output)
-    has_priority_comparison = plot_13_priority_comparison(repo_root, df, output)
-    if not has_priority_comparison:
-        plot_13_sla_violations(df, output)
+    has_priority_comparison = False
+    plot_13_sla_violations(df, output)
     aggregate = aggregate_environment_statistics(df)
     aggregate.to_csv(output.parent / "aggregate_environment_summary.csv", index=False)
     plot_14_aggregate_forest(
@@ -1691,6 +1777,9 @@ def generate_all(repo_root: Path) -> list[Path]:
         plot_25_recommendation_cloud_by_environment(
             exported_recommendations, df, manifest, output
         )
+    else:
+        plot_25_no_recommendations(output)
+    plot_26_executive_summary(df, output)
     write_report(
         output, manifest, has_priority_comparison, has_recommendation_cloud
     )

@@ -20,3 +20,11 @@ docker compose run --rm --no-deps \
   -experiment-heft-mode=colocation \
   -experiment-workflow=montage_dss_20d \
   -experiment-scenarios=edge_cloud_extreme
+
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -e MPLCONFIGDIR=/tmp/matplotlib \
+  -e EXPERIMENT_RESULT_DIR="${output_name}" \
+  -v "${repo_root}:/workspace" \
+  scheduler-simulator-notebooks \
+  python /workspace/experiments/notebooks/plot_experiments.py

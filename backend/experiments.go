@@ -12,6 +12,8 @@ import (
 const (
 	machineSimulatorsCSV        = "machine_simulators.csv"
 	edgeCloudMachinesCSV        = "machine_simulators_edge_cloud_extreme.csv"
+	communicationMachinesCSV    = "machine_simulators_communication_dominant.csv"
+	interferenceMachinesCSV     = "machine_simulators_interference_aware.csv"
 	montageRuntimesCSV          = "montage_c3d_standard_16_runtimes.csv"
 	montageWorkflowYAML         = "wf-montage-050d-gcp.yaml"
 	montageDSS20WorkflowID      = "montage_dss_20d"
@@ -228,7 +230,12 @@ func readExperimentText(name string) (string, error) {
 
 func readExperimentMachines() ([]experimentMachineRow, error) {
 	rows := []experimentMachineRow{}
-	for _, filename := range []string{machineSimulatorsCSV, edgeCloudMachinesCSV} {
+	for _, filename := range []string{
+		machineSimulatorsCSV,
+		edgeCloudMachinesCSV,
+		communicationMachinesCSV,
+		interferenceMachinesCSV,
+	} {
 		records, err := readExperimentCSV(filename)
 		if err != nil {
 			return nil, err

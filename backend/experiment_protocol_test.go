@@ -96,6 +96,53 @@ func TestEdgeCloudExtremeScenarioCreatesStrongTradeoffs(t *testing.T) {
 	}
 }
 
+func TestCommunicationDominantScenarioAmplifiesDataAndLimitsRemoteParallelism(t *testing.T) {
+	baseline, err := generateExperimentSimulation("edge_cloud_extreme", 42, 1, false, minBeamWidth)
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated, err := generateExperimentSimulation("edge_cloud_communication_dominant", 42, 1, false, minBeamWidth)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(generated.Workflow.Dependencies) != len(baseline.Workflow.Dependencies) {
+		t.Fatal("communication scenario changed the workflow topology")
+	}
+	for index := range generated.Workflow.Dependencies {
+		got := generated.Workflow.Dependencies[index].DataMB
+		want := round(baseline.Workflow.Dependencies[index].DataMB*250, 9)
+		if got != want {
+			t.Fatalf("dependency %d data mismatch: got %v, want %v", index, got, want)
+		}
+	}
+	resources := resourceMap(generated.Resources)
+	if resources["cloud-fast-limited"].CPU != 4 || resources["cloud-ultra-limited"].CPU != 2 {
+		t.Fatal("remote cloud capacity must be deliberately limited")
+	}
+}
+
+func TestInterferenceAwareScenarioVariesByMachineAndTaskPair(t *testing.T) {
+	metadata := &ExperimentMetadata{
+		ScenarioID: "edge_cloud_interference_aware", InterferenceRate: 0.5,
+	}
+	edge := controlledPairInterference(metadata, "edge-isolated-01", "task-a", "task-b")
+	burst := controlledPairInterference(metadata, "cloud-burst-shared", "task-a", "task-b")
+	if burst <= edge {
+		t.Fatalf("expected burst cloud interference %v to exceed isolated edge %v", burst, edge)
+	}
+	foundDifferentPair := false
+	first := controlledPairInterference(metadata, "fog-shared-01", "task-a", "task-b")
+	for _, other := range []string{"task-c", "task-d", "task-e", "task-f"} {
+		if controlledPairInterference(metadata, "fog-shared-01", "task-a", other) != first {
+			foundDifferentPair = true
+			break
+		}
+	}
+	if !foundDifferentPair {
+		t.Fatal("expected deterministic task profiles to create pair-specific interference")
+	}
+}
+
 func TestHomogeneousScenarioUsesIdenticalET0ForEveryMachine(t *testing.T) {
 	generated, err := generateExperimentSimulation("cluster_homo", 42, 1, false, minBeamWidth)
 	if err != nil {

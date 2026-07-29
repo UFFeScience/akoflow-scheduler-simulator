@@ -21,11 +21,18 @@ func candidatePairwiseInterference(generated GeneratedSimulation, taskID, resour
 				continue
 			}
 			pairs = append(pairs, PairwiseInterference{
-				OtherTaskID: item.TaskID, Value: metadata.InterferenceRate,
-				Dimensions: map[string]float64{"controlled": metadata.InterferenceRate},
+				OtherTaskID: item.TaskID,
+				Value:       controlledPairInterference(metadata, resourceID, item.TaskID, taskID),
+				Dimensions: map[string]float64{
+					"controlled": controlledPairInterference(metadata, resourceID, item.TaskID, taskID),
+				},
 			})
 		}
-		return round(float64(len(pairs))*metadata.InterferenceRate, 4), pairs
+		total := 0.0
+		for _, pair := range pairs {
+			total += pair.Value
+		}
+		return round(total, 4), pairs
 	}
 	colocated := []string{}
 	for _, item := range scheduled {

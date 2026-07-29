@@ -168,6 +168,34 @@ func fixedInterferenceValue(dimension, sourceID, targetID string) float64 {
 	return round(float64(hash.Sum32()%1801)/10000.0, 4)
 }
 
+func controlledPairInterference(metadata *ExperimentMetadata, resourceID, sourceID, targetID string) float64 {
+	if metadata == nil {
+		return 0
+	}
+	if metadata.ScenarioID != "edge_cloud_interference_aware" {
+		return metadata.InterferenceRate
+	}
+	resourceFactor := map[string]float64{
+		"edge-isolated-01":   0.25,
+		"fog-shared-01":      1.20,
+		"cloud-balanced-01":  0.60,
+		"cloud-burst-shared": 1.60,
+	}[resourceID]
+	if resourceFactor == 0 {
+		resourceFactor = 1
+	}
+	profile := func(taskID string) uint32 {
+		hash := fnv.New32a()
+		_, _ = hash.Write([]byte("scheduler-simulator/task-profile/v1|" + taskID))
+		return hash.Sum32() % 4
+	}
+	pairFactor := 0.45
+	if profile(sourceID) == profile(targetID) {
+		pairFactor = 1.25
+	}
+	return round(metadata.InterferenceRate*resourceFactor*pairFactor, 4)
+}
+
 func applyControlledInterference(generated *GeneratedSimulation, seed int64, rate float64, disabled bool) {
 	taskIDs := make([]string, 0, len(generated.Workflow.Tasks))
 	for _, task := range generated.Workflow.Tasks {

@@ -22,7 +22,7 @@ var experimentScenarioIDs = []string{
 
 var experimentSupportedScenarioIDs = append(
 	append([]string(nil), experimentScenarioIDs...),
-	"edge_cloud_extreme",
+	"edge_cloud_extreme", "edge_cloud_communication_dominant", "edge_cloud_interference_aware",
 )
 
 const (

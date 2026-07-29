@@ -1,0 +1,5 @@
+scenario_id,variant,metric,prism_mean,heft_mean,prism_gain_percent,winner
+edge_cloud_communication_dominant,prism_cc_time,makespan,1361.071833333333,1546.3972333333334,11.984333391525968,PRISM-CC
+edge_cloud_communication_dominant,prism_cc_cost,makespan,1556.219733333333,1546.3972333333334,-0.6351860820926759,HEFT
+edge_cloud_communication_dominant,prism_cc_time,budget_used,7238.288113699999,8180.825829099999,11.521302801085213,PRISM-CC
+edge_cloud_communication_dominant,prism_cc_cost,budget_used,5084.484623566666,8180.825829099999,37.84876087349695,PRISM-CC

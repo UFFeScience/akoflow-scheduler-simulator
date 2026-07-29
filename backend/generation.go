@@ -39,6 +39,13 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 		if runtimeErr != nil {
 			return GeneratedSimulation{}, runtimeErr
 		}
+		if req.ExperimentScenarioID == "edge_cloud_communication_dominant" {
+			for index := range workflow.Dependencies {
+				workflow.Dependencies[index].DataMB = round(
+					workflow.Dependencies[index].DataMB*250, 9,
+				)
+			}
+		}
 	}
 	resources, bandwidth, err := generateResources(req)
 	if err != nil {

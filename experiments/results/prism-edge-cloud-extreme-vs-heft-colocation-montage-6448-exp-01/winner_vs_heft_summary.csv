@@ -1,0 +1,5 @@
+scenario_id,variant,metric,prism_mean,heft_mean,prism_gain_percent,winner
+edge_cloud_extreme,prism_cc_time,makespan,476.5606666666667,476.5416666666667,-0.00398705954358775,HEFT
+edge_cloud_extreme,prism_cc_cost,makespan,534.3839333333334,476.5416666666667,-12.137924280842888,HEFT
+edge_cloud_extreme,prism_cc_time,budget_used,36.61880633333333,36.76513933333333,0.39802106738468096,PRISM-CC
+edge_cloud_extreme,prism_cc_cost,budget_used,18.3810635,36.76513933333333,50.00409672503349,PRISM-CC

@@ -142,8 +142,20 @@ Cada painel representa um ambiente e cada ponto uma opção de escalonamento: HE
 
 ![Opções viáveis por ambiente](24-opcoes-viaveis-por-ambiente.png)
 
+## Resumo executivo relativo ao HEFT
+
+Normaliza makespan, custo e tempo computacional pela média do HEFT usado como baseline. Valores abaixo de 1 favorecem o algoritmo; valores acima de 1 representam aumento relativo.
+
+![Resumo executivo relativo ao HEFT](26-resumo-executivo.png)
+
+## Violações do SLA
+
+Mostra, separadamente, o percentual de execuções que violou o deadline e o budget em cada ambiente e algoritmo.
+
+![Violações do SLA](13-violacoes-sla.png)
+
 ## Lista N de recomendações por ambiente
 
-Exibe todas as recomendações exportadas pelo Beam para PRISM-CC Time e PRISM-CC Cost. Recomendações que excederam budget ou deadline aparecem em cinza ao fundo. As opções viáveis permanecem azuis para Time e verdes para Cost. Um marcador maior identifica a melhor opção viável de cada objetivo; o losango é a referência HEFT.
+Exibe todas as recomendações exportadas pelo Beam para PRISM-CC Time e PRISM-CC Cost. Recomendações que excederam budget ou deadline aparecem em cinza ao fundo. Se o resultado não tiver exportado `recommendations_json`, o próprio gráfico registra explicitamente que a lista N está indisponível.
 
 ![Lista N de recomendações por ambiente](25-lista-n-recomendacoes-por-ambiente.png)

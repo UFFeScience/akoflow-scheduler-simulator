@@ -46,3 +46,11 @@ for percent in 10 20 30 40 50 60 70 80 90; do
   rate="$(python3 -c 'import sys; print(int(sys.argv[1]) / 100)' "${percent}")"
   run_rate "${sweep_name}/rate-${percent}" "${rate}" "${budget}" "${deadline}"
 done
+
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -e MPLCONFIGDIR=/tmp/matplotlib \
+  -v "${repo_root}:/workspace" \
+  scheduler-simulator-notebooks \
+  python /workspace/experiments/notebooks/plot_interference_sweep.py \
+  "/workspace/experiments/results/${sweep_name}"

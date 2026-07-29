@@ -1,0 +1,2 @@
+scenario_id,extra_time_mean,extra_time_ci95,saved_cost_mean,saved_cost_ci95,extra_time_cv,seconds_per_dollar
+edge_cloud_communication_dominant,195.14789999999994,63.23061190633256,2153.803490133333,651.521147130508,0.9054574752087584,0.09060617688381549
