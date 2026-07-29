@@ -27,7 +27,7 @@ func TestProfileLargePRISMCC(t *testing.T) {
 		t.Fatal(err)
 	}
 	generated.Experimental.Algorithm = "prism_cc_time"
-	generated.Experimental.PriorityPolicy = "upward_rank"
+	generated.Experimental.PriorityPolicy = "ready_lookahead"
 	generated.SLA.WeightTime = 1
 	generated.SLA.WeightCost = 0
 	if _, err := beamSearch(generated, beamWidth); err != nil {

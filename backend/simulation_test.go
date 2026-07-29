@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"sort"
 	"testing"
@@ -367,6 +368,277 @@ func TestBeamExpansionPartialScoreDoesNotDependOnUserWeights(t *testing.T) {
 		if timeExpanded[i].PartialScore != costExpanded[i].PartialScore {
 			t.Fatalf("partial score %d should not depend on user weights: %v != %v", i, timeExpanded[i].PartialScore, costExpanded[i].PartialScore)
 		}
+	}
+}
+
+func TestReadyLookaheadBranchesAcrossReadyTasksAndRespectsDependencies(t *testing.T) {
+	req := defaultRequest()
+	req.Seed = 777
+	req.TaskCount = 12
+	req.EdgeDensity = 0.2
+	generated, err := generateSimulation(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated.Workflow.Tasks = generated.Workflow.Tasks[:3]
+	first := generated.Workflow.Tasks[0].ID
+	second := generated.Workflow.Tasks[1].ID
+	join := generated.Workflow.Tasks[2].ID
+	generated.Workflow.Dependencies = []Dependency{
+		{Source: first, Target: join},
+		{Source: second, Target: join},
+	}
+	generated.Experimental = &ExperimentMetadata{PriorityPolicy: "ready_lookahead"}
+	order, err := prismCCPriorityOrder(generated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := optimizerContext{
+		Tasks:         taskMap(generated.Workflow.Tasks),
+		Resources:     resourceMap(generated.Resources),
+		DepsByTarget:  dependenciesByTarget(generated.Workflow.Dependencies),
+		PriorityOrder: order,
+		DynamicReady:  true,
+	}
+	if err := configureOptimizerContext(generated, &ctx); err != nil {
+		t.Fatal(err)
+	}
+	initial := initializeReadyState(ctx, beamState{
+		Assignments: []Assignment{}, AssignmentByTask: map[string]Assignment{},
+		TaskOrdinals: ctx.TaskOrdinal,
+	})
+	ready := readyTaskCandidates(ctx, initial)
+	if len(ready) != 2 {
+		t.Fatalf("expected exactly two roots in bifurcated DAG, got %v", ready)
+	}
+	for _, taskID := range ready {
+		if len(ctx.DepsByTarget[taskID]) != 0 {
+			t.Fatalf("initial candidate %s has unscheduled predecessors", taskID)
+		}
+	}
+	afterFirst := advanceReadyTaskFrontier(ctx, initial, first)
+	for _, taskID := range readyTaskCandidates(ctx, afterFirst) {
+		if taskID == join {
+			t.Fatalf("join task %s became ready before both predecessors", join)
+		}
+	}
+	afterBoth := advanceReadyTaskFrontier(ctx, afterFirst, second)
+	foundJoin := false
+	for _, taskID := range readyTaskCandidates(ctx, afterBoth) {
+		foundJoin = foundJoin || taskID == join
+	}
+	if !foundJoin {
+		t.Fatalf("join task %s did not become ready after both predecessors", join)
+	}
+}
+
+func TestReadyLookaheadPrunesDisjointResourcePermutation(t *testing.T) {
+	ctx := optimizerContext{
+		TaskIDs:       []string{"a", "b"},
+		PriorityOrder: []string{"a", "b"},
+		ResourceMasks: []uint64{1, 2},
+	}
+	state := beamState{ReadyTaskBits: []uint64{0b11}}
+	ready := readyTaskCandidates(ctx, state)
+	if len(ready) != 1 || ready[0] != "a" {
+		t.Fatalf("expected canonical order for disjoint tasks, got %v", ready)
+	}
+}
+
+func TestStateSignatureCanonicalizesEquivalentAssignmentOrder(t *testing.T) {
+	first := Assignment{TaskID: "a", ResourceID: "r1", CoreID: "c1", StartTime: 0, FinishTime: 1}
+	second := Assignment{TaskID: "b", ResourceID: "r2", CoreID: "c2", StartTime: 0, FinishTime: 2}
+	left := beamState{Assignments: []Assignment{first, second}}
+	right := beamState{Assignments: []Assignment{second, first}}
+	if stateSignature(left) != stateSignature(right) {
+		t.Fatal("equivalent non-compact states must have the same canonical signature")
+	}
+}
+
+func TestDedupeStatesPrefersCanonicalEquivalentState(t *testing.T) {
+	assignment := Assignment{
+		TaskID: "a", ResourceID: "r1", CoreID: "c1",
+		StartTime: 0, FinishTime: 10,
+	}
+	deviated := beamState{
+		Assignments: []Assignment{assignment}, PartialScore: 1,
+		TaskOrderSearch: true, OrderDeviated: true,
+	}
+	canonical := beamState{
+		Assignments: []Assignment{assignment}, PartialScore: 10,
+		TaskOrderSearch: true,
+	}
+	states := dedupeStates([]beamState{deviated, canonical})
+	if len(states) != 1 {
+		t.Fatalf("dedupe returned %d equivalent states, want 1", len(states))
+	}
+	if states[0].OrderDeviated {
+		t.Fatal("dedupe discarded the canonical representative")
+	}
+}
+
+func TestReadyLookaheadPreservesCanonicalEliteBeforeFeasibilityPruning(t *testing.T) {
+	deadline := 10.0
+	generated := GeneratedSimulation{SLA: SLA{DeadlineLimit: &deadline}}
+	canonical := beamState{
+		Assignments:     []Assignment{{TaskID: "canonical", ResourceID: "r1"}},
+		PartialMakespan: 20, PartialScore: 10,
+		TaskOrderSearch: true,
+	}
+	states := []beamState{canonical}
+	for index := 0; index < 3; index++ {
+		states = append(states, beamState{
+			Assignments:     []Assignment{{TaskID: fmt.Sprintf("alternative-%d", index), ResourceID: "r1"}},
+			PartialMakespan: float64(index + 1), PartialScore: float64(index + 1),
+			TaskOrderSearch: true, OrderDeviated: true,
+		})
+	}
+	selected := selectBeamStates(states, 2, generated)
+	foundCanonical := false
+	for _, state := range selected {
+		foundCanonical = foundCanonical || !state.OrderDeviated
+	}
+	if !foundCanonical {
+		t.Fatal("canonical task-order state was removed by partial-feasibility pruning")
+	}
+}
+
+func TestReadyLookaheadProducesCompleteDependencyValidSchedule(t *testing.T) {
+	req := defaultRequest()
+	req.Seed = 778
+	req.TaskCount = 20
+	req.EdgeDensity = 0.25
+	req.BeamWidth = minBeamWidth
+	generated, err := generateSimulation(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated.Experimental = &ExperimentMetadata{PriorityPolicy: "ready_lookahead"}
+	states, err := beamSearch(generated, normalizedBeamWidth(generated.SLA.BeamWidth))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(states) == 0 {
+		t.Fatal("ready-lookahead beam returned no states")
+	}
+	assignments := stateAssignments(states[0])
+	if len(assignments) != len(generated.Workflow.Tasks) {
+		t.Fatalf("got %d assignments, want %d", len(assignments), len(generated.Workflow.Tasks))
+	}
+	position := map[string]int{}
+	for index, assignment := range assignments {
+		position[assignment.TaskID] = index
+	}
+	for _, dependency := range generated.Workflow.Dependencies {
+		if position[dependency.Source] >= position[dependency.Target] {
+			t.Fatalf("dependency order violated: %s -> %s", dependency.Source, dependency.Target)
+		}
+	}
+}
+
+func TestAdaptiveReadyProducesCompleteDependencyValidSchedule(t *testing.T) {
+	req := defaultRequest()
+	req.Seed = 779
+	req.TaskCount = 20
+	req.EdgeDensity = 0.25
+	req.BeamWidth = minBeamWidth
+	generated, err := generateSimulation(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated.Experimental = &ExperimentMetadata{PriorityPolicy: "adaptive_ready"}
+	states, err := beamSearch(generated, normalizedBeamWidth(generated.SLA.BeamWidth))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(states) == 0 || len(states) > normalizedBeamWidth(generated.SLA.BeamWidth) {
+		t.Fatalf("adaptive Beam returned %d states", len(states))
+	}
+	assignments := stateAssignments(states[0])
+	if len(assignments) != len(generated.Workflow.Tasks) {
+		t.Fatalf("got %d assignments, want %d", len(assignments), len(generated.Workflow.Tasks))
+	}
+	position := map[string]int{}
+	for index, assignment := range assignments {
+		position[assignment.TaskID] = index
+	}
+	for _, dependency := range generated.Workflow.Dependencies {
+		if position[dependency.Source] >= position[dependency.Target] {
+			t.Fatalf("dependency order violated: %s -> %s", dependency.Source, dependency.Target)
+		}
+	}
+}
+
+func TestAdaptiveReadyRetainsExactHEFTCanonicalPath(t *testing.T) {
+	req := defaultRequest()
+	req.Seed = 780
+	req.TaskCount = 20
+	req.EdgeDensity = 0.25
+	req.BeamWidth = minBeamWidth
+	generated, err := generateSimulation(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated.Experimental = &ExperimentMetadata{PriorityPolicy: "adaptive_ready"}
+	heft, err := scheduleHEFTColocation(generated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	states, err := beamSearch(generated, normalizedBeamWidth(generated.SLA.BeamWidth))
+	if err != nil {
+		t.Fatal(err)
+	}
+	heftSignature := stateSignature(beamState{Assignments: heft.Assignments})
+	found := false
+	for _, state := range states {
+		found = found || stateSignature(state) == heftSignature
+	}
+	if !found {
+		t.Fatal("adaptive Beam did not retain the exact HEFT canonical path")
+	}
+}
+
+func TestAdaptiveBoundsIncludeRemainingCostAndCriticalPath(t *testing.T) {
+	budget, deadline := 10.0, 20.0
+	generated := GeneratedSimulation{SLA: SLA{BudgetLimit: &budget, DeadlineLimit: &deadline}}
+	ctx := optimizerContext{TaskIDs: []string{"a", "b"}, MinCriticalRanks: []float64{12, 7}}
+	state := beamState{
+		PartialBudgetUsed: 3, RemainingMinCost: 4, PartialMakespan: 5,
+		ReadyTaskBits: []uint64{0b11},
+	}
+	timeBound, costBound := adaptiveBounds(state, ctx)
+	if timeBound != 12 || costBound != 7 {
+		t.Fatalf("unexpected adaptive bounds: time=%v cost=%v", timeBound, costBound)
+	}
+	if !adaptivePotentiallyFeasible(state, timeBound, costBound, generated) {
+		t.Fatal("state should remain potentially feasible")
+	}
+	deadline = 10
+	if adaptivePotentiallyFeasible(state, timeBound, costBound, generated) {
+		t.Fatal("state with critical-path bound above deadline must be infeasible")
+	}
+}
+
+func TestAdaptiveSelectionPreservesCanonicalRepresentativeBeforeDominance(t *testing.T) {
+	canonical := beamState{
+		Assignments:     []Assignment{{TaskID: "a", ResourceID: "slow"}},
+		PartialMakespan: 10, PartialBudgetUsed: 10, ScheduledTaskHash: 1,
+		TaskOrderSearch: true,
+	}
+	alternative := beamState{
+		Assignments:     []Assignment{{TaskID: "a", ResourceID: "fast"}},
+		PartialMakespan: 5, PartialBudgetUsed: 5, ScheduledTaskHash: 1,
+		TaskOrderSearch: true, OrderDeviated: true,
+	}
+	selected := selectAdaptiveBeamStates(
+		[]beamState{canonical, alternative}, 10, GeneratedSimulation{}, optimizerContext{},
+	)
+	foundCanonical := false
+	for _, state := range selected {
+		foundCanonical = foundCanonical || !state.OrderDeviated
+	}
+	if !foundCanonical {
+		t.Fatal("incomplete dominance bound removed the canonical representative")
 	}
 }
 

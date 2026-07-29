@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"math"
+	"math/bits"
 	"runtime"
 	"sort"
 	"strings"
@@ -9,25 +12,35 @@ import (
 )
 
 type beamState struct {
-	Assignments        []Assignment
-	AssignmentByTask   map[string]Assignment
-	AssignmentTrace    *assignmentTrace
-	AssignmentIndex    *assignmentIndexNode
-	SelectedIntervals  map[string]*intervalIndexNode
-	BillingStart       map[string]float64
-	BillingFinish      map[string]float64
-	Compact            bool
-	SignatureHash      uint64
-	CoreAvail          map[string]float64
-	CoreIndexes        map[string]*coreAvailabilityNode
-	NodeHasBooted      map[string]bool
-	NodeReadyTime      map[string]float64
-	NodeLastActive     map[string]float64
-	StopIntervals      []MachineStopInterval
-	StepTrace          *scheduleStepTrace
-	PartialBudgetUsed  float64
-	PartialMakespan    float64
-	PartialScore       float64
+	Assignments         []Assignment
+	AssignmentByTask    map[string]Assignment
+	AssignmentTrace     *assignmentTrace
+	AssignmentIndex     *assignmentIndexNode
+	TaskOrdinals        map[string]int
+	SelectedIntervals   map[string]*intervalIndexNode
+	BillingStart        map[string]float64
+	BillingFinish       map[string]float64
+	Compact             bool
+	SignatureHash       uint64
+	CoreAvail           map[string]float64
+	CoreIndexes         map[string]*coreAvailabilityNode
+	NodeHasBooted       map[string]bool
+	NodeReadyTime       map[string]float64
+	NodeLastActive      map[string]float64
+	StopIntervals       []MachineStopInterval
+	StepTrace           *scheduleStepTrace
+	PartialBudgetUsed   float64
+	PartialMakespan     float64
+	PartialScore        float64
+	PartialInterference float64
+	RemainingMinCost    float64
+	ScheduledTaskHash   uint64
+	FrontierMask        uint16
+	FrontierScores      [beamFrontierCount]float64
+	PendingPredChunks   [][]uint16
+	ReadyTaskBits       []uint64
+	TaskOrderSearch     bool
+	OrderDeviated       bool
 }
 
 type scheduleStepTrace struct {
@@ -37,9 +50,20 @@ type scheduleStepTrace struct {
 }
 
 type optimizerContext struct {
-	Tasks        map[string]Task
-	Resources    map[string]Resource
-	DepsByTarget map[string][]Dependency
+	Tasks            map[string]Task
+	Resources        map[string]Resource
+	DepsByTarget     map[string][]Dependency
+	PriorityOrder    []string
+	PriorityRanks    map[string]float64
+	MaxPriorityRank  float64
+	DynamicReady     bool
+	AdaptiveReady    bool
+	TaskOrdinal      map[string]int
+	TaskIDs          []string
+	Successors       [][]int
+	ResourceMasks    []uint64
+	MinTaskCosts     []float64
+	MinCriticalRanks []float64
 }
 
 type beamFrontier struct {
@@ -48,6 +72,8 @@ type beamFrontier struct {
 }
 
 const beamFrontierCount = 11
+const readyTaskBranchLimit = 4
+const pendingPredecessorChunkSize = 64
 
 func optimizeSchedule(generated GeneratedSimulation) (ScheduleOptimizationResponse, error) {
 	optionCount := max(1, min(generated.SLA.OptionCount, maxScheduleOptions))
@@ -82,22 +108,54 @@ func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, erro
 	}
 	hasBooted, ready, last := initialNodeState(generated.Resources)
 	compact := len(generated.Workflow.Tasks) > 1000
-	initialBeam := []beamState{{Assignments: []Assignment{}, AssignmentByTask: map[string]Assignment{}, SelectedIntervals: map[string]*intervalIndexNode{}, BillingStart: map[string]float64{}, BillingFinish: map[string]float64{}, Compact: compact, CoreAvail: coreAvail, CoreIndexes: coreIndexes, NodeHasBooted: hasBooted, NodeReadyTime: ready, NodeLastActive: last, StopIntervals: []MachineStopInterval{}}}
 	ctx := optimizerContext{Tasks: taskMap(generated.Workflow.Tasks), Resources: resourceMap(generated.Resources), DepsByTarget: dependenciesByTarget(generated.Workflow.Dependencies)}
 	order, err := prismCCPriorityOrder(generated)
 	if err != nil {
 		return nil, err
 	}
+	ctx.PriorityOrder = order
+	ctx.DynamicReady = generated.Experimental != nil &&
+		(generated.Experimental.PriorityPolicy == "ready_lookahead" ||
+			generated.Experimental.PriorityPolicy == "adaptive_ready")
+	ctx.AdaptiveReady = generated.Experimental != nil &&
+		generated.Experimental.PriorityPolicy == "adaptive_ready"
+	if err := configureOptimizerContext(generated, &ctx); err != nil {
+		return nil, err
+	}
+	initialState := beamState{
+		Assignments: []Assignment{}, AssignmentByTask: map[string]Assignment{},
+		TaskOrdinals: ctx.TaskOrdinal, SelectedIntervals: map[string]*intervalIndexNode{},
+		BillingStart: map[string]float64{}, BillingFinish: map[string]float64{},
+		Compact: compact, CoreAvail: coreAvail, CoreIndexes: coreIndexes,
+		NodeHasBooted: hasBooted, NodeReadyTime: ready, NodeLastActive: last,
+		StopIntervals: []MachineStopInterval{},
+	}
+	if ctx.DynamicReady {
+		initialState = initializeReadyState(ctx, initialState)
+		initialState.TaskOrderSearch = true
+	}
+	for _, cost := range ctx.MinTaskCosts {
+		initialState.RemainingMinCost += cost
+	}
+	if ctx.AdaptiveReady {
+		return adaptiveBeamSearch(generated, ctx, initialState, beamWidth, len(order))
+	}
+	initialBeam := []beamState{initialState}
 	frontiers := beamFrontiers()
 	widths := beamFrontierWidths(beamWidth, len(frontiers))
 	beams := make([][]beamState, len(frontiers))
 	for index := range frontiers {
 		beams[index] = append([]beamState{}, initialBeam...)
 	}
-	for stepIndex, taskID := range order {
+	for stepIndex := range order {
 		anyExpanded := false
 		for index, frontier := range frontiers {
-			expanded := expandStatesParallel(generated, ctx, beams[index], stepIndex+1, taskID, frontier)
+			var expanded []beamState
+			if ctx.DynamicReady {
+				expanded = expandReadyStatesParallel(generated, ctx, beams[index], stepIndex+1, frontier)
+			} else {
+				expanded = expandStatesParallel(generated, ctx, beams[index], stepIndex+1, order[stepIndex], frontier)
+			}
 			if len(expanded) == 0 {
 				beams[index] = []beamState{}
 				continue
@@ -106,7 +164,7 @@ func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, erro
 			beams[index] = selectBeamStates(expanded, widths[index], generated)
 		}
 		if !anyExpanded {
-			return nil, fmt.Errorf("No feasible resource for task %s", taskID)
+			return nil, fmt.Errorf("no feasible PRISM state at step %d", stepIndex+1)
 		}
 	}
 	finalStates := []beamState{}
@@ -116,12 +174,71 @@ func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, erro
 	return dedupeStates(finalStates), nil
 }
 
+func configureOptimizerContext(generated GeneratedSimulation, ctx *optimizerContext) error {
+	ctx.TaskOrdinal = make(map[string]int, len(ctx.PriorityOrder))
+	ctx.TaskIDs = append([]string(nil), ctx.PriorityOrder...)
+	ctx.Successors = make([][]int, len(ctx.PriorityOrder))
+	ctx.ResourceMasks = make([]uint64, len(ctx.PriorityOrder))
+	ctx.MinTaskCosts = make([]float64, len(ctx.PriorityOrder))
+	ctx.MinCriticalRanks = make([]float64, len(ctx.PriorityOrder))
+	for ordinal, taskID := range ctx.PriorityOrder {
+		ctx.TaskOrdinal[taskID] = ordinal
+		task := ctx.Tasks[taskID]
+		minRuntime := math.Inf(1)
+		minCost := math.Inf(1)
+		for resourceIndex, resource := range generated.Resources {
+			if resourceIndex < 64 && task.CPU <= resource.CPU && task.Memory <= resource.Memory {
+				ctx.ResourceMasks[ordinal] |= uint64(1) << resourceIndex
+				runtime := generated.Matrices.ET0[taskID][resource.ID]
+				minRuntime = minf(minRuntime, runtime)
+				minCost = minf(minCost, runtime*resource.PricePerHourUSD/3600)
+			}
+		}
+		if math.IsInf(minRuntime, 1) {
+			minRuntime = 0
+		}
+		if math.IsInf(minCost, 1) {
+			minCost = 0
+		}
+		ctx.MinCriticalRanks[ordinal] = minRuntime
+		ctx.MinTaskCosts[ordinal] = minCost
+	}
+	for _, dependency := range generated.Workflow.Dependencies {
+		source, sourceOK := ctx.TaskOrdinal[dependency.Source]
+		target, targetOK := ctx.TaskOrdinal[dependency.Target]
+		if sourceOK && targetOK {
+			ctx.Successors[source] = append(ctx.Successors[source], target)
+		}
+	}
+	for ordinal := len(ctx.PriorityOrder) - 1; ordinal >= 0; ordinal-- {
+		maxSuccessor := 0.0
+		for _, successor := range ctx.Successors[ordinal] {
+			maxSuccessor = maxf(maxSuccessor, ctx.MinCriticalRanks[successor])
+		}
+		ctx.MinCriticalRanks[ordinal] += maxSuccessor
+	}
+	if !ctx.DynamicReady {
+		return nil
+	}
+	ranks, err := heftUpwardRanks(generated)
+	if err != nil {
+		return err
+	}
+	ctx.PriorityRanks = ranks
+	for _, rank := range ctx.PriorityRanks {
+		ctx.MaxPriorityRank = maxf(ctx.MaxPriorityRank, rank)
+	}
+	return nil
+}
+
 func prismCCPriorityOrder(generated GeneratedSimulation) ([]string, error) {
 	if generated.Experimental == nil || generated.Experimental.PriorityPolicy == "" ||
 		generated.Experimental.PriorityPolicy == "topological_order" {
 		return topologicalOrder(generated)
 	}
-	if generated.Experimental.PriorityPolicy != "upward_rank" {
+	if generated.Experimental.PriorityPolicy != "upward_rank" &&
+		generated.Experimental.PriorityPolicy != "ready_lookahead" &&
+		generated.Experimental.PriorityPolicy != "adaptive_ready" {
 		return nil, fmt.Errorf("unsupported PRISM-CC priority policy %q", generated.Experimental.PriorityPolicy)
 	}
 	ranks, err := heftUpwardRanks(generated)
@@ -139,6 +256,462 @@ func prismCCPriorityOrder(generated GeneratedSimulation) ([]string, error) {
 		return order[i] < order[j]
 	})
 	return order, nil
+}
+
+func initializeReadyState(ctx optimizerContext, state beamState) beamState {
+	chunkCount := (len(ctx.TaskIDs) + pendingPredecessorChunkSize - 1) / pendingPredecessorChunkSize
+	state.PendingPredChunks = make([][]uint16, chunkCount)
+	for index := range state.PendingPredChunks {
+		state.PendingPredChunks[index] = make([]uint16, pendingPredecessorChunkSize)
+	}
+	state.ReadyTaskBits = make([]uint64, (len(ctx.TaskIDs)+63)/64)
+	for ordinal, taskID := range ctx.TaskIDs {
+		pending := len(ctx.DepsByTarget[taskID])
+		if pending == 0 {
+			state.ReadyTaskBits[ordinal/64] |= uint64(1) << (ordinal % 64)
+		} else {
+			state.PendingPredChunks[ordinal/pendingPredecessorChunkSize][ordinal%pendingPredecessorChunkSize] = uint16(pending)
+		}
+	}
+	return state
+}
+
+func readyTaskOrdinals(ctx optimizerContext, state beamState) []int {
+	keys := make([]int, 0, readyTaskBranchLimit*2)
+	for wordIndex, word := range state.ReadyTaskBits {
+		for word != 0 && len(keys) < readyTaskBranchLimit*2 {
+			bit := bits.TrailingZeros64(word)
+			ordinal := wordIndex*64 + bit
+			if ordinal < len(ctx.TaskIDs) {
+				keys = append(keys, ordinal)
+			}
+			word &^= uint64(1) << bit
+		}
+		if len(keys) == readyTaskBranchLimit*2 {
+			break
+		}
+	}
+	selected := make([]int, 0, readyTaskBranchLimit)
+	for _, ordinal := range keys {
+		canonicalAfterEarlier := false
+		for _, earlier := range selected {
+			if ctx.ResourceMasks[ordinal]&ctx.ResourceMasks[earlier] == 0 {
+				canonicalAfterEarlier = true
+				break
+			}
+		}
+		if canonicalAfterEarlier {
+			continue
+		}
+		selected = append(selected, ordinal)
+		if len(selected) == readyTaskBranchLimit {
+			break
+		}
+	}
+	return selected
+}
+
+func readyTaskCandidates(ctx optimizerContext, state beamState) []string {
+	ordinals := readyTaskOrdinals(ctx, state)
+	ready := make([]string, 0, len(ordinals))
+	for _, ordinal := range ordinals {
+		ready = append(ready, ctx.TaskIDs[ordinal])
+	}
+	return ready
+}
+
+func advanceReadyTaskFrontier(ctx optimizerContext, state beamState, scheduledTaskID string) beamState {
+	ordinal := ctx.TaskOrdinal[scheduledTaskID]
+	readyBits := append([]uint64(nil), state.ReadyTaskBits...)
+	readyBits[ordinal/64] &^= uint64(1) << (ordinal % 64)
+	pendingChunks := append([][]uint16(nil), state.PendingPredChunks...)
+	clonedChunks := make([]int, 0, len(ctx.Successors[ordinal]))
+	for _, successor := range ctx.Successors[ordinal] {
+		chunkIndex := successor / pendingPredecessorChunkSize
+		offset := successor % pendingPredecessorChunkSize
+		pending := pendingChunks[chunkIndex][offset]
+		if pending == 0 {
+			continue
+		}
+		cloned := false
+		for _, index := range clonedChunks {
+			cloned = cloned || index == chunkIndex
+		}
+		if !cloned {
+			pendingChunks[chunkIndex] = append([]uint16(nil), pendingChunks[chunkIndex]...)
+			clonedChunks = append(clonedChunks, chunkIndex)
+		}
+		pending--
+		pendingChunks[chunkIndex][offset] = pending
+		if pending == 0 {
+			readyBits[successor/64] |= uint64(1) << (successor % 64)
+		}
+	}
+	state.PendingPredChunks = pendingChunks
+	state.ReadyTaskBits = readyBits
+	return state
+}
+
+func expandReadyStatesParallel(generated GeneratedSimulation, ctx optimizerContext, states []beamState, stepIndex int, frontier beamFrontier) []beamState {
+	if len(states) == 0 {
+		return []beamState{}
+	}
+	workers := min(len(states), runtime.GOMAXPROCS(0))
+	results := make([][]beamState, len(states))
+	jobs := make(chan int)
+	var wg sync.WaitGroup
+	wg.Add(workers)
+	for worker := 0; worker < workers; worker++ {
+		go func() {
+			defer wg.Done()
+			for index := range jobs {
+				for _, taskID := range readyTaskCandidates(ctx, states[index]) {
+					results[index] = append(
+						results[index],
+						expandState(generated, ctx, states[index], stepIndex, taskID, frontier)...,
+					)
+				}
+			}
+		}()
+	}
+	for index := range states {
+		jobs <- index
+	}
+	close(jobs)
+	wg.Wait()
+	out := []beamState{}
+	for _, stateResults := range results {
+		out = append(out, stateResults...)
+	}
+	return out
+}
+
+type adaptiveStateEvaluation struct {
+	State               beamState
+	TimeLowerBound      float64
+	CostLowerBound      float64
+	PotentiallyFeasible bool
+	BestScore           float64
+}
+
+func adaptiveBeamSearch(generated GeneratedSimulation, ctx optimizerContext, initial beamState, beamWidth, taskCount int) ([]beamState, error) {
+	beam := []beamState{initial}
+	neutral := beamFrontier{WeightTime: 0.5, WeightCost: 0.5}
+	for stepIndex := 1; stepIndex <= taskCount; stepIndex++ {
+		candidates := expandAdaptiveStatesParallel(generated, ctx, beam, stepIndex, neutral)
+		if len(candidates) == 0 {
+			return nil, fmt.Errorf("adaptive Beam produced no state at step %d", stepIndex)
+		}
+		beam = selectAdaptiveBeamStates(candidates, beamWidth, generated, ctx)
+		if len(beam) == 0 {
+			return nil, fmt.Errorf("adaptive Beam pruned every state at step %d", stepIndex)
+		}
+		if stepIndex == 1 || stepIndex%500 == 0 || stepIndex == taskCount {
+			log.Printf(
+				"adaptive Beam step %d/%d: candidates=%d retained=%d capacity=%d",
+				stepIndex, taskCount, len(candidates), len(beam), beamWidth,
+			)
+		}
+	}
+	return dedupeStates(beam), nil
+}
+
+func expandAdaptiveStatesParallel(generated GeneratedSimulation, ctx optimizerContext, states []beamState, stepIndex int, frontier beamFrontier) []beamState {
+	if len(states) == 0 {
+		return nil
+	}
+	workers := min(len(states), runtime.GOMAXPROCS(0))
+	results := make([][]beamState, len(states))
+	jobs := make(chan int)
+	var wg sync.WaitGroup
+	wg.Add(workers)
+	for worker := 0; worker < workers; worker++ {
+		go func() {
+			defer wg.Done()
+			for index := range jobs {
+				for _, taskID := range readyTaskCandidates(ctx, states[index]) {
+					results[index] = append(
+						results[index],
+						expandState(generated, ctx, states[index], stepIndex, taskID, frontier)...,
+					)
+				}
+			}
+		}()
+	}
+	for index := range states {
+		jobs <- index
+	}
+	close(jobs)
+	wg.Wait()
+	total := 0
+	for _, children := range results {
+		total += len(children)
+	}
+	out := make([]beamState, 0, total)
+	for _, children := range results {
+		out = append(out, children...)
+	}
+	return out
+}
+
+func adaptiveBounds(state beamState, ctx optimizerContext) (float64, float64) {
+	timeLowerBound := state.PartialMakespan
+	for wordIndex, word := range state.ReadyTaskBits {
+		for word != 0 {
+			bit := bits.TrailingZeros64(word)
+			ordinal := wordIndex*64 + bit
+			if ordinal < len(ctx.MinCriticalRanks) {
+				timeLowerBound = maxf(timeLowerBound, ctx.MinCriticalRanks[ordinal])
+			}
+			word &^= uint64(1) << bit
+		}
+	}
+	return timeLowerBound, state.PartialBudgetUsed + state.RemainingMinCost
+}
+
+func adaptivePotentiallyFeasible(state beamState, timeLowerBound, costLowerBound float64, generated GeneratedSimulation) bool {
+	if generated.SLA.DeadlineLimit != nil && timeLowerBound > *generated.SLA.DeadlineLimit {
+		return false
+	}
+	if generated.SLA.BudgetLimit != nil && costLowerBound > *generated.SLA.BudgetLimit {
+		return false
+	}
+	return true
+}
+
+func adaptiveDominates(left, right adaptiveStateEvaluation) bool {
+	if left.State.ScheduledTaskHash != right.State.ScheduledTaskHash {
+		return false
+	}
+	noWorse := left.TimeLowerBound <= right.TimeLowerBound &&
+		left.CostLowerBound <= right.CostLowerBound &&
+		left.State.PartialInterference <= right.State.PartialInterference
+	strict := left.TimeLowerBound < right.TimeLowerBound ||
+		left.CostLowerBound < right.CostLowerBound ||
+		left.State.PartialInterference < right.State.PartialInterference
+	return noWorse && strict
+}
+
+func removeAdaptiveDominated(items []adaptiveStateEvaluation) []adaptiveStateEvaluation {
+	groups := map[uint64][]adaptiveStateEvaluation{}
+	for _, item := range items {
+		groups[item.State.ScheduledTaskHash] = append(groups[item.State.ScheduledTaskHash], item)
+	}
+	out := make([]adaptiveStateEvaluation, 0, len(items))
+	for _, group := range groups {
+		for index, candidate := range group {
+			dominated := false
+			for otherIndex, other := range group {
+				if index != otherIndex && adaptiveDominates(other, candidate) {
+					dominated = true
+					break
+				}
+			}
+			if !dominated {
+				out = append(out, candidate)
+			}
+		}
+	}
+	return out
+}
+
+func markAdaptiveFrontierRelevance(items []adaptiveStateEvaluation) {
+	if len(items) == 0 {
+		return
+	}
+	maxTime, maxCost := 0.0, 0.0
+	for _, item := range items {
+		maxTime = maxf(maxTime, item.TimeLowerBound)
+		maxCost = maxf(maxCost, item.CostLowerBound)
+	}
+	for frontierIndex, frontier := range beamFrontiers() {
+		bestIndex, bestScore := -1, math.Inf(1)
+		for index := range items {
+			score := frontier.WeightTime*items[index].TimeLowerBound/maxf(maxTime, 0.001) +
+				frontier.WeightCost*items[index].CostLowerBound/maxf(maxCost, 0.001)
+			items[index].BestScore = minf(items[index].BestScore, score)
+			if score < bestScore {
+				bestIndex, bestScore = index, score
+			}
+		}
+		if bestIndex >= 0 {
+			items[bestIndex].State.FrontierMask |= uint16(1) << frontierIndex
+		}
+	}
+}
+
+func markCanonicalFrontierRelevance(items []adaptiveStateEvaluation, width int) {
+	canonicalCapacity := max(1, 3*width/4)
+	perFrontier := max(1, (canonicalCapacity+len(beamFrontiers())-1)/len(beamFrontiers()))
+	for frontierIndex := range beamFrontiers() {
+		indexes := make([]int, len(items))
+		for index := range indexes {
+			indexes[index] = index
+		}
+		sort.SliceStable(indexes, func(i, j int) bool {
+			left := items[indexes[i]].State.FrontierScores[frontierIndex]
+			right := items[indexes[j]].State.FrontierScores[frontierIndex]
+			if left != right {
+				return left < right
+			}
+			return beamStateLess(items[indexes[i]].State, items[indexes[j]].State)
+		})
+		for rank, index := range indexes {
+			if rank == perFrontier {
+				break
+			}
+			items[index].State.FrontierMask |= uint16(1) << frontierIndex
+		}
+	}
+}
+
+func adaptiveParetoIndexes(items []adaptiveStateEvaluation) map[int]bool {
+	indexes := make([]int, len(items))
+	for index := range indexes {
+		indexes[index] = index
+	}
+	sort.SliceStable(indexes, func(i, j int) bool {
+		left, right := items[indexes[i]], items[indexes[j]]
+		if left.TimeLowerBound != right.TimeLowerBound {
+			return left.TimeLowerBound < right.TimeLowerBound
+		}
+		return left.CostLowerBound < right.CostLowerBound
+	})
+	pareto := map[int]bool{}
+	bestCost := math.Inf(1)
+	for _, index := range indexes {
+		if items[index].CostLowerBound < bestCost {
+			pareto[index] = true
+			bestCost = items[index].CostLowerBound
+		}
+	}
+	return pareto
+}
+
+func adaptiveViolationScore(item adaptiveStateEvaluation, generated GeneratedSimulation) float64 {
+	score := 0.0
+	if generated.SLA.DeadlineLimit != nil {
+		score += maxf(0, item.TimeLowerBound-*generated.SLA.DeadlineLimit) /
+			maxf(*generated.SLA.DeadlineLimit, 0.001)
+	}
+	if generated.SLA.BudgetLimit != nil {
+		score += maxf(0, item.CostLowerBound-*generated.SLA.BudgetLimit) /
+			maxf(*generated.SLA.BudgetLimit, 0.001)
+	}
+	return score
+}
+
+func adaptiveAlternativeAddsValue(candidate, canonical adaptiveStateEvaluation, generated GeneratedSimulation) bool {
+	canonicalDominates := canonical.TimeLowerBound <= candidate.TimeLowerBound &&
+		canonical.CostLowerBound <= candidate.CostLowerBound &&
+		canonical.State.PartialInterference <= candidate.State.PartialInterference
+	if canonicalDominates {
+		return false
+	}
+	improvesObjective := candidate.TimeLowerBound < canonical.TimeLowerBound ||
+		candidate.CostLowerBound < canonical.CostLowerBound ||
+		candidate.State.PartialInterference < canonical.State.PartialInterference
+	if !improvesObjective {
+		return false
+	}
+	if candidate.PotentiallyFeasible {
+		return true
+	}
+	if canonical.PotentiallyFeasible {
+		return false
+	}
+	return adaptiveViolationScore(candidate, generated) < adaptiveViolationScore(canonical, generated)
+}
+
+func selectAdaptiveBeamStates(states []beamState, width int, generated GeneratedSimulation, ctx optimizerContext) []beamState {
+	unique := dedupeStates(states)
+	evaluated := make([]adaptiveStateEvaluation, 0, len(unique))
+	anyPotentiallyFeasible := false
+	for _, state := range unique {
+		timeBound, costBound := adaptiveBounds(state, ctx)
+		potential := adaptivePotentiallyFeasible(state, timeBound, costBound, generated)
+		anyPotentiallyFeasible = anyPotentiallyFeasible || potential
+		evaluated = append(evaluated, adaptiveStateEvaluation{
+			State: state, TimeLowerBound: timeBound, CostLowerBound: costBound,
+			PotentiallyFeasible: potential, BestScore: math.Inf(1),
+		})
+	}
+	var canonical *adaptiveStateEvaluation
+	for _, item := range evaluated {
+		if !item.State.OrderDeviated {
+			candidate := item
+			if canonical == nil || candidate.TimeLowerBound < canonical.TimeLowerBound ||
+				(candidate.TimeLowerBound == canonical.TimeLowerBound &&
+					candidate.CostLowerBound < canonical.CostLowerBound) {
+				canonical = &candidate
+			}
+		}
+	}
+	if canonical != nil {
+		filtered := make([]adaptiveStateEvaluation, 0, len(evaluated))
+		for _, item := range evaluated {
+			if !item.State.OrderDeviated ||
+				adaptiveAlternativeAddsValue(item, *canonical, generated) {
+				filtered = append(filtered, item)
+			}
+		}
+		evaluated = filtered
+	}
+	evaluated = removeAdaptiveDominated(evaluated)
+	present := map[string]bool{}
+	for _, item := range evaluated {
+		present[stateSignature(item.State)] = true
+	}
+	if canonical != nil {
+		signature := stateSignature(canonical.State)
+		if !present[signature] {
+			evaluated = append(evaluated, *canonical)
+			present[signature] = true
+		}
+	}
+	competitive := evaluated
+	if anyPotentiallyFeasible {
+		competitive = make([]adaptiveStateEvaluation, 0, len(evaluated))
+		for _, item := range evaluated {
+			if item.PotentiallyFeasible || !item.State.OrderDeviated {
+				competitive = append(competitive, item)
+			}
+		}
+	}
+	markAdaptiveFrontierRelevance(competitive)
+	valuable := make([]adaptiveStateEvaluation, 0, len(competitive))
+	for _, item := range competitive {
+		if item.State.FrontierMask != 0 || !item.State.OrderDeviated {
+			valuable = append(valuable, item)
+		}
+	}
+	sort.SliceStable(valuable, func(i, j int) bool {
+		left, right := valuable[i], valuable[j]
+		if left.PotentiallyFeasible != right.PotentiallyFeasible {
+			return left.PotentiallyFeasible
+		}
+		leftCanonical, rightCanonical := !left.State.OrderDeviated, !right.State.OrderDeviated
+		if leftCanonical != rightCanonical {
+			return leftCanonical
+		}
+		leftRelevance := bits.OnesCount16(left.State.FrontierMask)
+		rightRelevance := bits.OnesCount16(right.State.FrontierMask)
+		if leftRelevance != rightRelevance {
+			return leftRelevance > rightRelevance
+		}
+		if left.BestScore != right.BestScore {
+			return left.BestScore < right.BestScore
+		}
+		return beamStateLess(left.State, right.State)
+	})
+	if len(valuable) > width {
+		valuable = valuable[:width]
+	}
+	out := make([]beamState, 0, len(valuable))
+	for _, item := range valuable {
+		out = append(out, item.State)
+	}
+	return out
 }
 
 func beamFrontiers() []beamFrontier {
@@ -264,6 +837,18 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 	}
 	for i := range rows {
 		timeScore := rows[i].finish / maxf(maxFinish, 0.001)
+		usesAlternativeTaskOrder := ctx.DynamicReady &&
+			(state.OrderDeviated || ctx.TaskOrdinal[task.ID] != stepIndex-1)
+		if usesAlternativeTaskOrder {
+			criticalUrgencyPenalty := 1 - ctx.PriorityRanks[task.ID]/maxf(ctx.MaxPriorityRank, 0.001)
+			interferenceRisk := 0.0
+			if generated.Experimental != nil &&
+				generated.Experimental.interferenceActivitySet[task.ID] {
+				interferenceRisk = rows[i].phi * generated.Experimental.InterferenceRate
+			}
+			lookaheadScore := criticalUrgencyPenalty + interferenceRisk
+			timeScore = 0.65*timeScore + 0.35*lookaheadScore
+		}
 		costScore := 0.0
 		if maxRawCost != 0 {
 			costScore = rows[i].rawCost / maxRawCost
@@ -306,6 +891,30 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 		}
 	}
 	nextStates := []beamState{}
+	canonicalTaskID := ""
+	if ctx.AdaptiveReady {
+		readyTasks := readyTaskCandidates(ctx, state)
+		if len(readyTasks) > 0 {
+			canonicalTaskID = readyTasks[0]
+		}
+	}
+	canonicalMachineSlot := ""
+	if ctx.AdaptiveReady && task.ID == canonicalTaskID {
+		canonicalRows := append([]candidateRow(nil), rows...)
+		sort.SliceStable(canonicalRows, func(i, j int) bool {
+			if canonicalRows[i].finish != canonicalRows[j].finish {
+				return canonicalRows[i].finish < canonicalRows[j].finish
+			}
+			left := canonicalRows[i].assignment.ResourceID + "|" + canonicalRows[i].assignment.CoreID
+			right := canonicalRows[j].assignment.ResourceID + "|" + canonicalRows[j].assignment.CoreID
+			return left < right
+		})
+		canonicalMachineSlot = canonicalRows[0].assignment.ResourceID + "|" + canonicalRows[0].assignment.CoreID
+	}
+	nextReadyState := state
+	if ctx.DynamicReady {
+		nextReadyState = advanceReadyTaskFrontier(ctx, state, task.ID)
+	}
 	for _, row := range rows {
 		selectedCandidates := []CandidateEvaluation{}
 		if !state.Compact {
@@ -335,13 +944,34 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 		partialBudget := round(state.PartialBudgetUsed+row.incBudget, 4)
 		partialMakespan := round(maxf(state.PartialMakespan, row.assignment.FinishTime), 3)
 		partialScore := round(state.PartialScore+beamFrontierScore(row.assignment.Score, frontier)+float64(selectedRank)*0.0001, 6)
+		frontierScores := state.FrontierScores
+		for frontierIndex, objective := range beamFrontiers() {
+			frontierScores[frontierIndex] = round(
+				frontierScores[frontierIndex]+beamFrontierScore(row.assignment.Score, objective),
+				6,
+			)
+		}
+		partialInterference := round(
+			state.PartialInterference+maxf(0, row.assignment.EffectiveRuntime-generated.Matrices.ET0[task.ID][row.assignment.ResourceID]),
+			3,
+		)
+		taskOrdinal, hasTaskOrdinal := ctx.TaskOrdinal[task.ID]
+		minTaskCost := 0.0
+		if hasTaskOrdinal && taskOrdinal < len(ctx.MinTaskCosts) {
+			minTaskCost = ctx.MinTaskCosts[taskOrdinal]
+		}
+		remainingMinCost := maxf(0, state.RemainingMinCost-minTaskCost)
+		scheduledTaskHash := state.ScheduledTaskHash ^ stablePriority(task.ID)
+		if hasTaskOrdinal {
+			scheduledTaskHash = state.ScheduledTaskHash ^ intPriority(taskOrdinal)
+		}
 		assignments, byTask := state.Assignments, state.AssignmentByTask
 		trace, index := state.AssignmentTrace, state.AssignmentIndex
 		selectedIntervals := state.SelectedIntervals
 		billingStart, billingFinish := state.BillingStart, state.BillingFinish
 		if state.Compact {
 			trace = appendAssignmentTrace(trace, row.assignment)
-			index = assignmentIndexInsert(index, row.assignment.TaskID, row.assignment)
+			index = assignmentIndexInsert(index, ctx.TaskOrdinal[row.assignment.TaskID], row.assignment)
 			selectedIntervals = copyIntervalRootMap(selectedIntervals)
 			if generated.Experimental != nil && generated.Experimental.interferenceActivitySet[row.assignment.TaskID] {
 				selectedIntervals[row.assignment.ResourceID] = intervalIndexInsert(selectedIntervals[row.assignment.ResourceID], row.assignment)
@@ -355,12 +985,25 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 			}
 			byTask[row.assignment.TaskID] = row.assignment
 		}
-		signatureHash := state.SignatureHash*1099511628211 ^ stablePriority(row.assignment.TaskID+":"+row.assignment.ResourceID)
+		signatureHash := state.SignatureHash ^ stablePriority(fmt.Sprintf(
+			"%s:%s:%s:%.6f:%.6f",
+			row.assignment.TaskID, row.assignment.ResourceID, row.assignment.CoreID,
+			row.assignment.StartTime, row.assignment.FinishTime,
+		))
 		stepTrace := state.StepTrace
 		if !state.Compact {
 			stepTrace = appendStepTrace(state.StepTrace, step)
 		}
-		nextStates = append(nextStates, beamState{Assignments: assignments, AssignmentByTask: byTask, AssignmentTrace: trace, AssignmentIndex: index, SelectedIntervals: selectedIntervals, BillingStart: billingStart, BillingFinish: billingFinish, Compact: state.Compact, SignatureHash: signatureHash, CoreAvail: coreAvail, CoreIndexes: coreIndexes, NodeHasBooted: nodeHasBooted, NodeReadyTime: nodeReady, NodeLastActive: nodeLast, StopIntervals: intervals, StepTrace: stepTrace, PartialBudgetUsed: partialBudget, PartialMakespan: partialMakespan, PartialScore: partialScore})
+		orderDeviated := state.OrderDeviated
+		if ctx.AdaptiveReady {
+			slot := row.assignment.ResourceID + "|" + row.assignment.CoreID
+			if task.ID != canonicalTaskID || slot != canonicalMachineSlot {
+				orderDeviated = true
+			}
+		} else if ctx.DynamicReady && ctx.TaskOrdinal[task.ID] != stepIndex-1 {
+			orderDeviated = true
+		}
+		nextStates = append(nextStates, beamState{Assignments: assignments, AssignmentByTask: byTask, AssignmentTrace: trace, AssignmentIndex: index, TaskOrdinals: state.TaskOrdinals, SelectedIntervals: selectedIntervals, BillingStart: billingStart, BillingFinish: billingFinish, Compact: state.Compact, SignatureHash: signatureHash, CoreAvail: coreAvail, CoreIndexes: coreIndexes, NodeHasBooted: nodeHasBooted, NodeReadyTime: nodeReady, NodeLastActive: nodeLast, StopIntervals: intervals, StepTrace: stepTrace, PartialBudgetUsed: partialBudget, PartialMakespan: partialMakespan, PartialScore: partialScore, PartialInterference: partialInterference, RemainingMinCost: remainingMinCost, ScheduledTaskHash: scheduledTaskHash, FrontierScores: frontierScores, PendingPredChunks: nextReadyState.PendingPredChunks, ReadyTaskBits: nextReadyState.ReadyTaskBits, TaskOrderSearch: state.TaskOrderSearch, OrderDeviated: orderDeviated})
 	}
 	return nextStates
 }
@@ -409,14 +1052,56 @@ func selectBeamStates(states []beamState, width int, generated GeneratedSimulati
 		return []beamState{}
 	}
 	unique := dedupeStates(states)
-	unique = preferPartiallyFeasibleStates(unique, generated)
-	if len(unique) <= width {
-		return unique
+	taskOrderSearch := false
+	for _, state := range unique {
+		taskOrderSearch = taskOrderSearch || state.TaskOrderSearch
 	}
+	if !taskOrderSearch {
+		unique = preferPartiallyFeasibleStates(unique, generated)
+		if len(unique) <= width {
+			return unique
+		}
+		sort.SliceStable(unique, func(i, j int) bool {
+			return beamStateLess(unique[i], unique[j])
+		})
+		return append([]beamState{}, unique[:width]...)
+	}
+	canonical := []beamState{}
+	for _, state := range unique {
+		if !state.OrderDeviated {
+			canonical = append(canonical, state)
+		}
+	}
+	sort.SliceStable(canonical, func(i, j int) bool {
+		return beamStateLess(canonical[i], canonical[j])
+	})
+	unique = preferPartiallyFeasibleStates(unique, generated)
 	sort.SliceStable(unique, func(i, j int) bool {
 		return beamStateLess(unique[i], unique[j])
 	})
-	return append([]beamState{}, unique[:width]...)
+	eliteLimit := max(1, (3*width+3)/4)
+	selected := make([]beamState, 0, width)
+	seen := map[string]bool{}
+	for _, state := range canonical {
+		if len(selected) == eliteLimit {
+			break
+		}
+		signature := stateSignature(state)
+		selected = append(selected, state)
+		seen[signature] = true
+	}
+	for _, state := range unique {
+		if len(selected) == width {
+			break
+		}
+		signature := stateSignature(state)
+		if seen[signature] {
+			continue
+		}
+		selected = append(selected, state)
+		seen[signature] = true
+	}
+	return selected
 }
 
 func preferPartiallyFeasibleStates(states []beamState, generated GeneratedSimulation) []beamState {
@@ -459,7 +1144,7 @@ func beamStateLess(a, b beamState) bool {
 }
 
 func dedupeStates(states []beamState) []beamState {
-	sort.Slice(states, func(i, j int) bool {
+	sort.SliceStable(states, func(i, j int) bool {
 		a, b := states[i], states[j]
 		if a.PartialScore != b.PartialScore {
 			return a.PartialScore < b.PartialScore
@@ -467,16 +1152,28 @@ func dedupeStates(states []beamState) []beamState {
 		if a.PartialMakespan != b.PartialMakespan {
 			return a.PartialMakespan < b.PartialMakespan
 		}
-		return a.PartialBudgetUsed < b.PartialBudgetUsed
+		if a.PartialBudgetUsed != b.PartialBudgetUsed {
+			return a.PartialBudgetUsed < b.PartialBudgetUsed
+		}
+		if a.OrderDeviated != b.OrderDeviated {
+			return !a.OrderDeviated
+		}
+		return stateSignature(a) < stateSignature(b)
 	})
-	seen := map[string]bool{}
+	indexBySignature := map[string]int{}
 	out := []beamState{}
 	for _, state := range states {
 		sig := stateSignature(state)
-		if seen[sig] {
+		if index, seen := indexBySignature[sig]; seen {
+			// Equivalent task permutations can reach the same schedule. Keep
+			// the HEFT-canonical representative even if its partial score is
+			// worse than the already-seen deviated copy.
+			if out[index].OrderDeviated && !state.OrderDeviated {
+				out[index] = state
+			}
 			continue
 		}
-		seen[sig] = true
+		indexBySignature[sig] = len(out)
 		out = append(out, state)
 	}
 	return out
@@ -488,8 +1185,13 @@ func stateSignature(state beamState) string {
 	}
 	parts := []string{}
 	for _, assignment := range state.Assignments {
-		parts = append(parts, assignment.TaskID+":"+assignment.ResourceID)
+		parts = append(parts, fmt.Sprintf(
+			"%s:%s:%s:%.6f:%.6f",
+			assignment.TaskID, assignment.ResourceID, assignment.CoreID,
+			assignment.StartTime, assignment.FinishTime,
+		))
 	}
+	sort.Strings(parts)
 	return strings.Join(parts, "|")
 }
 

@@ -22,9 +22,13 @@ func main() {
 	experimentBeamWidth := flag.Int("experiment-beam-width", minBeamWidth, "beam width used by the experimental protocol")
 	experimentRecommendations := flag.Int("experiment-recommendations", 100, "maximum PRISM-CC recommendations exported per algorithm, environment, and seed")
 	experimentWorkers := flag.Int("experiment-workers", 0, "parallel environment/seed jobs (default: min(4, GOMAXPROCS))")
-	experimentPRISMCCPriority := flag.String("experiment-prism-priority", "topological_order", "PRISM-CC task priority: topological_order or upward_rank")
+	experimentPRISMCCPriority := flag.String("experiment-prism-priority", "topological_order", "PRISM-CC task priority: topological_order, upward_rank, ready_lookahead, or adaptive_ready")
 	experimentWorkflow := flag.String("experiment-workflow", "montage_050d", "experiment workflow: montage_050d or montage_dss_20d")
 	experimentHEFTMode := flag.String("experiment-heft-mode", "classic_no_colocation", "HEFT baseline: classic_no_colocation or colocation")
+	experimentScenarios := flag.String("experiment-scenarios", "", "comma-separated experiment scenarios (default: all)")
+	experimentInterferenceRate := flag.Float64("experiment-interference-rate", 0.20, "controlled software interference penalty per overlapping task")
+	experimentBudgetLimit := flag.Float64("experiment-budget-limit", 0, "fixed budget limit; 0 calibrates from the selected HEFT baseline")
+	experimentDeadlineLimit := flag.Float64("experiment-deadline-limit", 0, "fixed deadline limit; 0 calibrates from the selected HEFT baseline")
 	flag.Parse()
 	if *experimentOutput != "" {
 		if err := runExperimentalProtocol(ExperimentRunOptions{
@@ -35,6 +39,10 @@ func main() {
 			PRISMCCPriority:     *experimentPRISMCCPriority,
 			WorkflowID:          *experimentWorkflow,
 			HEFTMode:            *experimentHEFTMode,
+			ScenarioIDs:         splitNonEmptyCSV(*experimentScenarios),
+			InterferenceRate:    *experimentInterferenceRate,
+			FixedBudgetLimit:    *experimentBudgetLimit,
+			FixedDeadlineLimit:  *experimentDeadlineLimit,
 		}); err != nil {
 			log.Fatal(err)
 		}

@@ -3,7 +3,6 @@ package main
 import (
 	"hash/fnv"
 	"math"
-	"sort"
 )
 
 // assignmentTrace and the two persistent treaps below let Beam children share
@@ -16,22 +15,21 @@ type assignmentTrace struct {
 }
 
 type assignmentIndexNode struct {
-	Key      string
-	Value    Assignment
+	Key      int
+	Value    *Assignment
 	Priority uint64
 	Left     *assignmentIndexNode
 	Right    *assignmentIndexNode
 }
 
 type intervalIndexNode struct {
-	Key        string
-	Start      float64
-	Finish     float64
-	MaxFinish  float64
-	Assignment Assignment
-	Priority   uint64
-	Left       *intervalIndexNode
-	Right      *intervalIndexNode
+	Key       string
+	Start     float64
+	Finish    float64
+	MaxFinish float64
+	Priority  uint64
+	Left      *intervalIndexNode
+	Right     *intervalIndexNode
 }
 
 type coreAvailabilityNode struct {
@@ -41,6 +39,117 @@ type coreAvailabilityNode struct {
 	BestKey     string
 	BestValue   float64
 	Left, Right *coreAvailabilityNode
+}
+
+type persistentIntNode struct {
+	Key      int
+	Value    int
+	Priority uint64
+	Left     *persistentIntNode
+	Right    *persistentIntNode
+}
+
+func intPriority(key int) uint64 {
+	value := uint64(key + 1)
+	value ^= value >> 30
+	value *= 0xbf58476d1ce4e5b9
+	value ^= value >> 27
+	value *= 0x94d049bb133111eb
+	return value ^ (value >> 31)
+}
+
+func persistentIntLookup(root *persistentIntNode, key int) (int, bool) {
+	for root != nil {
+		switch {
+		case key < root.Key:
+			root = root.Left
+		case key > root.Key:
+			root = root.Right
+		default:
+			return root.Value, true
+		}
+	}
+	return 0, false
+}
+
+func persistentIntInsert(root *persistentIntNode, key, value int) *persistentIntNode {
+	if root == nil {
+		return &persistentIntNode{Key: key, Value: value, Priority: intPriority(key)}
+	}
+	copy := *root
+	if key < root.Key {
+		copy.Left = persistentIntInsert(root.Left, key, value)
+		if copy.Left.Priority < copy.Priority {
+			return rotatePersistentIntRight(&copy)
+		}
+	} else if key > root.Key {
+		copy.Right = persistentIntInsert(root.Right, key, value)
+		if copy.Right.Priority < copy.Priority {
+			return rotatePersistentIntLeft(&copy)
+		}
+	} else {
+		copy.Value = value
+	}
+	return &copy
+}
+
+func persistentIntDelete(root *persistentIntNode, key int) *persistentIntNode {
+	if root == nil {
+		return nil
+	}
+	if key < root.Key {
+		copy := *root
+		copy.Left = persistentIntDelete(root.Left, key)
+		return &copy
+	}
+	if key > root.Key {
+		copy := *root
+		copy.Right = persistentIntDelete(root.Right, key)
+		return &copy
+	}
+	if root.Left == nil {
+		return root.Right
+	}
+	if root.Right == nil {
+		return root.Left
+	}
+	if root.Left.Priority < root.Right.Priority {
+		rotated := rotatePersistentIntRight(root)
+		copy := *rotated
+		copy.Right = persistentIntDelete(rotated.Right, key)
+		return &copy
+	}
+	rotated := rotatePersistentIntLeft(root)
+	copy := *rotated
+	copy.Left = persistentIntDelete(rotated.Left, key)
+	return &copy
+}
+
+func rotatePersistentIntRight(root *persistentIntNode) *persistentIntNode {
+	left := *root.Left
+	newRoot := *root
+	newRoot.Left = left.Right
+	left.Right = &newRoot
+	return &left
+}
+
+func rotatePersistentIntLeft(root *persistentIntNode) *persistentIntNode {
+	right := *root.Right
+	newRoot := *root
+	newRoot.Right = right.Left
+	right.Left = &newRoot
+	return &right
+}
+
+func persistentIntFirstKeys(root *persistentIntNode, limit int, out *[]int) {
+	if root == nil || len(*out) >= limit {
+		return
+	}
+	persistentIntFirstKeys(root.Left, limit, out)
+	if len(*out) < limit {
+		*out = append(*out, root.Key)
+	}
+	persistentIntFirstKeys(root.Right, limit, out)
 }
 
 func stablePriority(value string) uint64 {
@@ -68,7 +177,7 @@ func traceAssignments(trace *assignmentTrace) []Assignment {
 	return out
 }
 
-func assignmentIndexLookup(root *assignmentIndexNode, key string) (Assignment, bool) {
+func assignmentIndexLookup(root *assignmentIndexNode, key int) (Assignment, bool) {
 	for root != nil {
 		switch {
 		case key < root.Key:
@@ -76,15 +185,16 @@ func assignmentIndexLookup(root *assignmentIndexNode, key string) (Assignment, b
 		case key > root.Key:
 			root = root.Right
 		default:
-			return root.Value, true
+			return *root.Value, true
 		}
 	}
 	return Assignment{}, false
 }
 
-func assignmentIndexInsert(root *assignmentIndexNode, key string, value Assignment) *assignmentIndexNode {
+func assignmentIndexInsert(root *assignmentIndexNode, key int, value Assignment) *assignmentIndexNode {
 	if root == nil {
-		return &assignmentIndexNode{Key: key, Value: value, Priority: stablePriority(key)}
+		stored := value
+		return &assignmentIndexNode{Key: key, Value: &stored, Priority: intPriority(key)}
 	}
 	copy := *root
 	if key < root.Key {
@@ -98,7 +208,8 @@ func assignmentIndexInsert(root *assignmentIndexNode, key string, value Assignme
 			return rotateAssignmentLeft(&copy)
 		}
 	} else {
-		copy.Value = value
+		stored := value
+		copy.Value = &stored
 	}
 	return &copy
 }
@@ -143,8 +254,7 @@ func intervalIndexInsert(root *intervalIndexNode, assignment Assignment) *interv
 	if root == nil {
 		return &intervalIndexNode{
 			Key: key, Start: assignment.StartTime, Finish: assignment.FinishTime,
-			MaxFinish: assignment.FinishTime, Assignment: assignment,
-			Priority: stablePriority(key),
+			MaxFinish: assignment.FinishTime, Priority: stablePriority(key),
 		}
 	}
 	copy := *root
@@ -183,24 +293,18 @@ func rotateIntervalLeft(root *intervalIndexNode) *intervalIndexNode {
 	return &right
 }
 
-func intervalOverlaps(root *intervalIndexNode, start, finish float64, out *[]Assignment) {
+func intervalOverlapCount(root *intervalIndexNode, start, finish float64) int {
 	if root == nil || root.MaxFinish <= start {
-		return
+		return 0
 	}
-	intervalOverlaps(root.Left, start, finish, out)
+	count := intervalOverlapCount(root.Left, start, finish)
 	if root.Start < finish && start < root.Finish {
-		*out = append(*out, root.Assignment)
+		count++
 	}
 	if root.Start < finish {
-		intervalOverlaps(root.Right, start, finish, out)
+		count += intervalOverlapCount(root.Right, start, finish)
 	}
-}
-
-func sortedOverlaps(root *intervalIndexNode, start, finish float64) []Assignment {
-	out := []Assignment{}
-	intervalOverlaps(root, start, finish, &out)
-	sort.Slice(out, func(i, j int) bool { return out[i].TaskID < out[j].TaskID })
-	return out
+	return count
 }
 
 func stateAssignments(state beamState) []Assignment {
@@ -212,7 +316,11 @@ func stateAssignments(state beamState) []Assignment {
 
 func stateAssignment(state beamState, taskID string) (Assignment, bool) {
 	if state.Compact {
-		return assignmentIndexLookup(state.AssignmentIndex, taskID)
+		ordinal, exists := state.TaskOrdinals[taskID]
+		if !exists {
+			return Assignment{}, false
+		}
+		return assignmentIndexLookup(state.AssignmentIndex, ordinal)
 	}
 	assignment, ok := state.AssignmentByTask[taskID]
 	return assignment, ok
@@ -243,18 +351,11 @@ func candidatePairwiseInterferenceForState(generated GeneratedSimulation, taskID
 	if metadata == nil || metadata.InterferenceDisabled || !metadata.interferenceActivitySet[taskID] {
 		return 0, []PairwiseInterference{}
 	}
-	overlaps := sortedOverlaps(state.SelectedIntervals[resourceID], start, finish)
 	if state.Compact {
-		return round(float64(len(overlaps))*metadata.InterferenceRate, 4), nil
+		count := intervalOverlapCount(state.SelectedIntervals[resourceID], start, finish)
+		return round(float64(count)*metadata.InterferenceRate, 4), nil
 	}
-	pairs := make([]PairwiseInterference, 0, len(overlaps))
-	for _, item := range overlaps {
-		pairs = append(pairs, PairwiseInterference{
-			OtherTaskID: item.TaskID, Value: metadata.InterferenceRate,
-			Dimensions: map[string]float64{"controlled": metadata.InterferenceRate},
-		})
-	}
-	return round(float64(len(pairs))*metadata.InterferenceRate, 4), pairs
+	return 0, nil
 }
 
 func incrementalMachineActiveCostForState(state beamState, candidate Assignment, resource Resource) float64 {

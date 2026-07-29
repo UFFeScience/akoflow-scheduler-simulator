@@ -1,0 +1,4 @@
+scenario_id,algorithm,runs,feasible_ratio,budget_limit,deadline_limit,makespan_mean,makespan_median,makespan_stddev,makespan_ci95,budget_mean,budget_median,budget_stddev,budget_ci95,interference_time_mean,algorithm_milliseconds_mean,makespan_gain_vs_heft_percent,budget_gain_vs_heft_percent
+hybrid_hetero,prism_cc_time,1,0.000000,3.798521,187.842000,1121.350000,1121.350000,0.000000,0.000000,5.961059,5.961059,0.000000,0.000000,31921.287000,90657.409000,-152.821655,-44.408612
+hybrid_hetero,prism_cc_cost,1,0.000000,3.798521,187.842000,1774.472000,1774.472000,0.000000,0.000000,2.871404,2.871404,0.000000,0.000000,51134.344000,90657.409000,-300.075755,30.439295
+hybrid_hetero,heft_colocation,1,0.000000,3.798521,187.842000,443.534000,443.534000,0.000000,0.000000,4.127911,4.127911,0.000000,0.000000,23480.490000,3107.505000,0.000000,0.000000

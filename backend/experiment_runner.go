@@ -37,12 +37,17 @@ type ExperimentRunOptions struct {
 	PRISMCCPriority     string
 	WorkflowID          string
 	HEFTMode            string
+	ScenarioIDs         []string
+	InterferenceRate    float64
+	FixedBudgetLimit    float64
+	FixedDeadlineLimit  float64
 }
 
 type ExperimentRecord struct {
 	Algorithm              string
 	ScenarioID             string
 	InterferenceSeed       int64
+	InterferenceRate       float64
 	InterferenceActivities []string
 	Makespan               float64
 	BudgetUsed             float64
@@ -97,6 +102,30 @@ type ScenarioSLA struct {
 	DeadlineLimit float64 `json:"deadline_limit"`
 }
 
+func splitNonEmptyCSV(value string) []string {
+	items := []string{}
+	for _, item := range strings.Split(value, ",") {
+		item = strings.TrimSpace(item)
+		if item != "" {
+			items = append(items, item)
+		}
+	}
+	return items
+}
+
+func experimentReferencePolicy(options ExperimentRunOptions, baselineAlgorithm string) string {
+	if options.FixedBudgetLimit > 0 {
+		return fmt.Sprintf(
+			"Fixed SLA across interference levels: budget %.6f USD and deadline %.6f s",
+			options.FixedBudgetLimit, options.FixedDeadlineLimit,
+		)
+	}
+	return fmt.Sprintf(
+		"Per-scenario %s mean multiplied by an explicit %.2fx margin for both deadline and budget",
+		baselineAlgorithm, experimentSLAMargin,
+	)
+}
+
 func runExperimentalProtocol(options ExperimentRunOptions) error {
 	if options.Repetitions <= 0 {
 		options.Repetitions = 30
@@ -121,10 +150,30 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	if options.HEFTMode == "" {
 		options.HEFTMode = "classic_no_colocation"
 	}
+	if options.InterferenceRate < 0 || options.InterferenceRate > 1 {
+		return fmt.Errorf("experiment interference rate must be between 0 and 1, got %v", options.InterferenceRate)
+	}
+	scenarioIDs := options.ScenarioIDs
+	if len(scenarioIDs) == 0 {
+		scenarioIDs = append([]string(nil), experimentScenarioIDs...)
+	}
+	validScenarios := map[string]bool{}
+	for _, scenarioID := range experimentScenarioIDs {
+		validScenarios[scenarioID] = true
+	}
+	for _, scenarioID := range scenarioIDs {
+		if !validScenarios[scenarioID] {
+			return fmt.Errorf("unsupported experiment scenario %q", scenarioID)
+		}
+	}
+	if (options.FixedBudgetLimit > 0) != (options.FixedDeadlineLimit > 0) {
+		return fmt.Errorf("fixed budget and deadline limits must be provided together")
+	}
 	if options.WorkflowID != "montage_050d" && options.WorkflowID != montageDSS20WorkflowID {
 		return fmt.Errorf("unsupported experiment workflow %q", options.WorkflowID)
 	}
-	if options.PRISMCCPriority != "topological_order" && options.PRISMCCPriority != "upward_rank" {
+	if options.PRISMCCPriority != "topological_order" && options.PRISMCCPriority != "upward_rank" &&
+		options.PRISMCCPriority != "ready_lookahead" && options.PRISMCCPriority != "adaptive_ready" {
 		return fmt.Errorf("unsupported PRISM-CC priority policy %q", options.PRISMCCPriority)
 	}
 	if options.HEFTMode != "classic_no_colocation" && options.HEFTMode != "colocation" {
@@ -147,22 +196,22 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		interferenceSeed int64
 		record           ExperimentRecord
 	}
-	heftRuns := make([]calibratedHEFTRun, 0, len(experimentScenarioIDs)*options.Repetitions)
+	heftRuns := make([]calibratedHEFTRun, 0, len(scenarioIDs)*options.Repetitions)
 	heftMakespans := map[string][]float64{}
 	heftBudgets := map[string][]float64{}
-	records := make([]ExperimentRecord, 0, len(experimentScenarioIDs)*len(experimentAlgorithms)*options.Repetitions)
+	records := make([]ExperimentRecord, 0, len(scenarioIDs)*len(experimentAlgorithms)*options.Repetitions)
 	seeds := make([]int64, 0, options.Repetitions)
 	taskCount := 0
 	for repetition := 1; repetition <= options.Repetitions; repetition++ {
 		seeds = append(seeds, int64(repetition))
 	}
-	for _, scenarioID := range experimentScenarioIDs {
+	for _, scenarioID := range scenarioIDs {
 		var referenceResult SimulationResult
 		referenceElapsed := 0.0
 		for repetition := 1; repetition <= options.Repetitions; repetition++ {
 			interferenceSeed := int64(repetition)
-			heftGenerated, generationErr := generateExperimentSimulationForWorkflow(
-				scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth,
+			heftGenerated, generationErr := generateExperimentSimulationForWorkflowAtRate(
+				scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth, options.InterferenceRate,
 			)
 			if generationErr != nil {
 				return fmt.Errorf("%s seed %d HEFT generation: %w", scenarioID, interferenceSeed, generationErr)
@@ -195,10 +244,16 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	}
 
 	scenarioSLAs := map[string]ScenarioSLA{}
-	for _, scenarioID := range experimentScenarioIDs {
-		scenarioSLAs[scenarioID] = ScenarioSLA{
-			BudgetLimit:   round(mean(heftBudgets[scenarioID])*experimentSLAMargin, 6),
-			DeadlineLimit: round(mean(heftMakespans[scenarioID])*experimentSLAMargin, 6),
+	for _, scenarioID := range scenarioIDs {
+		if options.FixedBudgetLimit > 0 {
+			scenarioSLAs[scenarioID] = ScenarioSLA{
+				BudgetLimit: options.FixedBudgetLimit, DeadlineLimit: options.FixedDeadlineLimit,
+			}
+		} else {
+			scenarioSLAs[scenarioID] = ScenarioSLA{
+				BudgetLimit:   round(mean(heftBudgets[scenarioID])*experimentSLAMargin, 6),
+				DeadlineLimit: round(mean(heftMakespans[scenarioID])*experimentSLAMargin, 6),
+			}
 		}
 	}
 	for _, heftRun := range heftRuns {
@@ -225,7 +280,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	}
 	jobs := make(chan prismJob)
 	jobResults := make(chan prismJobResult)
-	jobCount := options.Repetitions * len(experimentScenarioIDs)
+	jobCount := options.Repetitions * len(scenarioIDs)
 	workerCount := options.Workers
 	if workerCount <= 0 {
 		workerCount = min(4, runtime.GOMAXPROCS(0))
@@ -252,7 +307,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	)
 	go func() {
 		for repetition := 1; repetition <= options.Repetitions; repetition++ {
-			for _, scenarioID := range experimentScenarioIDs {
+			for _, scenarioID := range scenarioIDs {
 				jobs <- prismJob{scenarioID: scenarioID, seed: int64(repetition)}
 			}
 		}
@@ -296,11 +351,11 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	}
 	manifest := ExperimentManifest{
 		GeneratedAt: time.Now().UTC().Format(time.RFC3339), StructuralSeed: options.StructuralSeed,
-		InterferenceSeeds: seeds, Scenarios: experimentScenarioIDs, Algorithms: experimentAlgorithms,
+		InterferenceSeeds: seeds, Scenarios: scenarioIDs, Algorithms: experimentAlgorithms,
 		WorkflowID: options.WorkflowID, TaskCount: taskCount,
-		InterferenceRate: 0.20, SelectedActivities: taskCount / 2,
+		InterferenceRate: options.InterferenceRate, SelectedActivities: taskCount / 2,
 		SLAMargin: experimentSLAMargin, ScenarioSLAs: scenarioSLAs,
-		ReferencePolicy: fmt.Sprintf("Per-scenario %s mean multiplied by an explicit %.2fx margin for both deadline and budget", baselineAlgorithm, experimentSLAMargin),
+		ReferencePolicy: experimentReferencePolicy(options, baselineAlgorithm),
 		Calibration:     "Per-scenario mean of the selected HEFT baseline runs",
 		HEFTMode:        options.HEFTMode, PRISMCCPriority: options.PRISMCCPriority,
 		BeamWidth: options.BeamWidth, RecommendationCount: options.RecommendationCount,
@@ -323,8 +378,8 @@ func scheduleHEFTBaseline(generated GeneratedSimulation, mode string) (Simulatio
 }
 
 func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, interferenceSeed int64, sla ScenarioSLA) ([]ExperimentRecord, error) {
-	generated, generationErr := generateExperimentSimulationForWorkflow(
-		scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth,
+	generated, generationErr := generateExperimentSimulationForWorkflowAtRate(
+		scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth, options.InterferenceRate,
 	)
 	if generationErr != nil {
 		return nil, fmt.Errorf("%s seed %d generation: %w", scenarioID, interferenceSeed, generationErr)
@@ -387,6 +442,12 @@ func generateExperimentSimulation(scenarioID string, structuralSeed, interferenc
 }
 
 func generateExperimentSimulationForWorkflow(scenarioID, workflowID string, structuralSeed, interferenceSeed int64, disabled bool, beamWidth int) (GeneratedSimulation, error) {
+	return generateExperimentSimulationForWorkflowAtRate(
+		scenarioID, workflowID, structuralSeed, interferenceSeed, disabled, beamWidth, 0.20,
+	)
+}
+
+func generateExperimentSimulationForWorkflowAtRate(scenarioID, workflowID string, structuralSeed, interferenceSeed int64, disabled bool, beamWidth int, interferenceRate float64) (GeneratedSimulation, error) {
 	req := defaultRequest()
 	req.Preset = "Montage"
 	req.ExperimentScenarioID = scenarioID
@@ -402,7 +463,7 @@ func generateExperimentSimulationForWorkflow(scenarioID, workflowID string, stru
 	if err != nil {
 		return GeneratedSimulation{}, err
 	}
-	applyControlledInterference(&generated, interferenceSeed, 0.20, disabled)
+	applyControlledInterference(&generated, interferenceSeed, interferenceRate, disabled)
 	generated.Experimental.ScenarioID = scenarioID
 	return generated, nil
 }
@@ -447,7 +508,8 @@ func experimentRecordFromResult(result SimulationResult, algorithm, scenarioID s
 	}
 	return ExperimentRecord{
 		Algorithm: algorithm, ScenarioID: scenarioID, InterferenceSeed: seed, InterferenceActivities: activities,
-		Makespan: result.TimingVariables.Makespan, BudgetUsed: result.CostVariables.BUsed,
+		InterferenceRate: result.Experimental.InterferenceRate,
+		Makespan:         result.TimingVariables.Makespan, BudgetUsed: result.CostVariables.BUsed,
 		BudgetLimit: budgetLimit, DeadlineLimit: deadlineLimit, BudgetViolation: round(budgetViolation, 4),
 		DeadlineViolation: round(deadlineViolation, 3), Feasible: budgetViolation == 0 && deadlineViolation == 0,
 		InterferenceTime:  result.InterferenceVariables.TotalInterferenceTime,
@@ -491,7 +553,7 @@ func writeExperimentRawCSV(path string, records []ExperimentRecord) error {
 		recommendations, _ := json.Marshal(record.Recommendations)
 		row := []string{
 			record.Algorithm, record.ScenarioID, strconv.FormatInt(record.InterferenceSeed, 10),
-			strings.Join(record.InterferenceActivities, "|"), "0.2",
+			strings.Join(record.InterferenceActivities, "|"), formatFloat(record.InterferenceRate),
 			formatFloat(record.Makespan), formatFloat(record.BudgetUsed), formatFloat(record.BudgetLimit),
 			formatFloat(record.DeadlineLimit), formatFloat(record.BudgetViolation), formatFloat(record.DeadlineViolation),
 			strconv.FormatBool(record.Feasible), formatFloat(record.InterferenceTime),
@@ -517,6 +579,16 @@ func writeExperimentSummaryCSV(path string, records []ExperimentRecord) error {
 		}
 	}
 	experimentAlgorithms := []string{"prism_cc_time", "prism_cc_cost", baselineAlgorithm}
+	scenarioSet := map[string]bool{}
+	for _, record := range records {
+		scenarioSet[record.ScenarioID] = true
+	}
+	scenarios := []string{}
+	for _, scenario := range experimentScenarioIDs {
+		if scenarioSet[scenario] {
+			scenarios = append(scenarios, scenario)
+		}
+	}
 	file, err := os.Create(path)
 	if err != nil {
 		return err
@@ -534,7 +606,7 @@ func writeExperimentSummaryCSV(path string, records []ExperimentRecord) error {
 	}); err != nil {
 		return err
 	}
-	for _, scenario := range experimentScenarioIDs {
+	for _, scenario := range scenarios {
 		for _, algorithm := range experimentAlgorithms {
 			items := groups[groupKey{scenario, algorithm}]
 			makespans, budgets, interference, elapsed := []float64{}, []float64{}, []float64{}, []float64{}
