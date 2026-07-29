@@ -1,0 +1,2 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+cluster_homo,heft_classic,On-prem homogêneo · HEFT coalocado,283.384,283.384,0.0,0.0,0.0,0.0,0.0,255.0456,0.0,111.11111111111111,11.111111111111116,0.0,False,True,1,,,
