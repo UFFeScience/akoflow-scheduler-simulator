@@ -1499,6 +1499,51 @@ def plot_13_priority_comparison(repo_root: Path, df: pd.DataFrame, output: Path)
     return True
 
 
+def plot_13_sla_violations(df: pd.DataFrame, output: Path) -> None:
+    rows = []
+    for (scenario, algorithm), group in df.groupby(
+        ["scenario_id", "algorithm"], observed=True
+    ):
+        rows.extend(
+            [
+                {
+                    "scenario_id": scenario,
+                    "algorithm": algorithm,
+                    "violation": "Deadline",
+                    "ratio": 100 * (group["deadline_violation"] > 0).mean(),
+                },
+                {
+                    "scenario_id": scenario,
+                    "algorithm": algorithm,
+                    "violation": "Budget",
+                    "ratio": 100 * (group["budget_violation"] > 0).mean(),
+                },
+            ]
+        )
+    violations = pd.DataFrame(rows)
+    fig, axes = plt.subplots(2, 1, figsize=(13, 10), sharex=True)
+    for ax, violation in zip(axes, ["Deadline", "Budget"]):
+        subset = violations[violations["violation"] == violation]
+        sns.barplot(
+            data=subset,
+            x="scenario_id",
+            y="ratio",
+            hue="algorithm",
+            order=SCENARIO_ORDER,
+            hue_order=ALGORITHM_ORDER,
+            palette=PALETTE,
+            ax=ax,
+        )
+        ax.set_ylabel("Execuções que violaram (%)")
+        ax.set_xlabel("")
+        ax.set_ylim(0, 100)
+        ax.set_title(f"Violação de {violation.lower()}")
+        ax.legend(title="", ncol=3)
+    axes[-1].set_xticklabels([SCENARIO_LABELS[item] for item in SCENARIO_ORDER])
+    fig.suptitle("Violações do SLA por ambiente e algoritmo", y=1.01)
+    save(fig, output, "13-violacoes-sla.png")
+
+
 def write_report(
     output: Path, manifest: dict, has_priority_comparison: bool = False,
     has_recommendation_cloud: bool = False,
@@ -1538,6 +1583,14 @@ def write_report(
                 "13-comparacao-topology-uprank.png",
                 "Comparação Topology × UpRank",
                 "Compara diretamente as duas políticas de prioridade do PRISM-CC, mantendo máquinas, sementes, interferência, Beam Search, budget e deadline constantes. O painel superior mostra makespan e o inferior mostra custo.",
+            )
+        )
+    else:
+        descriptions.append(
+            (
+                "13-violacoes-sla.png",
+                "Violações do SLA",
+                "Mostra, separadamente, o percentual de execuções que violou o deadline e o budget em cada ambiente e algoritmo.",
             )
         )
     if has_recommendation_cloud:
@@ -1585,6 +1638,8 @@ def generate_all(repo_root: Path) -> list[Path]:
     plot_11_algorithm_time(df, output)
     plot_12_seed_stability(df, output)
     has_priority_comparison = plot_13_priority_comparison(repo_root, df, output)
+    if not has_priority_comparison:
+        plot_13_sla_violations(df, output)
     aggregate = aggregate_environment_statistics(df)
     aggregate.to_csv(output.parent / "aggregate_environment_summary.csv", index=False)
     plot_14_aggregate_forest(
@@ -1640,3 +1695,7 @@ def generate_all(repo_root: Path) -> list[Path]:
         output, manifest, has_priority_comparison, has_recommendation_cloud
     )
     return sorted(output.glob("*.png"))
+
+
+if __name__ == "__main__":
+    generate_all(Path("/workspace"))

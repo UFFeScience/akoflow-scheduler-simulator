@@ -1,0 +1,5 @@
+scenario_id,homogeneity,machine_id,kind,provider,machine_type,cpu_description,vcpus_or_threads,physical_cores,sockets,memory_gb,bandwidth_gbps,location,flops,speedup,ref_flops,price_per_hour_usd,network_price_per_gb_usd,pricing_model,price_source
+edge_cloud_extreme,hetero,edge-nano-01,cluster,Edge Lab,edge-nano,4-core ARM Cortex-A72,4,4,1,4,0.1,edge-site,84.4,0.20,synthetic_edge_cloud_extreme_v1,0.005,0,synthetic_edge_flat_rate,synthetic experimental scenario
+edge_cloud_extreme,hetero,fog-mid-01,cluster,Fog Regional,fog-mid,8-core Intel Xeon D,8,8,1,32,1,fog-region,844,2.00,synthetic_edge_cloud_extreme_v1,0.080,0.002,synthetic_fog_flat_rate,synthetic experimental scenario
+edge_cloud_extreme,hetero,cloud-fast-01,cloud,Cloud Provider,cloud-fast,32-core compute optimized,32,32,1,128,10,cloud-region,4224,10.00,synthetic_edge_cloud_extreme_v1,1.800,0.05,synthetic_cloud_on_demand,synthetic experimental scenario
+edge_cloud_extreme,hetero,cloud-ultra-01,cloud,Cloud Provider,cloud-ultra,96-core accelerated compute,96,96,2,512,100,cloud-remote,12672,30.00,synthetic_edge_cloud_extreme_v1,8.000,0.12,synthetic_cloud_on_demand,synthetic experimental scenario

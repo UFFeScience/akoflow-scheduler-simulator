@@ -13,16 +13,30 @@ import seaborn as sns
 
 
 LABELS = {
+    "heft_classic": "HEFT clássico",
     "heft_colocation": "HEFT com co-location",
     "prism_cc_time": "PRISM-Time",
     "prism_cc_cost": "PRISM-Cost",
 }
 COLORS = {
+    "heft_classic": "#6B7280",
     "heft_colocation": "#6B7280",
     "prism_cc_time": "#2563EB",
     "prism_cc_cost": "#16A34A",
 }
 ORDER = ["heft_colocation", "prism_cc_time", "prism_cc_cost"]
+
+
+def algorithm_order(data: pd.DataFrame) -> list[str]:
+    baseline = "heft_classic" if "heft_classic" in set(data.algorithm) else "heft_colocation"
+    return [baseline, "prism_cc_time", "prism_cc_cost"]
+
+
+def scenario_label(manifest: dict) -> str:
+    scenarios = manifest.get("scenarios", [])
+    if scenarios == ["edge_cloud_extreme"]:
+        return "cenário edge–cloud extremo"
+    return "ambiente híbrido heterogêneo"
 
 
 def load_sweep(result_dir: Path) -> pd.DataFrame:
@@ -44,20 +58,30 @@ def priority_label(result_dir: Path) -> str:
     return {
         "upward_rank": "Upward Rank fixo",
         "ready_lookahead": "tarefas prontas + lookahead",
+        "adaptive_ready": "caminho HEFT canônico + Beam adaptativo",
     }.get(policy, policy)
 
 
-def plot_sweep(data: pd.DataFrame, output: Path, policy: str) -> None:
+def plot_sweep(data: pd.DataFrame, output: Path, policy: str, manifest: dict) -> None:
     sns.set_theme(style="whitegrid", context="talk")
     fig, axes = plt.subplots(2, 2, figsize=(17, 12))
+    summary = (
+        data.groupby(["interference_percent", "algorithm"], as_index=False)
+        .agg(
+            makespan=("makespan", "mean"),
+            budget_used=("budget_used", "mean"),
+            interference_time=("interference_time", "mean"),
+        )
+    )
+    order = algorithm_order(data)
     specs = [
         ("makespan", "Makespan", "Tempo (s)"),
         ("budget_used", "Custo total", "Custo (USD)"),
         ("interference_time", "Interferência acumulada", "Tempo de interferência (s)"),
     ]
     for ax, (metric, title, ylabel) in zip(axes.flat[:3], specs):
-        for algorithm in ORDER:
-            subset = data[data.algorithm == algorithm]
+        for algorithm in order:
+            subset = summary[summary.algorithm == algorithm]
             ax.plot(
                 subset.interference_percent,
                 subset[metric],
@@ -76,14 +100,16 @@ def plot_sweep(data: pd.DataFrame, output: Path, policy: str) -> None:
 
     feasibility = (
         data.assign(feasible_numeric=data.feasible.astype(int))
-        .pivot(index="interference_percent", columns="algorithm", values="feasible_numeric")
-        .reindex(columns=ORDER)
+        .groupby(["interference_percent", "algorithm"])["feasible_numeric"]
+        .mean()
+        .unstack("algorithm")
+        .reindex(columns=order)
     )
     ax = axes[1, 1]
-    annotations = feasibility.T.map(lambda value: "cumpre" if value else "viola").to_numpy()
+    annotations = feasibility.T.map(lambda value: f"{100 * value:.0f}%").to_numpy()
     sns.heatmap(
         feasibility.T,
-        cmap=sns.color_palette(["#FCA5A5", "#86EFAC"], as_cmap=True),
+        cmap=sns.color_palette(["#FCA5A5", "#FDE68A", "#86EFAC"], as_cmap=True),
         vmin=0,
         vmax=1,
         cbar=False,
@@ -107,13 +133,93 @@ def plot_sweep(data: pd.DataFrame, output: Path, policy: str) -> None:
     unique = dict(zip(labels, handles))
     fig.legend(unique.values(), unique.keys(), loc="lower center", ncol=4, frameon=False)
     fig.suptitle(
-        "Impacto da interferência — ambiente híbrido heterogêneo\n"
-        f"Montage 6.448 · {policy} · seed 1 · Beam 120 · SLA fixo",
+        f"Impacto da interferência — {scenario_label(manifest)}\n"
+        f"Montage {manifest['task_count']:,} · {policy} · "
+        f"{len(manifest['interference_seeds'])} sementes · Beam {manifest['beam_width']} · SLA fixo",
         fontsize=20,
         y=0.995,
     )
     fig.tight_layout(rect=(0, 0.07, 1, 0.95))
     fig.savefig(output, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_individual_metrics(data: pd.DataFrame, figures: Path) -> None:
+    sns.set_theme(style="whitegrid", context="talk")
+    summary = (
+        data.groupby(["interference_percent", "algorithm"], as_index=False)
+        .agg(
+            makespan=("makespan", "mean"),
+            budget_used=("budget_used", "mean"),
+            interference_time=("interference_time", "mean"),
+        )
+    )
+    order = algorithm_order(data)
+    specs = [
+        ("makespan", "Makespan por nível de interferência", "Tempo (s)", "makespan-por-interferencia.png"),
+        ("budget_used", "Custo por nível de interferência", "Custo (USD)", "custo-por-interferencia.png"),
+        (
+            "interference_time",
+            "Interferência acumulada por nível",
+            "Tempo de interferência (s)",
+            "interferencia-acumulada.png",
+        ),
+    ]
+    for metric, title, ylabel, filename in specs:
+        fig, ax = plt.subplots(figsize=(11, 7))
+        for algorithm in order:
+            subset = summary[summary.algorithm == algorithm]
+            ax.plot(
+                subset.interference_percent,
+                subset[metric],
+                marker="o",
+                linewidth=2.4,
+                markersize=7,
+                label=LABELS[algorithm],
+                color=COLORS[algorithm],
+            )
+        if metric == "makespan":
+            ax.axhline(data.deadline_limit.iloc[0], color="#DC2626", linestyle="--", label="Deadline fixo")
+        if metric == "budget_used":
+            ax.axhline(data.budget_limit.iloc[0], color="#DC2626", linestyle="--", label="Budget fixo")
+        ax.set_title(title)
+        ax.set_ylabel(ylabel)
+        ax.set_xlabel("Penalidade de interferência de software (%)")
+        ax.set_xticks(range(10, 100, 10))
+        ax.set_xticklabels([f"{value}%" for value in range(10, 100, 10)])
+        ax.legend(frameon=False)
+        fig.tight_layout()
+        fig.savefig(figures / filename, dpi=180, bbox_inches="tight")
+        plt.close(fig)
+
+    feasibility = (
+        data.assign(feasible_numeric=data.feasible.astype(int))
+        .groupby(["interference_percent", "algorithm"])["feasible_numeric"]
+        .mean()
+        .unstack("algorithm")
+        .reindex(columns=order)
+    )
+    fig, ax = plt.subplots(figsize=(12, 5))
+    annotations = feasibility.T.map(lambda value: f"{100 * value:.0f}%").to_numpy()
+    sns.heatmap(
+        feasibility.T,
+        cmap=sns.color_palette(["#FCA5A5", "#FDE68A", "#86EFAC"], as_cmap=True),
+        vmin=0,
+        vmax=1,
+        cbar=False,
+        linewidths=1,
+        linecolor="white",
+        annot=annotations,
+        fmt="",
+        ax=ax,
+    )
+    ax.set_title("Cumprimento simultâneo do deadline e budget")
+    ax.set_yticklabels([LABELS[item] for item in feasibility.columns], rotation=0)
+    ax.set_xticklabels([f"{int(value)}%" for value in feasibility.index], rotation=0)
+    ax.set_xlabel("Penalidade de interferência de software")
+    ax.set_ylabel("")
+    fig.tight_layout()
+    fig.savefig(figures / "factibilidade-por-interferencia.png", dpi=180, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -164,13 +270,18 @@ def plot_comparison(current: pd.DataFrame, baseline: pd.DataFrame, output: Path)
     plt.close(fig)
 
 
-def write_readme(result_dir: Path, data: pd.DataFrame, policy: str, has_comparison: bool) -> None:
+def write_readme(
+    result_dir: Path, data: pd.DataFrame, policy: str,
+    has_comparison: bool, manifest: dict,
+) -> None:
     deadline = data.deadline_limit.iloc[0]
     budget = data.budget_limit.iloc[0]
+    baseline = LABELS[algorithm_order(data)[0]]
     text = f"""# Impacto da interferência de software
 
-Experimento no ambiente híbrido heterogêneo com Montage 6.448, seed 1,
-PRISM com **{policy}**, HEFT com co-location e Beam 120.
+Experimento no {scenario_label(manifest)} com Montage {manifest['task_count']:,},
+{len(manifest['interference_seeds'])} sementes pareadas,
+PRISM com **{policy}**, {baseline} e Beam {manifest['beam_width']}.
 
 A penalidade por tarefa interferente sobreposta varia de 10% a 90%.
 O conjunto de atividades interferentes permanece pareado e constante.
@@ -180,6 +291,13 @@ O SLA foi calibrado sem interferência e mantido fixo em todas as execuções:
 - Budget: US$ {budget:.6f}
 
 ![Impacto da interferência](figures/impacto-interferencia.png)
+
+## Gráficos individuais
+
+- [Makespan por interferência](figures/makespan-por-interferencia.png)
+- [Custo por interferência](figures/custo-por-interferencia.png)
+- [Interferência acumulada](figures/interferencia-acumulada.png)
+- [Factibilidade por interferência](figures/factibilidade-por-interferencia.png)
 """
     if has_comparison:
         text += "\n## Comparação com a ordem fixa\n\n![Comparação](figures/comparacao-upward-rank-ready-lookahead.png)\n"
@@ -196,13 +314,18 @@ def main() -> None:
     figures = args.result_dir / "figures"
     figures.mkdir(exist_ok=True)
     policy = priority_label(args.result_dir)
-    plot_sweep(data, figures / "impacto-interferencia.png", policy)
+    with (args.result_dir / "rate-10" / "manifest.json").open() as handle:
+        manifest = json.load(handle)
+    plot_sweep(data, figures / "impacto-interferencia.png", policy, manifest)
+    plot_individual_metrics(data, figures)
     if args.baseline_dir:
         baseline = load_sweep(args.baseline_dir)
         plot_comparison(
             data, baseline, figures / "comparacao-upward-rank-ready-lookahead.png"
         )
-    write_readme(args.result_dir, data, policy, args.baseline_dir is not None)
+    write_readme(
+        args.result_dir, data, policy, args.baseline_dir is not None, manifest
+    )
 
 
 if __name__ == "__main__":

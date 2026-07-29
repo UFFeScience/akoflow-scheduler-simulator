@@ -1,0 +1,61 @@
+{
+  "generated_at": "2026-07-29T05:44:39Z",
+  "structural_seed": 42,
+  "interference_seeds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "scenarios": [
+    "hybrid_hetero"
+  ],
+  "algorithms": [
+    "prism_cc_time",
+    "prism_cc_cost",
+    "heft_colocation"
+  ],
+  "workflow_id": "montage_dss_20d",
+  "task_count": 6448,
+  "interference_rate": 0.1,
+  "selected_activities": 3224,
+  "sla_margin": 1.2,
+  "scenario_slas": {
+    "hybrid_hetero": {
+      "budget_limit": 3.798521,
+      "deadline_limit": 187.842
+    }
+  },
+  "reference_policy": "Fixed SLA across interference levels: budget 3.798521 USD and deadline 187.842000 s",
+  "calibration": "Per-scenario mean of the selected HEFT baseline runs",
+  "heft_mode": "colocation",
+  "prism_cc_priority": "adaptive_ready",
+  "beam_width": 120,
+  "recommendation_count": 100
+}

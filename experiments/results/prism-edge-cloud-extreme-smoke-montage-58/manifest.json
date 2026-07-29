@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-07-29T06:10:25Z",
+  "structural_seed": 42,
+  "interference_seeds": [
+    1
+  ],
+  "scenarios": [
+    "edge_cloud_extreme"
+  ],
+  "algorithms": [
+    "prism_cc_time",
+    "prism_cc_cost",
+    "heft_colocation"
+  ],
+  "workflow_id": "montage_050d",
+  "task_count": 58,
+  "interference_rate": 0.2,
+  "selected_activities": 29,
+  "sla_margin": 1.2,
+  "scenario_slas": {
+    "edge_cloud_extreme": {
+      "budget_limit": 0.423194,
+      "deadline_limit": 128.4852
+    }
+  },
+  "reference_policy": "Per-scenario heft_colocation mean multiplied by an explicit 1.20x margin for both deadline and budget",
+  "calibration": "Per-scenario mean of the selected HEFT baseline runs",
+  "heft_mode": "colocation",
+  "prism_cc_priority": "adaptive_ready",
+  "beam_width": 120,
+  "recommendation_count": 20
+}

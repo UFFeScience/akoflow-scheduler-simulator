@@ -20,6 +20,11 @@ var experimentScenarioIDs = []string{
 	"cluster_homo", "cluster_hetero", "cloud_homo", "cloud_hetero", "hybrid_homo", "hybrid_hetero",
 }
 
+var experimentSupportedScenarioIDs = append(
+	append([]string(nil), experimentScenarioIDs...),
+	"edge_cloud_extreme",
+)
+
 const (
 	c3dStandard16ReferencePricePerHourUSD = 0.726384
 	c3dStandard16ReferenceMakespanSeconds = 2815.0
@@ -158,7 +163,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		scenarioIDs = append([]string(nil), experimentScenarioIDs...)
 	}
 	validScenarios := map[string]bool{}
-	for _, scenarioID := range experimentScenarioIDs {
+	for _, scenarioID := range experimentSupportedScenarioIDs {
 		validScenarios[scenarioID] = true
 	}
 	for _, scenarioID := range scenarioIDs {
@@ -480,7 +485,7 @@ func validateExperimentScenarios() error {
 			return fmt.Errorf("scenario %s machine %s has invalid speedup", row.ScenarioID, row.MachineID)
 		}
 	}
-	for _, scenarioID := range experimentScenarioIDs {
+	for _, scenarioID := range experimentSupportedScenarioIDs {
 		if counts[scenarioID] != 4 {
 			return fmt.Errorf("scenario %s must define exactly 4 machines, got %d", scenarioID, counts[scenarioID])
 		}
@@ -584,7 +589,7 @@ func writeExperimentSummaryCSV(path string, records []ExperimentRecord) error {
 		scenarioSet[record.ScenarioID] = true
 	}
 	scenarios := []string{}
-	for _, scenario := range experimentScenarioIDs {
+	for _, scenario := range experimentSupportedScenarioIDs {
 		if scenarioSet[scenario] {
 			scenarios = append(scenarios, scenario)
 		}

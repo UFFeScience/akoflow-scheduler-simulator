@@ -68,6 +68,34 @@ func TestExperimentScenariosHaveFourMachinesAndUpdatedSpeedups(t *testing.T) {
 	}
 }
 
+func TestEdgeCloudExtremeScenarioCreatesStrongTradeoffs(t *testing.T) {
+	generated, err := generateExperimentSimulation("edge_cloud_extreme", 42, 1, false, minBeamWidth)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(generated.Resources) != 4 {
+		t.Fatalf("expected 4 edge-cloud resources, got %d", len(generated.Resources))
+	}
+	byID := map[string]Resource{}
+	for _, resource := range generated.Resources {
+		byID[resource.ID] = resource
+	}
+	edge := byID["edge-nano-01"]
+	ultra := byID["cloud-ultra-01"]
+	if ultra.Speedup/edge.Speedup < 100 {
+		t.Fatalf("speed heterogeneity is too small: edge=%v ultra=%v", edge.Speedup, ultra.Speedup)
+	}
+	if ultra.PricePerHourUSD/edge.PricePerHourUSD < 1000 {
+		t.Fatalf("price heterogeneity is too small: edge=%v ultra=%v", edge.PricePerHourUSD, ultra.PricePerHourUSD)
+	}
+	if ultra.Memory/edge.Memory < 100 {
+		t.Fatalf("memory heterogeneity is too small: edge=%v ultra=%v", edge.Memory, ultra.Memory)
+	}
+	if ultra.Bandwidth/edge.Bandwidth < 1000 {
+		t.Fatalf("bandwidth heterogeneity is too small: edge=%v ultra=%v", edge.Bandwidth, ultra.Bandwidth)
+	}
+}
+
 func TestHomogeneousScenarioUsesIdenticalET0ForEveryMachine(t *testing.T) {
 	generated, err := generateExperimentSimulation("cluster_homo", 42, 1, false, minBeamWidth)
 	if err != nil {

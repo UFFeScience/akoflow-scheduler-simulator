@@ -1,0 +1,4 @@
+scenario_id,algorithm,runs,feasible_ratio,budget_limit,deadline_limit,makespan_mean,makespan_median,makespan_stddev,makespan_ci95,budget_mean,budget_median,budget_stddev,budget_ci95,interference_time_mean,algorithm_milliseconds_mean,makespan_gain_vs_heft_percent,budget_gain_vs_heft_percent
+edge_cloud_extreme,prism_cc_time,30,0.000000,43.762430,360.187200,582.438433,579.625000,26.182161,9.369166,36.636625,36.609406,0.560942,0.200730,23383.763367,6353.875600,-0.008437,-0.026252
+edge_cloud_extreme,prism_cc_cost,30,0.000000,43.762430,360.187200,582.438433,579.625000,26.182161,9.369166,36.636625,36.609406,0.560942,0.200730,23383.763367,6353.875600,-0.008437,-0.026252
+edge_cloud_extreme,heft_colocation,30,0.000000,43.762430,360.187200,582.389300,579.655500,26.195411,9.373908,36.627010,36.606763,0.554781,0.198526,23373.898000,3738.241767,0.000000,0.000000

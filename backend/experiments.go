@@ -11,6 +11,7 @@ import (
 
 const (
 	machineSimulatorsCSV        = "machine_simulators.csv"
+	edgeCloudMachinesCSV        = "machine_simulators_edge_cloud_extreme.csv"
 	montageRuntimesCSV          = "montage_c3d_standard_16_runtimes.csv"
 	montageWorkflowYAML         = "wf-montage-050d-gcp.yaml"
 	montageDSS20WorkflowID      = "montage_dss_20d"
@@ -226,42 +227,41 @@ func readExperimentText(name string) (string, error) {
 }
 
 func readExperimentMachines() ([]experimentMachineRow, error) {
-	records, err := readExperimentCSV(machineSimulatorsCSV)
-	if err != nil {
-		return nil, err
-	}
 	rows := []experimentMachineRow{}
-	for i, record := range records {
-		if i == 0 {
-			continue
-		}
-		cores, err := strconv.Atoi(record[8])
+	for _, filename := range []string{machineSimulatorsCSV, edgeCloudMachinesCSV} {
+		records, err := readExperimentCSV(filename)
 		if err != nil {
-			return nil, fmt.Errorf("invalid physical_cores on row %d: %w", i+1, err)
+			return nil, err
 		}
-		memory, err := strconv.ParseFloat(record[10], 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid memory_gb on row %d: %w", i+1, err)
+		for i, record := range records[1:] {
+			cores, err := strconv.Atoi(record[8])
+			if err != nil {
+				return nil, fmt.Errorf("%s: invalid physical_cores on row %d: %w", filename, i+2, err)
+			}
+			memory, err := strconv.ParseFloat(record[10], 64)
+			if err != nil {
+				return nil, fmt.Errorf("%s: invalid memory_gb on row %d: %w", filename, i+2, err)
+			}
+			bandwidth, _ := strconv.ParseFloat(record[11], 64)
+			speedup, err := strconv.ParseFloat(record[14], 64)
+			if err != nil {
+				return nil, fmt.Errorf("%s: invalid speedup on row %d: %w", filename, i+2, err)
+			}
+			pricePerHour, err := strconv.ParseFloat(record[16], 64)
+			if err != nil {
+				return nil, fmt.Errorf("%s: invalid price_per_hour_usd on row %d: %w", filename, i+2, err)
+			}
+			networkPricePerGB, err := strconv.ParseFloat(record[17], 64)
+			if err != nil {
+				return nil, fmt.Errorf("%s: invalid network_price_per_gb_usd on row %d: %w", filename, i+2, err)
+			}
+			rows = append(rows, experimentMachineRow{
+				ScenarioID: record[0], Homogeneity: record[1], MachineID: record[2], Kind: record[3],
+				Provider: record[4], MachineType: record[5], Cores: cores, MemoryGB: memory,
+				Bandwidth: bandwidth, Location: record[12], Speedup: speedup,
+				PricePerHourUSD: pricePerHour, NetworkPricePerGBUSD: networkPricePerGB, PricingModel: record[18],
+			})
 		}
-		bandwidth, _ := strconv.ParseFloat(record[11], 64)
-		speedup, err := strconv.ParseFloat(record[14], 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid speedup on row %d: %w", i+1, err)
-		}
-		pricePerHour, err := strconv.ParseFloat(record[16], 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid price_per_hour_usd on row %d: %w", i+1, err)
-		}
-		networkPricePerGB, err := strconv.ParseFloat(record[17], 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid network_price_per_gb_usd on row %d: %w", i+1, err)
-		}
-		rows = append(rows, experimentMachineRow{
-			ScenarioID: record[0], Homogeneity: record[1], MachineID: record[2], Kind: record[3],
-			Provider: record[4], MachineType: record[5], Cores: cores, MemoryGB: memory,
-			Bandwidth: bandwidth, Location: record[12], Speedup: speedup,
-			PricePerHourUSD: pricePerHour, NetworkPricePerGBUSD: networkPricePerGB, PricingModel: record[18],
-		})
 	}
 	return rows, nil
 }
