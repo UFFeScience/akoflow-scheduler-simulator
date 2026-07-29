@@ -14,7 +14,16 @@ func TestHybridRaspberryScenario(t *testing.T) {
 		t.Fatalf("expected 14 resources, got %d", len(resources))
 	}
 	raspberries := 0
+	hpcNodes := 0
+	cloudNodes := 0
+	raspberrySpeedups := map[float64]bool{}
 	for _, resource := range resources {
+		if len(resource.ID) >= 8 && resource.ID[:8] == "hpc-node" {
+			hpcNodes++
+		}
+		if len(resource.ID) >= 10 && resource.ID[:10] == "cloud-node" {
+			cloudNodes++
+		}
 		if len(resource.ID) < 8 || resource.ID[:8] != "rpi-edge" {
 			continue
 		}
@@ -22,15 +31,23 @@ func TestHybridRaspberryScenario(t *testing.T) {
 		if resource.Cores != 2 || resource.Memory != 1 {
 			t.Fatalf("%s does not match the requested Raspberry Pi capacity", resource.ID)
 		}
-		if math.Abs(resource.Speedup-0.023) > 1e-9 {
-			t.Fatalf("%s speedup: got %v, want 0.023", resource.ID, resource.Speedup)
+		raspberrySpeedups[resource.Speedup] = true
+		if resource.Speedup < 0.019 || resource.Speedup > 0.027 {
+			t.Fatalf("%s speedup outside the heterogeneous fog range: %v", resource.ID, resource.Speedup)
 		}
-		if resource.Bandwidth != 20 || resource.NetworkLatencyMS != 10 {
+		if resource.Bandwidth < 10 || resource.Bandwidth > 20 ||
+			resource.NetworkLatencyMS < 5 || resource.NetworkLatencyMS > 15 {
 			t.Fatalf("%s network: got %.2f MB/s and %.2f ms", resource.ID, resource.Bandwidth, resource.NetworkLatencyMS)
 		}
 	}
 	if raspberries != 10 {
 		t.Fatalf("expected 10 Raspberry Pi resources, got %d", raspberries)
+	}
+	if hpcNodes != 2 || cloudNodes != 2 {
+		t.Fatalf("expected 2 HPC and 2 cloud resources, got %d and %d", hpcNodes, cloudNodes)
+	}
+	if len(raspberrySpeedups) < 5 {
+		t.Fatalf("fog layer is not sufficiently heterogeneous: %v", raspberrySpeedups)
 	}
 }
 
@@ -42,12 +59,12 @@ func TestHybridRaspberryTransferIncludesLatency(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := generated.Matrices.TransferDelay["rpi-edge-01"]["cloud-node-01"]
-	want := (10.0 + 100.0) / 2000.0
+	want := (15.0 + 80.0) / 2000.0
 	if math.Abs(got-want) > 1e-9 {
 		t.Fatalf("transfer latency: got %v s, want %v s", got, want)
 	}
-	if generated.Matrices.BandwidthBW["fog-node-01"]["cloud-node-01"] != 500 {
-		t.Fatalf("fog/cloud backbone must be 500 Mbps in the experiment model")
+	if generated.Matrices.BandwidthBW["hpc-node-01"]["cloud-node-01"] != 500 {
+		t.Fatalf("HPC/cloud backbone must be 500 Mbps in the experiment model")
 	}
 }
 

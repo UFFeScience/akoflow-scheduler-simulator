@@ -1,15 +1,15 @@
 scenario_id,homogeneity,machine_id,kind,provider,machine_type,cpu_description,vcpus_or_threads,physical_cores,sockets,memory_gb,bandwidth_gbps,location,flops,speedup,ref_flops,price_per_hour_usd,network_price_per_gb_usd,pricing_model,price_source,network_latency_ms
-hybrid_raspberry_500mbps,hetero,rpi-edge-01,cluster,Edge Lab,Raspberry Pi,Cortex-A53 dual-core @ 1.2 GHz,2,2,1,1,0.02,edge-01,9.6,0.023,422.4,0,0,owned_edge,9.6 GFLOPS / 422.4 GFLOPS reference,10
-hybrid_raspberry_500mbps,hetero,rpi-edge-02,cluster,Edge Lab,Raspberry Pi,Cortex-A53 dual-core @ 1.2 GHz,2,2,1,1,0.02,edge-02,9.6,0.023,422.4,0,0,owned_edge,9.6 GFLOPS / 422.4 GFLOPS reference,10
-hybrid_raspberry_500mbps,hetero,rpi-edge-03,cluster,Edge Lab,Raspberry Pi,Cortex-A53 dual-core @ 1.2 GHz,2,2,1,1,0.02,edge-03,9.6,0.023,422.4,0,0,owned_edge,9.6 GFLOPS / 422.4 GFLOPS reference,10
-hybrid_raspberry_500mbps,hetero,rpi-edge-04,cluster,Edge Lab,Raspberry Pi,Cortex-A53 dual-core @ 1.2 GHz,2,2,1,1,0.02,edge-04,9.6,0.023,422.4,0,0,owned_edge,9.6 GFLOPS / 422.4 GFLOPS reference,10
-hybrid_raspberry_500mbps,hetero,rpi-edge-05,cluster,Edge Lab,Raspberry Pi,Cortex-A53 dual-core @ 1.2 GHz,2,2,1,1,0.02,edge-05,9.6,0.023,422.4,0,0,owned_edge,9.6 GFLOPS / 422.4 GFLOPS reference,10
-hybrid_raspberry_500mbps,hetero,rpi-edge-06,cluster,Edge Lab,Raspberry Pi,Cortex-A53 dual-core @ 1.2 GHz,2,2,1,1,0.02,edge-06,9.6,0.023,422.4,0,0,owned_edge,9.6 GFLOPS / 422.4 GFLOPS reference,10
-hybrid_raspberry_500mbps,hetero,rpi-edge-07,cluster,Edge Lab,Raspberry Pi,Cortex-A53 dual-core @ 1.2 GHz,2,2,1,1,0.02,edge-07,9.6,0.023,422.4,0,0,owned_edge,9.6 GFLOPS / 422.4 GFLOPS reference,10
-hybrid_raspberry_500mbps,hetero,rpi-edge-08,cluster,Edge Lab,Raspberry Pi,Cortex-A53 dual-core @ 1.2 GHz,2,2,1,1,0.02,edge-08,9.6,0.023,422.4,0,0,owned_edge,9.6 GFLOPS / 422.4 GFLOPS reference,10
-hybrid_raspberry_500mbps,hetero,rpi-edge-09,cluster,Edge Lab,Raspberry Pi,Cortex-A53 dual-core @ 1.2 GHz,2,2,1,1,0.02,edge-09,9.6,0.023,422.4,0,0,owned_edge,9.6 GFLOPS / 422.4 GFLOPS reference,10
-hybrid_raspberry_500mbps,hetero,rpi-edge-10,cluster,Edge Lab,Raspberry Pi,Cortex-A53 dual-core @ 1.2 GHz,2,2,1,1,0.02,edge-10,9.6,0.023,422.4,0,0,owned_edge,9.6 GFLOPS / 422.4 GFLOPS reference,10
-hybrid_raspberry_500mbps,hetero,fog-node-01,cluster,Fog Lab,fog-medium,8-core Xeon D,8,8,1,32,0.5,fog-01,844,2.0,422.4,0.08,0,owned_fog,synthetic hybrid scenario,15
-hybrid_raspberry_500mbps,hetero,fog-node-02,cluster,Fog Lab,fog-fast,16-core Xeon D,16,16,1,64,0.5,fog-02,1689.6,4.0,422.4,0.16,0,owned_fog,synthetic hybrid scenario,15
-hybrid_raspberry_500mbps,hetero,cloud-node-01,cloud,Cloud Provider,compute-optimized,32-core compute optimized,32,32,1,128,0.5,cloud-01,4224,10.0,422.4,1.8,0.05,on_demand,synthetic hybrid scenario,100
-hybrid_raspberry_500mbps,hetero,cloud-node-02,cloud,Cloud Provider,accelerated-compute,64-core accelerated compute,64,64,1,256,0.5,cloud-02,8448,20.0,422.4,4.5,0.09,on_demand,synthetic hybrid scenario,130
+hybrid_raspberry_500mbps,hetero,rpi-edge-01,cluster,Fog Layer,Raspberry Pi,Cortex-A53 dual-core @ 1.0 GHz,2,2,1,1,0.010,fog-01,8.0,0.019,422.4,0,0,owned_fog,theoretical FLOPS / 422.4 GFLOPS reference,15
+hybrid_raspberry_500mbps,hetero,rpi-edge-02,cluster,Fog Layer,Raspberry Pi,Cortex-A53 dual-core @ 1.1 GHz,2,2,1,1,0.011,fog-02,8.8,0.021,422.4,0,0,owned_fog,theoretical FLOPS / 422.4 GFLOPS reference,14
+hybrid_raspberry_500mbps,hetero,rpi-edge-03,cluster,Fog Layer,Raspberry Pi,Cortex-A53 dual-core @ 1.2 GHz,2,2,1,1,0.012,fog-03,9.6,0.023,422.4,0,0,owned_fog,theoretical FLOPS / 422.4 GFLOPS reference,13
+hybrid_raspberry_500mbps,hetero,rpi-edge-04,cluster,Fog Layer,Raspberry Pi,Cortex-A53 dual-core @ 1.3 GHz,2,2,1,1,0.013,fog-04,10.4,0.025,422.4,0,0,owned_fog,theoretical FLOPS / 422.4 GFLOPS reference,12
+hybrid_raspberry_500mbps,hetero,rpi-edge-05,cluster,Fog Layer,Raspberry Pi,Cortex-A53 dual-core @ 1.4 GHz,2,2,1,1,0.014,fog-05,11.2,0.027,422.4,0,0,owned_fog,theoretical FLOPS / 422.4 GFLOPS reference,11
+hybrid_raspberry_500mbps,hetero,rpi-edge-06,cluster,Fog Layer,Raspberry Pi,Cortex-A53 dual-core @ 1.0 GHz,2,2,1,1,0.015,fog-06,8.0,0.019,422.4,0,0,owned_fog,theoretical FLOPS / 422.4 GFLOPS reference,10
+hybrid_raspberry_500mbps,hetero,rpi-edge-07,cluster,Fog Layer,Raspberry Pi,Cortex-A53 dual-core @ 1.1 GHz,2,2,1,1,0.016,fog-07,8.8,0.021,422.4,0,0,owned_fog,theoretical FLOPS / 422.4 GFLOPS reference,9
+hybrid_raspberry_500mbps,hetero,rpi-edge-08,cluster,Fog Layer,Raspberry Pi,Cortex-A53 dual-core @ 1.2 GHz,2,2,1,1,0.017,fog-08,9.6,0.023,422.4,0,0,owned_fog,theoretical FLOPS / 422.4 GFLOPS reference,8
+hybrid_raspberry_500mbps,hetero,rpi-edge-09,cluster,Fog Layer,Raspberry Pi,Cortex-A53 dual-core @ 1.3 GHz,2,2,1,1,0.018,fog-09,10.4,0.025,422.4,0,0,owned_fog,theoretical FLOPS / 422.4 GFLOPS reference,7
+hybrid_raspberry_500mbps,hetero,rpi-edge-10,cluster,Fog Layer,Raspberry Pi,Cortex-A53 dual-core @ 1.4 GHz,2,2,1,1,0.020,fog-10,11.2,0.027,422.4,0,0,owned_fog,theoretical FLOPS / 422.4 GFLOPS reference,5
+hybrid_raspberry_500mbps,hetero,hpc-node-01,cluster,HPC Center,hpc-standard,16-core Intel Xeon HPC,16,16,1,64,0.5,hpc-site,2534.4,6.0,422.4,0.30,0,shared_hpc,synthetic heterogeneous HPC reference,8
+hybrid_raspberry_500mbps,hetero,hpc-node-02,cluster,HPC Center,hpc-fast,32-core Intel Xeon HPC,32,32,2,128,0.5,hpc-site-02,5068.8,12.0,422.4,0.65,0,shared_hpc,synthetic heterogeneous HPC reference,15
+hybrid_raspberry_500mbps,hetero,cloud-node-01,cloud,Cloud Provider,compute-standard,16-vCPU compute instance,16,16,1,64,0.5,cloud-region,3379.2,8.0,422.4,1.20,0.04,on_demand,synthetic heterogeneous cloud reference,80
+hybrid_raspberry_500mbps,hetero,cloud-node-02,cloud,Cloud Provider,compute-accelerated,64-vCPU accelerated instance,64,64,1,256,0.5,cloud-region-02,8448,20.0,422.4,4.50,0.09,on_demand,synthetic heterogeneous cloud reference,150
