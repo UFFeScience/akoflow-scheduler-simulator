@@ -88,7 +88,8 @@ func generateResources(req SimulationRequest) ([]Resource, map[string]map[string
 				Memory: round(spec.Memory, 2), PricePerCPUSecond: spec.PricePerHourUSD / float64(spec.Cores) / 3600,
 				PricePerGBSecond: 0, FinancialNetworkPrice: finPrice,
 				Bandwidth: round(spec.Bandwidth, 2), Location: spec.Location, Status: status, BootOverhead: boot, Speedup: spec.Speedup,
-				PricePerHourUSD: spec.PricePerHourUSD, PricingModel: spec.PricingModel, ImageCache: cache,
+				NetworkLatencyMS: spec.NetworkLatencyMS,
+				PricePerHourUSD:  spec.PricePerHourUSD, PricingModel: spec.PricingModel, ImageCache: cache,
 			})
 		}
 	} else {
@@ -107,7 +108,7 @@ func generateResources(req SimulationRequest) ([]Resource, map[string]map[string
 				bandwidth[left.ID][right.ID] = 10000
 			} else if len(req.ResourceSpecs) > 0 {
 				multiplier := 1.0
-				if left.Location == right.Location {
+				if left.Location == right.Location && req.ExperimentScenarioID != "hybrid_raspberry_500mbps" {
 					multiplier = 1.5
 				}
 				bandwidth[left.ID][right.ID] = round(minf(left.Bandwidth, right.Bandwidth)*multiplier, 2)

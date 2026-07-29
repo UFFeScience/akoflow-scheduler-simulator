@@ -29,6 +29,8 @@ func main() {
 	experimentInterferenceRate := flag.Float64("experiment-interference-rate", 0.20, "controlled software interference penalty per overlapping task")
 	experimentBudgetLimit := flag.Float64("experiment-budget-limit", 0, "fixed budget limit; 0 calibrates from the selected HEFT baseline")
 	experimentDeadlineLimit := flag.Float64("experiment-deadline-limit", 0, "fixed deadline limit; 0 calibrates from the selected HEFT baseline")
+	experimentBudgetMargin := flag.Float64("experiment-budget-margin", experimentSLAMargin, "budget multiplier over the per-scenario mean HEFT cost")
+	experimentDeadlineMargin := flag.Float64("experiment-deadline-margin", experimentSLAMargin, "deadline multiplier over the per-scenario mean HEFT makespan")
 	flag.Parse()
 	if *experimentOutput != "" {
 		if err := runExperimentalProtocol(ExperimentRunOptions{
@@ -43,6 +45,8 @@ func main() {
 			InterferenceRate:    *experimentInterferenceRate,
 			FixedBudgetLimit:    *experimentBudgetLimit,
 			FixedDeadlineLimit:  *experimentDeadlineLimit,
+			BudgetMargin:        *experimentBudgetMargin,
+			DeadlineMargin:      *experimentDeadlineMargin,
 		}); err != nil {
 			log.Fatal(err)
 		}

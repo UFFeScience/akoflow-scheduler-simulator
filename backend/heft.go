@@ -142,7 +142,8 @@ func heftUpwardRanks(generated GeneratedSimulation) (map[string]float64, error) 
 					if left.ID == right.ID {
 						continue
 					}
-					communication += dependency.DataMB / maxf(generated.Matrices.BandwidthBW[left.ID][right.ID], 0.001)
+					communication += dependency.DataMB/maxf(generated.Matrices.BandwidthBW[left.ID][right.ID], 0.001) +
+						generated.Matrices.TransferDelay[left.ID][right.ID]
 					pairs++
 				}
 			}

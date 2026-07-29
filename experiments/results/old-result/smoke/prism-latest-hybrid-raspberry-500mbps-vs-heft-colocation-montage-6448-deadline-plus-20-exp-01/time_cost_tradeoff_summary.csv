@@ -1,0 +1,2 @@
+scenario_id,extra_time_mean,extra_time_ci95,saved_cost_mean,saved_cost_ci95,extra_time_cv,seconds_per_dollar
+hybrid_raspberry_500mbps,55.870000000000005,0.0,21.050926000000004,0.0,0.0,2.6540400170519813

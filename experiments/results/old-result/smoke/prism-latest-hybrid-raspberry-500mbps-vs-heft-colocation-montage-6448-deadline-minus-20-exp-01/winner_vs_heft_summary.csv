@@ -1,0 +1,5 @@
+scenario_id,variant,metric,prism_mean,heft_mean,prism_gain_percent,winner
+hybrid_raspberry_500mbps,prism_cc_time,makespan,577.673,577.673,0.0,Empate
+hybrid_raspberry_500mbps,prism_cc_cost,makespan,577.673,577.673,0.0,Empate
+hybrid_raspberry_500mbps,prism_cc_time,budget_used,36.858448,36.858452,1.0852327702222541e-05,PRISM-CC
+hybrid_raspberry_500mbps,prism_cc_cost,budget_used,36.858448,36.858452,1.0852327702222541e-05,PRISM-CC

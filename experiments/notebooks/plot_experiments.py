@@ -35,6 +35,7 @@ SCENARIO_LABELS = {
     "edge_cloud_extreme": "Edge–cloud\nextremo",
     "edge_cloud_communication_dominant": "Edge–cloud\ncomunicação dominante",
     "edge_cloud_interference_aware": "Edge–cloud\ninterferência previsível",
+    "hybrid_raspberry_500mbps": "Híbrido Raspberry Pi\n500 Mbps",
 }
 ALGORITHM_ORDER = ["prism_cc_time", "prism_cc_cost", "heft_classic"]
 ALGORITHM_LABELS = {
@@ -99,7 +100,8 @@ def validate_results(df: pd.DataFrame, manifest: dict) -> pd.DataFrame:
     )
     assert counts["runs"].eq(len(manifest["interference_seeds"])).all()
     heft = df[df["algorithm"] == "heft_classic"]
-    margin = manifest.get("sla_margin", 1.0)
+    budget_margin = manifest.get("budget_margin", manifest.get("sla_margin", 1.0))
+    deadline_margin = manifest.get("deadline_margin", manifest.get("sla_margin", 1.0))
     for scenario in SCENARIO_ORDER:
         scenario_rows = df[df["scenario_id"] == scenario]
         scenario_heft = heft[heft["scenario_id"] == scenario]
@@ -107,12 +109,12 @@ def validate_results(df: pd.DataFrame, manifest: dict) -> pd.DataFrame:
         assert scenario_rows["budget_limit"].nunique() == 1
         assert np.isclose(
             scenario_rows["deadline_limit"].iloc[0],
-            scenario_heft["makespan"].mean() * margin,
+            scenario_heft["makespan"].mean() * deadline_margin,
             atol=1e-6,
         )
         assert np.isclose(
             scenario_rows["budget_limit"].iloc[0],
-            scenario_heft["budget_used"].mean() * margin,
+            scenario_heft["budget_used"].mean() * budget_margin,
             atol=1e-6,
         )
     return counts
@@ -823,6 +825,8 @@ def plot_20_price_of_savings(df: pd.DataFrame, output: Path) -> pd.DataFrame:
             }
         )
     tradeoff = pd.DataFrame(rows).set_index("scenario_id").reindex(SCENARIO_ORDER).reset_index()
+    for column in ["extra_time_ci95", "saved_cost_ci95", "extra_time_cv"]:
+        tradeoff[column] = tradeoff[column].fillna(0.0)
     fig, ax = plt.subplots(figsize=(11, 7))
     sizes = 100 + 700 * tradeoff.extra_time_cv.clip(upper=1)
     ax.errorbar(
@@ -1692,8 +1696,9 @@ def write_report(
         f"Prioridade das tarefas do PRISM-CC: **{priority_label}**.",
         "",
         (
-            f"SLA definido por ambiente com margem explícita de "
-            f"`{manifest.get('sla_margin', 1.0)}x` sobre a média do HEFT usado "
+            f"SLA definido por ambiente: budget com margem "
+            f"`{manifest.get('budget_margin', manifest.get('sla_margin', 1.0))}x` e deadline com margem "
+            f"`{manifest.get('deadline_margin', manifest.get('sla_margin', 1.0))}x` sobre a média do HEFT usado "
             f"como baseline. Cada combinação possui "
             f"{len(manifest['interference_seeds'])} sementes pareadas."
         ),

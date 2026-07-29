@@ -89,7 +89,9 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 				financialCost[left.ID][right.ID] = 0
 				continue
 			}
-			transferDelay[left.ID][right.ID] = round(100.0/bandwidth[left.ID][right.ID], 4)
+			transferDelay[left.ID][right.ID] = round(
+				(left.NetworkLatencyMS+right.NetworkLatencyMS)/2000.0, 6,
+			)
 			if left.Kind == "cluster" && right.Kind == "cluster" {
 				financialCost[left.ID][right.ID] = 0
 			} else {

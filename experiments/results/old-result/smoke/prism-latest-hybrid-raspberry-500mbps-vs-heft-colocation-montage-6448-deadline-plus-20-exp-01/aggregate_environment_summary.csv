@@ -1,0 +1,4 @@
+scenario_id,algorithm,runs,makespan_mean,makespan_median,makespan_stddev,makespan_ci95,budget_used_mean,budget_used_median,budget_used_stddev,budget_used_ci95
+hybrid_raspberry_500mbps,heft_classic,1,577.673,577.673,0,0.0,36.858452,36.858452,0,0.0
+hybrid_raspberry_500mbps,prism_cc_cost,1,633.543,633.543,0,0.0,15.807522,15.807522,0,0.0
+hybrid_raspberry_500mbps,prism_cc_time,1,577.673,577.673,0,0.0,36.858448,36.858448,0,0.0

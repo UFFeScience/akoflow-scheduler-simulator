@@ -23,6 +23,7 @@ var experimentScenarioIDs = []string{
 var experimentSupportedScenarioIDs = append(
 	append([]string(nil), experimentScenarioIDs...),
 	"edge_cloud_extreme", "edge_cloud_communication_dominant", "edge_cloud_interference_aware",
+	"hybrid_raspberry_500mbps",
 )
 
 const (
@@ -46,6 +47,8 @@ type ExperimentRunOptions struct {
 	InterferenceRate    float64
 	FixedBudgetLimit    float64
 	FixedDeadlineLimit  float64
+	BudgetMargin        float64
+	DeadlineMargin      float64
 }
 
 type ExperimentRecord struct {
@@ -93,6 +96,8 @@ type ExperimentManifest struct {
 	InterferenceRate    float64                `json:"interference_rate"`
 	SelectedActivities  int                    `json:"selected_activities"`
 	SLAMargin           float64                `json:"sla_margin"`
+	BudgetMargin        float64                `json:"budget_margin"`
+	DeadlineMargin      float64                `json:"deadline_margin"`
 	ScenarioSLAs        map[string]ScenarioSLA `json:"scenario_slas"`
 	ReferencePolicy     string                 `json:"reference_policy"`
 	Calibration         string                 `json:"calibration"`
@@ -126,8 +131,8 @@ func experimentReferencePolicy(options ExperimentRunOptions, baselineAlgorithm s
 		)
 	}
 	return fmt.Sprintf(
-		"Per-scenario %s mean multiplied by an explicit %.2fx margin for both deadline and budget",
-		baselineAlgorithm, experimentSLAMargin,
+		"Per-scenario %s mean multiplied by explicit margins: %.2fx budget and %.2fx deadline",
+		baselineAlgorithm, options.BudgetMargin, options.DeadlineMargin,
 	)
 }
 
@@ -157,6 +162,12 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	}
 	if options.InterferenceRate < 0 || options.InterferenceRate > 1 {
 		return fmt.Errorf("experiment interference rate must be between 0 and 1, got %v", options.InterferenceRate)
+	}
+	if options.BudgetMargin <= 0 {
+		options.BudgetMargin = experimentSLAMargin
+	}
+	if options.DeadlineMargin <= 0 {
+		options.DeadlineMargin = experimentSLAMargin
 	}
 	scenarioIDs := options.ScenarioIDs
 	if len(scenarioIDs) == 0 {
@@ -256,8 +267,8 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 			}
 		} else {
 			scenarioSLAs[scenarioID] = ScenarioSLA{
-				BudgetLimit:   round(mean(heftBudgets[scenarioID])*experimentSLAMargin, 6),
-				DeadlineLimit: round(mean(heftMakespans[scenarioID])*experimentSLAMargin, 6),
+				BudgetLimit:   round(mean(heftBudgets[scenarioID])*options.BudgetMargin, 6),
+				DeadlineLimit: round(mean(heftMakespans[scenarioID])*options.DeadlineMargin, 6),
 			}
 		}
 	}
@@ -360,6 +371,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		WorkflowID: options.WorkflowID, TaskCount: taskCount,
 		InterferenceRate: options.InterferenceRate, SelectedActivities: taskCount / 2,
 		SLAMargin: experimentSLAMargin, ScenarioSLAs: scenarioSLAs,
+		BudgetMargin: options.BudgetMargin, DeadlineMargin: options.DeadlineMargin,
 		ReferencePolicy: experimentReferencePolicy(options, baselineAlgorithm),
 		Calibration:     "Per-scenario mean of the selected HEFT baseline runs",
 		HEFTMode:        options.HEFTMode, PRISMCCPriority: options.PRISMCCPriority,
@@ -486,8 +498,12 @@ func validateExperimentScenarios() error {
 		}
 	}
 	for _, scenarioID := range experimentSupportedScenarioIDs {
-		if counts[scenarioID] != 4 {
-			return fmt.Errorf("scenario %s must define exactly 4 machines, got %d", scenarioID, counts[scenarioID])
+		expected := 4
+		if scenarioID == "hybrid_raspberry_500mbps" {
+			expected = 14
+		}
+		if counts[scenarioID] != expected {
+			return fmt.Errorf("scenario %s must define exactly %d machines, got %d", scenarioID, expected, counts[scenarioID])
 		}
 	}
 	return nil

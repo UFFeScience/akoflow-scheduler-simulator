@@ -231,7 +231,8 @@ func predecessorTiming(deps []Dependency, assignmentByTask map[string]Assignment
 		predecessor := assignmentByTask[dep.Source]
 		transfer := 0.0
 		if predecessor.ResourceID != resourceID {
-			transfer = dep.DataMB / generated.Matrices.BandwidthBW[predecessor.ResourceID][resourceID]
+			transfer = dep.DataMB/generated.Matrices.BandwidthBW[predecessor.ResourceID][resourceID] +
+				generated.Matrices.TransferDelay[predecessor.ResourceID][resourceID]
 		}
 		transferTotal += transfer
 		predecessorFloor = maxf(predecessorFloor, predecessor.FinishTime+transfer)

@@ -127,6 +127,9 @@ func validateRequest(r SimulationRequest) error {
 		if spec.PricePerHourUSD < 0 || spec.NetworkPricePerGBUSD < 0 {
 			return errors.New("resource prices cannot be negative")
 		}
+		if spec.NetworkLatencyMS < 0 {
+			return errors.New("resource network latency cannot be negative")
+		}
 	}
 	return nil
 }

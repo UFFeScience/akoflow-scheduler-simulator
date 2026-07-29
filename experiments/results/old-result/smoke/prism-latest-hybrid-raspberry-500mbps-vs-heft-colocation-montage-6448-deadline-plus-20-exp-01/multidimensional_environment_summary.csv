@@ -1,0 +1,4 @@
+scenario_id,algorithm,runs,makespan_mean,makespan_median,makespan_stddev,makespan_ci95,budget_used_mean,budget_used_median,budget_used_stddev,budget_used_ci95,interference_seed,utilization_mean,utilization_imbalance,machines_used,interference_time_mean,interference_pairs_mean,interference_per_task,makespan_cv_percent,makespan_gain_percent,budget_gain_percent
+hybrid_raspberry_500mbps,heft_classic,1,577.673,577.673,0,0.0,36.858452,36.858452,0,0.0,1.0,0.2718332142857143,0.16028292881035558,14.0,18674.825,18577.0,2.8962197580645164,0.0,,
+hybrid_raspberry_500mbps,prism_cc_cost,1,633.543,633.543,0,0.0,15.807522,15.807522,0,0.0,1.0,0.322885,0.1127398488417345,14.0,17226.026,18460.0,2.6715300868486356,0.0,-9.671561592804233,57.11289774188022
+hybrid_raspberry_500mbps,prism_cc_time,1,577.673,577.673,0,0.0,36.858448,36.858448,0,0.0,1.0,0.2718342142857143,0.1602843267590345,14.0,18675.338,18577.0,2.8962993176178657,0.0,0.0,1.0852327702222541e-05

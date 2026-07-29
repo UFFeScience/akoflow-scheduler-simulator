@@ -14,6 +14,7 @@ const (
 	edgeCloudMachinesCSV        = "machine_simulators_edge_cloud_extreme.csv"
 	communicationMachinesCSV    = "machine_simulators_communication_dominant.csv"
 	interferenceMachinesCSV     = "machine_simulators_interference_aware.csv"
+	hybridRaspberryMachinesCSV  = "machine_simulators_hybrid_raspberry_500mbps.csv"
 	montageRuntimesCSV          = "montage_c3d_standard_16_runtimes.csv"
 	montageWorkflowYAML         = "wf-montage-050d-gcp.yaml"
 	montageDSS20WorkflowID      = "montage_dss_20d"
@@ -44,6 +45,7 @@ type experimentMachineRow struct {
 	PricePerHourUSD      float64
 	NetworkPricePerGBUSD float64
 	PricingModel         string
+	NetworkLatencyMS     float64
 }
 
 type montageRuntimeRow struct {
@@ -75,6 +77,14 @@ func experimentScenarioResources(scenarioID string) ([]ResourceSpec, error) {
 			continue
 		}
 		bandwidth := row.Bandwidth * 1000
+		cluster500MbpsScenario := row.ScenarioID == "cluster_homo" ||
+			row.ScenarioID == "cluster_hetero" ||
+			row.ScenarioID == "hybrid_homo" ||
+			row.ScenarioID == "hybrid_hetero" ||
+			row.ScenarioID == "hybrid_raspberry_500mbps"
+		if cluster500MbpsScenario && row.Kind == "cluster" && !strings.HasPrefix(row.MachineID, "rpi-edge-") {
+			bandwidth = 500
+		}
 		if bandwidth <= 0 {
 			if row.Kind == "cluster" {
 				bandwidth = 10000
@@ -94,6 +104,7 @@ func experimentScenarioResources(scenarioID string) ([]ResourceSpec, error) {
 			ID: row.MachineID, Name: name, Kind: row.Kind, Cores: row.Cores,
 			Memory: row.MemoryGB, Bandwidth: bandwidth, BootOverhead: boot, Location: row.Location, Speedup: row.Speedup,
 			PricePerHourUSD: row.PricePerHourUSD, NetworkPricePerGBUSD: row.NetworkPricePerGBUSD, PricingModel: row.PricingModel,
+			NetworkLatencyMS: row.NetworkLatencyMS,
 		})
 	}
 	if len(specs) == 0 {
@@ -235,6 +246,7 @@ func readExperimentMachines() ([]experimentMachineRow, error) {
 		edgeCloudMachinesCSV,
 		communicationMachinesCSV,
 		interferenceMachinesCSV,
+		hybridRaspberryMachinesCSV,
 	} {
 		records, err := readExperimentCSV(filename)
 		if err != nil {
@@ -262,11 +274,19 @@ func readExperimentMachines() ([]experimentMachineRow, error) {
 			if err != nil {
 				return nil, fmt.Errorf("%s: invalid network_price_per_gb_usd on row %d: %w", filename, i+2, err)
 			}
+			networkLatencyMS := 0.0
+			if len(record) > 20 && strings.TrimSpace(record[20]) != "" {
+				networkLatencyMS, err = strconv.ParseFloat(record[20], 64)
+				if err != nil {
+					return nil, fmt.Errorf("%s: invalid network_latency_ms on row %d: %w", filename, i+2, err)
+				}
+			}
 			rows = append(rows, experimentMachineRow{
 				ScenarioID: record[0], Homogeneity: record[1], MachineID: record[2], Kind: record[3],
 				Provider: record[4], MachineType: record[5], Cores: cores, MemoryGB: memory,
 				Bandwidth: bandwidth, Location: record[12], Speedup: speedup,
 				PricePerHourUSD: pricePerHour, NetworkPricePerGBUSD: networkPricePerGB, PricingModel: record[18],
+				NetworkLatencyMS: networkLatencyMS,
 			})
 		}
 	}

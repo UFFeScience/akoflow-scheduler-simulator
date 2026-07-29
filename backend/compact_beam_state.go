@@ -348,7 +348,8 @@ func predecessorTimingForState(deps []Dependency, state beamState, generated Gen
 		}
 		transfer := 0.0
 		if predecessor.ResourceID != resourceID {
-			transfer = dep.DataMB / maxf(generated.Matrices.BandwidthBW[predecessor.ResourceID][resourceID], 0.001)
+			transfer = dep.DataMB/maxf(generated.Matrices.BandwidthBW[predecessor.ResourceID][resourceID], 0.001) +
+				generated.Matrices.TransferDelay[predecessor.ResourceID][resourceID]
 		}
 		floor = maxf(floor, predecessor.FinishTime+transfer)
 		transferTotal += transfer

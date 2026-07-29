@@ -7,6 +7,7 @@ type ResourceSpec struct {
 	Cores                int     `json:"cores"`
 	Memory               float64 `json:"memory"`
 	Bandwidth            float64 `json:"bandwidth"`
+	NetworkLatencyMS     float64 `json:"network_latency_ms,omitempty"`
 	BootOverhead         float64 `json:"boot_overhead"`
 	Location             string  `json:"location"`
 	Speedup              float64 `json:"speedup,omitempty"`
@@ -52,6 +53,7 @@ type Resource struct {
 	PricePerGBSecond      float64  `json:"price_per_gb_second"`
 	FinancialNetworkPrice float64  `json:"financial_network_price"`
 	Bandwidth             float64  `json:"bandwidth"`
+	NetworkLatencyMS      float64  `json:"network_latency_ms,omitempty"`
 	Location              string   `json:"location"`
 	Status                string   `json:"status"`
 	BootOverhead          float64  `json:"boot_overhead"`
