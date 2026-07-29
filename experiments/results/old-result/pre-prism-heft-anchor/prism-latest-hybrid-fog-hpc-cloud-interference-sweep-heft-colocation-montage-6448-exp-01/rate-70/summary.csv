@@ -1,0 +1,4 @@
+scenario_id,algorithm,runs,feasible_ratio,budget_limit,deadline_limit,makespan_mean,makespan_median,makespan_stddev,makespan_ci95,budget_mean,budget_median,budget_stddev,budget_ci95,interference_time_mean,algorithm_milliseconds_mean,makespan_gain_vs_heft_percent,budget_gain_vs_heft_percent
+hybrid_raspberry_500mbps,prism_cc_time,30,0.000000,34.148266,390.132000,981.658067,977.503000,57.274667,20.495476,30.009900,30.013023,0.471762,0.168818,49221.686367,29525.141467,0.034613,0.398510
+hybrid_raspberry_500mbps,prism_cc_cost,30,0.000000,34.148266,390.132000,981.658067,977.503000,57.274667,20.495476,30.009900,30.013023,0.471762,0.168818,49221.686367,29525.141467,0.034613,0.398510
+hybrid_raspberry_500mbps,heft_colocation,30,0.000000,34.148266,390.132000,981.997967,977.828000,57.206757,20.471175,30.129970,30.082058,0.435280,0.155763,49221.063333,2880.664033,0.000000,0.000000

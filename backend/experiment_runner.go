@@ -31,6 +31,7 @@ const (
 	c3dStandard16ReferenceMakespanSeconds = 2815.0
 	c3dStandard16ReferenceBudgetUSD       = c3dStandard16ReferencePricePerHourUSD * c3dStandard16ReferenceMakespanSeconds / 3600
 	experimentSLAMargin                   = 1.20
+	prismImprovementEpsilon               = 1e-6
 )
 
 type ExperimentRunOptions struct {
@@ -404,6 +405,10 @@ func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, inte
 	generated.SLA.BudgetLimit = &sla.BudgetLimit
 	generated.SLA.DeadlineLimit = &sla.DeadlineLimit
 	generated.Experimental.PriorityPolicy = options.PRISMCCPriority
+	heftAnchor, heftErr := scheduleHEFTBaseline(generated, options.HEFTMode)
+	if heftErr != nil {
+		return nil, fmt.Errorf("%s/HEFT anchor seed %d: %w", scenarioID, interferenceSeed, heftErr)
+	}
 	runStarted := time.Now()
 	finalStates, searchErr := beamSearch(generated, normalizedBeamWidth(generated.SLA.BeamWidth))
 	searchMilliseconds := float64(time.Since(runStarted).Microseconds()) / 1000
@@ -428,8 +433,9 @@ func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, inte
 		if len(response) == 0 {
 			return nil, fmt.Errorf("%s/%s seed %d: beam returned no schedule", scenarioID, algorithm, interferenceSeed)
 		}
+		selected := selectAnchoredPRISMResult(algorithm, heftAnchor, response, sla)
 		record := experimentRecordFromResult(
-			response[0].Result, algorithm, scenarioID, interferenceSeed, sla.BudgetLimit, sla.DeadlineLimit,
+			selected, algorithm, scenarioID, interferenceSeed, sla.BudgetLimit, sla.DeadlineLimit,
 			searchMilliseconds,
 		)
 		for _, option := range response {
@@ -445,6 +451,29 @@ func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, inte
 		records = append(records, record)
 	}
 	return records, nil
+}
+
+func selectAnchoredPRISMResult(algorithm string, heft SimulationResult, options []ScheduleOption, sla ScenarioSLA) SimulationResult {
+	selected := heft
+	for _, option := range options {
+		if algorithm == "prism_cc_time" {
+			if option.Makespan < selected.TimingVariables.Makespan-prismImprovementEpsilon {
+				selected = option.Result
+			}
+			continue
+		}
+		if !option.Feasible ||
+			option.Makespan > sla.DeadlineLimit+prismImprovementEpsilon ||
+			option.BudgetUsed > sla.BudgetLimit+prismImprovementEpsilon {
+			continue
+		}
+		costImproved := option.BudgetUsed < selected.CostVariables.BUsed-prismImprovementEpsilon
+		costTied := math.Abs(option.BudgetUsed-selected.CostVariables.BUsed) <= prismImprovementEpsilon
+		if costImproved || (costTied && option.Makespan < selected.TimingVariables.Makespan-prismImprovementEpsilon) {
+			selected = option.Result
+		}
+	}
+	return selected
 }
 
 func compactRecommendationSignature(signature string) string {

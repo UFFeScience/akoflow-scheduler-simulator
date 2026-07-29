@@ -1,8 +1,8 @@
 scenario_id,variant,metric,prism_mean,heft_mean,prism_gain_percent,winner
 cluster_homo,prism_cc_time,makespan,283.384,283.384,0.0,Empate
 cluster_homo,prism_cc_cost,makespan,283.384,283.384,0.0,Empate
-cluster_hetero,prism_cc_time,makespan,291.3045666666667,291.3348666666667,0.010400402926944925,PRISM-CC
-cluster_hetero,prism_cc_cost,makespan,291.3045666666667,291.3348666666667,0.010400402926944925,PRISM-CC
+cluster_hetero,prism_cc_time,makespan,291.29023333333333,291.3348666666667,0.015320285499652574,PRISM-CC
+cluster_hetero,prism_cc_cost,makespan,291.3348666666667,291.3348666666667,0.0,Empate
 cloud_homo,prism_cc_time,makespan,88.37280000000001,88.37280000000001,0.0,Empate
 cloud_homo,prism_cc_cost,makespan,88.37280000000001,88.37280000000001,0.0,Empate
 cloud_hetero,prism_cc_time,makespan,92.23186666666669,92.23186666666669,0.0,Empate
@@ -10,7 +10,7 @@ cloud_hetero,prism_cc_cost,makespan,92.23186666666669,92.23186666666669,0.0,Empa
 hybrid_homo,prism_cc_time,makespan,92.23186666666669,92.23186666666669,0.0,Empate
 hybrid_homo,prism_cc_cost,makespan,92.23186666666669,92.23186666666669,0.0,Empate
 hybrid_hetero,prism_cc_time,makespan,97.9762,97.9762,0.0,Empate
-hybrid_hetero,prism_cc_cost,makespan,98.25276666666666,97.9762,-0.2822794379315112,HEFT
+hybrid_hetero,prism_cc_cost,makespan,97.9762,97.9762,0.0,Empate
 hybrid_raspberry_500mbps,prism_cc_time,makespan,147.31296666666668,147.31296666666668,0.0,Empate
 hybrid_raspberry_500mbps,prism_cc_cost,makespan,147.7158666666667,147.31296666666668,-0.2734993457240469,HEFT
 cluster_homo,prism_cc_time,budget_used,0.0,0.0,0.0,Empate
@@ -23,7 +23,7 @@ cloud_hetero,prism_cc_time,budget_used,0.6742648666666667,0.6742648666666667,0.0
 cloud_hetero,prism_cc_cost,budget_used,0.6742648666666667,0.6742648666666667,0.0,Empate
 hybrid_homo,prism_cc_time,budget_used,0.6491746333333334,0.6491746333333334,0.0,Empate
 hybrid_homo,prism_cc_cost,budget_used,0.6491746333333334,0.6491746333333334,0.0,Empate
-hybrid_hetero,prism_cc_time,budget_used,0.4361451666666667,0.43885959999999996,0.6185197574197456,PRISM-CC
-hybrid_hetero,prism_cc_cost,budget_used,0.4208967333333334,0.43885959999999996,4.093078211497841,PRISM-CC
+hybrid_hetero,prism_cc_time,budget_used,0.43885959999999996,0.43885959999999996,0.0,Empate
+hybrid_hetero,prism_cc_cost,budget_used,0.4361451666666667,0.43885959999999996,0.6185197574197456,PRISM-CC
 hybrid_raspberry_500mbps,prism_cc_time,budget_used,0.5930369999999999,0.5930369999999999,0.0,Empate
-hybrid_raspberry_500mbps,prism_cc_cost,budget_used,0.5459275,0.5930369999999999,7.943770793390619,PRISM-CC
+hybrid_raspberry_500mbps,prism_cc_cost,budget_used,0.5453433333333334,0.5930369999999999,8.0422750463574,PRISM-CC

@@ -1,7 +1,7 @@
 # Impacto da interferência de software
 
 Experimento no ambiente híbrido heterogêneo com Montage 6,448,
-30 sementes pareadas,
+1 sementes pareadas,
 PRISM com **caminho HEFT canônico + Beam adaptativo**, HEFT com co-location e Beam 120.
 
 A penalidade por tarefa interferente sobreposta varia de 10% a 90%.
