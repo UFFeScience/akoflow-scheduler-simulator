@@ -6,6 +6,7 @@ repetitions="${EXPERIMENT_REPETITIONS:-30}"
 workers="${EXPERIMENT_WORKERS_PER_DEADLINE:-2}"
 scenarios="cluster_homo,cluster_hetero,cloud_homo,cloud_hetero,hybrid_homo,hybrid_hetero,hybrid_raspberry_500mbps"
 prefix="${EXPERIMENT_PREFIX:-prism-latest}"
+interference_rate="${EXPERIMENT_INTERFERENCE_RATE:-0.20}"
 
 run_case() {
   margin_name="$1"
@@ -26,6 +27,7 @@ run_case() {
     -experiment-heft-mode=colocation \
     -experiment-workflow=montage_dss_20d \
     -experiment-scenarios="${scenarios}" \
+    -experiment-interference-rate="${interference_rate}" \
     -experiment-budget-margin=1.2 \
     -experiment-deadline-margin="${deadline_margin}"
 }

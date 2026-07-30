@@ -1,0 +1,64 @@
+{
+  "generated_at": "2026-07-30T11:25:00Z",
+  "structural_seed": 42,
+  "interference_seeds": [
+    1
+  ],
+  "scenarios": [
+    "cluster_homo",
+    "cluster_hetero",
+    "cloud_homo",
+    "cloud_hetero",
+    "hybrid_homo",
+    "hybrid_hetero",
+    "hybrid_raspberry_500mbps"
+  ],
+  "algorithms": [
+    "prism_cc_time",
+    "prism_cc_cost",
+    "heft_colocation"
+  ],
+  "workflow_id": "montage_dss_20d",
+  "task_count": 6448,
+  "interference_rate": 0,
+  "selected_activities": 3224,
+  "sla_margin": 1.2,
+  "budget_margin": 1.2,
+  "deadline_margin": 1.2,
+  "scenario_slas": {
+    "cloud_hetero": {
+      "budget_limit": 10.151059,
+      "deadline_limit": 159.5868
+    },
+    "cloud_homo": {
+      "budget_limit": 11.354382,
+      "deadline_limit": 141.8976
+    },
+    "cluster_hetero": {
+      "budget_limit": 0,
+      "deadline_limit": 526.1532
+    },
+    "cluster_homo": {
+      "budget_limit": 0,
+      "deadline_limit": 589.026
+    },
+    "hybrid_hetero": {
+      "budget_limit": 3.748972,
+      "deadline_limit": 187.9776
+    },
+    "hybrid_homo": {
+      "budget_limit": 6.268712,
+      "deadline_limit": 171.2076
+    },
+    "hybrid_raspberry_500mbps": {
+      "budget_limit": 34.182215,
+      "deadline_limit": 392.9784
+    }
+  },
+  "reference_policy": "Per-scenario heft_colocation mean multiplied by explicit margins: 1.20x budget and 1.20x deadline",
+  "calibration": "Per-scenario mean of the selected HEFT baseline runs",
+  "heft_mode": "colocation",
+  "prism_cc_priority": "adaptive_ready",
+  "beam_width": 120,
+  "recommendation_count": 100
+}

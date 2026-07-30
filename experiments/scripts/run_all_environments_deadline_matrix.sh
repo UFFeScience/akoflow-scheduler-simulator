@@ -9,6 +9,7 @@ recommendations="${EXPERIMENT_RECOMMENDATIONS:-100}"
 prefix="${EXPERIMENT_PREFIX:-prism-latest}"
 run_58="${EXPERIMENT_RUN_58:-1}"
 run_6448="${EXPERIMENT_RUN_6448:-1}"
+interference_rate="${EXPERIMENT_INTERFERENCE_RATE:-0.20}"
 scenarios="cluster_homo,cluster_hetero,cloud_homo,cloud_hetero,hybrid_homo,hybrid_hetero,hybrid_raspberry_500mbps"
 
 run_case() {
@@ -31,6 +32,7 @@ run_case() {
       -experiment-heft-mode=colocation \
       -experiment-workflow="${workflow}" \
       -experiment-scenarios="${scenarios}" \
+      -experiment-interference-rate="${interference_rate}" \
       -experiment-budget-margin=1.2 \
       -experiment-deadline-margin="${deadline_margin}"
   else
