@@ -21,6 +21,9 @@ const (
 	montageDSS20WorkflowYAML    = "wf-montage-chameleon-dss-20d-001.yaml"
 	montageDSS20RuntimesCSV     = "montage_chameleon_dss_20d_001_runtimes.csv"
 	montageDSS20DependenciesCSV = "montage_chameleon_dss_20d_001_dependencies.csv"
+	megabitsPerGigabit          = 1000.0
+	bitsPerByte                 = 8.0
+	clusterBandwidthLimitMbps   = 500.0
 )
 
 type ExperimentScenario struct {
@@ -76,20 +79,22 @@ func experimentScenarioResources(scenarioID string) ([]ResourceSpec, error) {
 		if row.ScenarioID != scenarioID {
 			continue
 		}
-		bandwidth := row.Bandwidth * 1000
-		cluster500MbpsScenario := row.ScenarioID == "cluster_homo" ||
+		bandwidth := gigabitsPerSecondToMegabytesPerSecond(row.Bandwidth)
+		bandwidth500MbpsScenario := row.ScenarioID == "cluster_homo" ||
 			row.ScenarioID == "cluster_hetero" ||
+			row.ScenarioID == "cloud_homo" ||
+			row.ScenarioID == "cloud_hetero" ||
 			row.ScenarioID == "hybrid_homo" ||
 			row.ScenarioID == "hybrid_hetero" ||
 			row.ScenarioID == "hybrid_raspberry_500mbps"
-		if cluster500MbpsScenario && row.Kind == "cluster" && !strings.HasPrefix(row.MachineID, "rpi-edge-") {
-			bandwidth = 500
+		if bandwidth500MbpsScenario && !strings.HasPrefix(row.MachineID, "rpi-edge-") {
+			bandwidth = megabitsPerSecondToMegabytesPerSecond(clusterBandwidthLimitMbps)
 		}
 		if bandwidth <= 0 {
 			if row.Kind == "cluster" {
-				bandwidth = 10000
+				bandwidth = gigabitsPerSecondToMegabytesPerSecond(10)
 			} else {
-				bandwidth = 2500
+				bandwidth = gigabitsPerSecondToMegabytesPerSecond(2.5)
 			}
 		}
 		boot := 0.0
@@ -111,6 +116,14 @@ func experimentScenarioResources(scenarioID string) ([]ResourceSpec, error) {
 		return nil, fmt.Errorf("unknown experiment scenario: %s", scenarioID)
 	}
 	return specs, nil
+}
+
+func gigabitsPerSecondToMegabytesPerSecond(value float64) float64 {
+	return value * megabitsPerGigabit / bitsPerByte
+}
+
+func megabitsPerSecondToMegabytesPerSecond(value float64) float64 {
+	return value / bitsPerByte
 }
 
 func experimentScenarios() ([]ExperimentScenario, error) {

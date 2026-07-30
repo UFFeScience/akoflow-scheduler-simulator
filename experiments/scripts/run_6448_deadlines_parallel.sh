@@ -5,11 +5,12 @@ repo_root="$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)"
 repetitions="${EXPERIMENT_REPETITIONS:-30}"
 workers="${EXPERIMENT_WORKERS_PER_DEADLINE:-2}"
 scenarios="cluster_homo,cluster_hetero,cloud_homo,cloud_hetero,hybrid_homo,hybrid_hetero,hybrid_raspberry_500mbps"
+prefix="${EXPERIMENT_PREFIX:-prism-latest}"
 
 run_case() {
   margin_name="$1"
   deadline_margin="$2"
-  output_name="prism-latest-all-environments-500mbps-vs-heft-colocation-montage-6448-deadline-${margin_name}-exp-01"
+  output_name="${prefix}-all-environments-500mbps-vs-heft-colocation-montage-6448-deadline-${margin_name}-exp-01"
   if [ -s "${repo_root}/experiments/results/${output_name}/raw_results.csv" ]; then
     return
   fi
@@ -44,7 +45,7 @@ wait "${pid_minus_10}"
 wait "${pid_minus_20}"
 
 for margin_name in plus-20 minus-5 minus-10 minus-20; do
-  output_name="prism-latest-all-environments-500mbps-vs-heft-colocation-montage-6448-deadline-${margin_name}-exp-01"
+  output_name="${prefix}-all-environments-500mbps-vs-heft-colocation-montage-6448-deadline-${margin_name}-exp-01"
   docker run --rm \
     --user "$(id -u):$(id -g)" \
     -e MPLCONFIGDIR=/tmp/matplotlib \

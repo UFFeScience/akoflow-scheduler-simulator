@@ -7,7 +7,8 @@ workers="${EXPERIMENT_WORKERS:-6}"
 beam_width="${EXPERIMENT_BEAM_WIDTH:-120}"
 recommendations="${EXPERIMENT_RECOMMENDATIONS:-100}"
 scenario="hybrid_raspberry_500mbps"
-sweep_name="prism-latest-hybrid-fog-hpc-cloud-interference-sweep-heft-colocation-montage-6448-exp-01"
+prefix="${EXPERIMENT_PREFIX:-prism-latest}"
+sweep_name="${prefix}-hybrid-fog-hpc-cloud-interference-sweep-heft-colocation-montage-6448-exp-01"
 calibration_name="${sweep_name}-calibration-zero"
 
 run_rate() {

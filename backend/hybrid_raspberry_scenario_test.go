@@ -35,7 +35,7 @@ func TestHybridRaspberryScenario(t *testing.T) {
 		if resource.Speedup < 0.019 || resource.Speedup > 0.027 {
 			t.Fatalf("%s speedup outside the heterogeneous fog range: %v", resource.ID, resource.Speedup)
 		}
-		if resource.Bandwidth < 10 || resource.Bandwidth > 20 ||
+		if resource.Bandwidth < 1.25 || resource.Bandwidth > 2.5 ||
 			resource.NetworkLatencyMS < 5 || resource.NetworkLatencyMS > 15 {
 			t.Fatalf("%s network: got %.2f MB/s and %.2f ms", resource.ID, resource.Bandwidth, resource.NetworkLatencyMS)
 		}
@@ -63,21 +63,36 @@ func TestHybridRaspberryTransferIncludesLatency(t *testing.T) {
 	if math.Abs(got-want) > 1e-9 {
 		t.Fatalf("transfer latency: got %v s, want %v s", got, want)
 	}
-	if generated.Matrices.BandwidthBW["hpc-node-01"]["cloud-node-01"] != 500 {
+	if generated.Matrices.BandwidthBW["hpc-node-01"]["cloud-node-01"] != 62.5 {
 		t.Fatalf("HPC/cloud backbone must be 500 Mbps in the experiment model")
 	}
 }
 
-func TestExperimentClusterBandwidthIsCappedAt500Mbps(t *testing.T) {
-	for _, scenario := range []string{"cluster_homo", "cluster_hetero", "hybrid_homo", "hybrid_hetero"} {
+func TestLegacyExperimentMachineBandwidthIsCappedAt500Mbps(t *testing.T) {
+	for _, scenario := range []string{
+		"cluster_homo", "cluster_hetero", "cloud_homo", "cloud_hetero",
+		"hybrid_homo", "hybrid_hetero",
+	} {
 		resources, err := experimentScenarioResources(scenario)
 		if err != nil {
 			t.Fatal(err)
 		}
 		for _, resource := range resources {
-			if resource.Kind == "cluster" && resource.Bandwidth != 500 {
-				t.Fatalf("%s/%s bandwidth: got %.2f, want 500", scenario, resource.ID, resource.Bandwidth)
+			if resource.Bandwidth != 62.5 {
+				t.Fatalf("%s/%s bandwidth: got %.2f MB/s, want 62.5 MB/s (500 Mbps)", scenario, resource.ID, resource.Bandwidth)
 			}
 		}
+	}
+}
+
+func TestExperimentBandwidthConversionDividesBitsByEight(t *testing.T) {
+	if got := gigabitsPerSecondToMegabytesPerSecond(200); got != 25000 {
+		t.Fatalf("200 Gbps: got %.2f MB/s, want 25000 MB/s", got)
+	}
+	if got := gigabitsPerSecondToMegabytesPerSecond(0.5); got != 62.5 {
+		t.Fatalf("500 Mbps: got %.2f MB/s, want 62.5 MB/s", got)
+	}
+	if got := megabitsPerSecondToMegabytesPerSecond(10); got != 1.25 {
+		t.Fatalf("10 Mbps: got %.2f MB/s, want 1.25 MB/s", got)
 	}
 }
