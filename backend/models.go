@@ -20,6 +20,7 @@ type SimulationRequest struct {
 	Preset               string         `json:"preset"`
 	ExperimentScenarioID string         `json:"experiment_scenario_id"`
 	ExperimentWorkflowID string         `json:"experiment_workflow_id,omitempty"`
+	ExperimentDataScale  float64        `json:"experiment_data_scale,omitempty"`
 	Seed                 int64          `json:"seed"`
 	TaskCount            int            `json:"task_count"`
 	EdgeDensity          float64        `json:"edge_density"`

@@ -36,6 +36,15 @@ SCENARIO_LABELS = {
     "edge_cloud_communication_dominant": "Edge–cloud\ncomunicação dominante",
     "edge_cloud_interference_aware": "Edge–cloud\ninterferência previsível",
     "hybrid_raspberry_500mbps": "Híbrido Raspberry Pi\n500 Mbps",
+    "hybrid_communication_trap": "Híbrido\ncommunication trap",
+    "hybrid_heft_network_trap": "Híbrido\nHEFT network trap",
+    "real_network_stress_cluster_homo": "Cluster homogêneo\nrede real heterogênea",
+    "real_network_stress_cluster_hetero": "Cluster heterogêneo\nrede real heterogênea",
+    "real_network_stress_cloud_homo": "Cloud homogênea\nrede real heterogênea",
+    "real_network_stress_cloud_hetero": "Cloud heterogênea\nrede real heterogênea",
+    "real_network_stress_hybrid_homo": "Híbrido homogêneo\nrede real heterogênea",
+    "real_network_stress_hybrid_hetero": "Híbrido heterogêneo\nrede real heterogênea",
+    "real_network_stress_hybrid_raspberry_500mbps": "Fog híbrido\nrede real heterogênea",
 }
 ALGORITHM_ORDER = ["prism_cc_time", "prism_cc_cost", "heft_classic"]
 ALGORITHM_LABELS = {

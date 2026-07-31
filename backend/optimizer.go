@@ -64,6 +64,7 @@ type optimizerContext struct {
 	ResourceMasks    []uint64
 	MinTaskCosts     []float64
 	MinCriticalRanks []float64
+	CanonicalHEFT    map[string]Assignment
 }
 
 type beamFrontier struct {
@@ -119,6 +120,16 @@ func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, erro
 			generated.Experimental.PriorityPolicy == "adaptive_ready")
 	ctx.AdaptiveReady = generated.Experimental != nil &&
 		generated.Experimental.PriorityPolicy == "adaptive_ready"
+	if ctx.AdaptiveReady {
+		canonicalHEFT, canonicalErr := scheduleHEFTColocation(generated)
+		if canonicalErr != nil {
+			return nil, canonicalErr
+		}
+		ctx.CanonicalHEFT = map[string]Assignment{}
+		for _, assignment := range canonicalHEFT.Assignments {
+			ctx.CanonicalHEFT[assignment.TaskID] = assignment
+		}
+	}
 	if err := configureOptimizerContext(generated, &ctx); err != nil {
 		return nil, err
 	}
@@ -900,16 +911,9 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 	}
 	canonicalMachineSlot := ""
 	if ctx.AdaptiveReady && task.ID == canonicalTaskID {
-		canonicalRows := append([]candidateRow(nil), rows...)
-		sort.SliceStable(canonicalRows, func(i, j int) bool {
-			if canonicalRows[i].finish != canonicalRows[j].finish {
-				return canonicalRows[i].finish < canonicalRows[j].finish
-			}
-			left := canonicalRows[i].assignment.ResourceID + "|" + canonicalRows[i].assignment.CoreID
-			right := canonicalRows[j].assignment.ResourceID + "|" + canonicalRows[j].assignment.CoreID
-			return left < right
-		})
-		canonicalMachineSlot = canonicalRows[0].assignment.ResourceID + "|" + canonicalRows[0].assignment.CoreID
+		if canonical, ok := ctx.CanonicalHEFT[task.ID]; ok {
+			canonicalMachineSlot = canonical.ResourceID + "|" + canonical.CoreID
+		}
 	}
 	nextReadyState := state
 	if ctx.DynamicReady {

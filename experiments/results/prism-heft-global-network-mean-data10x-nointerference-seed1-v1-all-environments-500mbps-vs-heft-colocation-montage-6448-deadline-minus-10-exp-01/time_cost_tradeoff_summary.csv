@@ -1,0 +1,8 @@
+scenario_id,extra_time_mean,extra_time_ci95,saved_cost_mean,saved_cost_ci95,extra_time_cv,seconds_per_dollar
+cluster_homo,0.0,0.0,0.0,0.0,0.0,
+cluster_hetero,0.0,0.0,0.0,0.0,0.0,
+cloud_homo,0.0,0.0,0.0,0.0,0.0,
+cloud_hetero,0.0,0.0,0.0,0.0,0.0,
+hybrid_homo,7.021000000000015,0.0,-8.220921000000004,0.0,0.0,
+hybrid_hetero,6.910999999999973,0.0,-0.25715499999999736,0.0,0.0,
+hybrid_raspberry_500mbps,530.536,0.0,207.424309,0.0,0.0,2.5577329993660483

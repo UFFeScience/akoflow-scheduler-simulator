@@ -10,20 +10,24 @@ import (
 )
 
 const (
-	machineSimulatorsCSV        = "machine_simulators.csv"
-	edgeCloudMachinesCSV        = "machine_simulators_edge_cloud_extreme.csv"
-	communicationMachinesCSV    = "machine_simulators_communication_dominant.csv"
-	interferenceMachinesCSV     = "machine_simulators_interference_aware.csv"
-	hybridRaspberryMachinesCSV  = "machine_simulators_hybrid_raspberry_500mbps.csv"
-	montageRuntimesCSV          = "montage_c3d_standard_16_runtimes.csv"
-	montageWorkflowYAML         = "wf-montage-050d-gcp.yaml"
-	montageDSS20WorkflowID      = "montage_dss_20d"
-	montageDSS20WorkflowYAML    = "wf-montage-chameleon-dss-20d-001.yaml"
-	montageDSS20RuntimesCSV     = "montage_chameleon_dss_20d_001_runtimes.csv"
-	montageDSS20DependenciesCSV = "montage_chameleon_dss_20d_001_dependencies.csv"
-	megabitsPerGigabit          = 1000.0
-	bitsPerByte                 = 8.0
-	clusterBandwidthLimitMbps   = 500.0
+	machineSimulatorsCSV         = "machine_simulators.csv"
+	edgeCloudMachinesCSV         = "machine_simulators_edge_cloud_extreme.csv"
+	communicationMachinesCSV     = "machine_simulators_communication_dominant.csv"
+	interferenceMachinesCSV      = "machine_simulators_interference_aware.csv"
+	hybridRaspberryMachinesCSV   = "machine_simulators_hybrid_raspberry_500mbps.csv"
+	communicationTrapMachinesCSV = "machine_simulators_hybrid_communication_trap.csv"
+	heftNetworkTrapMachinesCSV   = "machine_simulators_hybrid_heft_network_trap.csv"
+	montageRuntimesCSV           = "montage_c3d_standard_16_runtimes.csv"
+	montageWorkflowYAML          = "wf-montage-050d-gcp.yaml"
+	montageDSS20WorkflowID       = "montage_dss_20d"
+	montageDSS20WorkflowYAML     = "wf-montage-chameleon-dss-20d-001.yaml"
+	montageDSS20RuntimesCSV      = "montage_chameleon_dss_20d_001_runtimes.csv"
+	montageDSS20DependenciesCSV  = "montage_chameleon_dss_20d_001_dependencies.csv"
+	imageDataflow8WorkflowID     = "image_dataflow_8"
+	imageDataflow8WorkflowYAML   = "wf-image-dataflow-8.yaml"
+	megabitsPerGigabit           = 1000.0
+	bitsPerByte                  = 8.0
+	clusterBandwidthLimitMbps    = 500.0
 )
 
 type ExperimentScenario struct {
@@ -70,13 +74,14 @@ type montageDSS20DependencyRow struct {
 }
 
 func experimentScenarioResources(scenarioID string) ([]ResourceSpec, error) {
+	sourceScenarioID := realNetworkStressBaseScenario(scenarioID)
 	rows, err := readExperimentMachines()
 	if err != nil {
 		return nil, err
 	}
 	specs := []ResourceSpec{}
 	for _, row := range rows {
-		if row.ScenarioID != scenarioID {
+		if row.ScenarioID != sourceScenarioID {
 			continue
 		}
 		bandwidth := gigabitsPerSecondToMegabytesPerSecond(row.Bandwidth)
@@ -116,6 +121,18 @@ func experimentScenarioResources(scenarioID string) ([]ResourceSpec, error) {
 		return nil, fmt.Errorf("unknown experiment scenario: %s", scenarioID)
 	}
 	return specs, nil
+}
+
+func realNetworkStressBaseScenario(scenarioID string) string {
+	const prefix = "real_network_stress_"
+	if strings.HasPrefix(scenarioID, prefix) {
+		return strings.TrimPrefix(scenarioID, prefix)
+	}
+	return scenarioID
+}
+
+func isRealNetworkStressScenario(scenarioID string) bool {
+	return strings.HasPrefix(scenarioID, "real_network_stress_")
 }
 
 func gigabitsPerSecondToMegabytesPerSecond(value float64) float64 {
@@ -241,6 +258,46 @@ func applyMontageDSS20ExperimentData(workflow *Workflow) error {
 	return nil
 }
 
+func applyImageDataflow8ExperimentData(workflow *Workflow) error {
+	runtimes := map[string]float64{
+		"t0": 60, "t1": 45, "t2": 90, "t3": 70,
+		"t4": 50, "t5": 80, "t6": 120, "t7": 65,
+	}
+	dataByEdge := map[string]float64{
+		"t0\x00t1": 10000, // d1: 10 GB
+		"t1\x00t2": 10000, // d2: 10 GB
+		"t2\x00t6": 40000, // d3 + d5 + d9 + d10: 4 x 10 GB
+		"t3\x00t4": 10000, // d7: 10 GB
+		"t4\x00t6": 10000, // d8: 10 GB
+		"t5\x00t7": 20000, // d11 + d12: 2 x 10 GB
+		"t7\x00t6": 10000, // d13: 10 GB
+	}
+	if len(workflow.Tasks) != len(runtimes) || len(workflow.Dependencies) != len(dataByEdge) {
+		return fmt.Errorf(
+			"image dataflow topology mismatch: got %d tasks and %d dependencies",
+			len(workflow.Tasks), len(workflow.Dependencies),
+		)
+	}
+	for index := range workflow.Tasks {
+		task := &workflow.Tasks[index]
+		runtime, ok := runtimes[task.ID]
+		if !ok {
+			return fmt.Errorf("image dataflow runtime missing for %s", task.ID)
+		}
+		task.BaseRuntime = runtime
+		task.WorkflowStage = "dataflow"
+	}
+	for index := range workflow.Dependencies {
+		dependency := &workflow.Dependencies[index]
+		dataMB, ok := dataByEdge[dependency.Source+"\x00"+dependency.Target]
+		if !ok {
+			return fmt.Errorf("image dataflow dependency missing for %s -> %s", dependency.Source, dependency.Target)
+		}
+		dependency.DataMB = dataMB
+	}
+	return nil
+}
+
 func readExperimentText(name string) (string, error) {
 	for _, base := range []string{"/experiments", "experiments", "../experiments"} {
 		path := filepath.Join(base, name)
@@ -260,6 +317,8 @@ func readExperimentMachines() ([]experimentMachineRow, error) {
 		communicationMachinesCSV,
 		interferenceMachinesCSV,
 		hybridRaspberryMachinesCSV,
+		communicationTrapMachinesCSV,
+		heftNetworkTrapMachinesCSV,
 	} {
 		records, err := readExperimentCSV(filename)
 		if err != nil {

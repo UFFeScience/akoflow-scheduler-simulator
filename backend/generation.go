@@ -18,6 +18,8 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 		workflowFile := montageWorkflowYAML
 		if req.ExperimentWorkflowID == montageDSS20WorkflowID {
 			workflowFile = montageDSS20WorkflowYAML
+		} else if req.ExperimentWorkflowID == imageDataflow8WorkflowID {
+			workflowFile = imageDataflow8WorkflowYAML
 		}
 		workflowYAML, err := readExperimentText(workflowFile)
 		if err != nil {
@@ -31,7 +33,9 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 	}
 	if req.ExperimentScenarioID != "" && strings.EqualFold(req.Preset, "Montage") {
 		var runtimeErr error
-		if req.ExperimentWorkflowID == montageDSS20WorkflowID {
+		if req.ExperimentWorkflowID == imageDataflow8WorkflowID {
+			runtimeErr = applyImageDataflow8ExperimentData(&workflow)
+		} else if req.ExperimentWorkflowID == montageDSS20WorkflowID {
 			runtimeErr = applyMontageDSS20ExperimentData(&workflow)
 		} else {
 			runtimeErr = applyMontageExperimentRuntimes(&workflow)
@@ -43,6 +47,24 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 			for index := range workflow.Dependencies {
 				workflow.Dependencies[index].DataMB = round(
 					workflow.Dependencies[index].DataMB*250, 9,
+				)
+			}
+		}
+		if req.ExperimentScenarioID == "hybrid_communication_trap" {
+			for index := range workflow.Dependencies {
+				workflow.Dependencies[index].DataMB = round(
+					workflow.Dependencies[index].DataMB*25, 9,
+				)
+			}
+		}
+		dataScale := req.ExperimentDataScale
+		if dataScale <= 0 {
+			dataScale = 1
+		}
+		if dataScale != 1 {
+			for index := range workflow.Dependencies {
+				workflow.Dependencies[index].DataMB = round(
+					workflow.Dependencies[index].DataMB*dataScale, 9,
 				)
 			}
 		}
@@ -89,9 +111,16 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 				financialCost[left.ID][right.ID] = 0
 				continue
 			}
-			transferDelay[left.ID][right.ID] = round(
-				(left.NetworkLatencyMS+right.NetworkLatencyMS)/2000.0, 6,
-			)
+			if isRealNetworkStressScenario(req.ExperimentScenarioID) {
+				transferDelay[left.ID][right.ID] = realNetworkStressLatencySeconds(left, right)
+			} else if req.ExperimentScenarioID == "hybrid_communication_trap" ||
+				req.ExperimentScenarioID == "hybrid_heft_network_trap" {
+				transferDelay[left.ID][right.ID] = communicationTrapLatencySeconds(left.ID, right.ID)
+			} else {
+				transferDelay[left.ID][right.ID] = round(
+					(left.NetworkLatencyMS+right.NetworkLatencyMS)/2000.0, 6,
+				)
+			}
 			if left.Kind == "cluster" && right.Kind == "cluster" {
 				financialCost[left.ID][right.ID] = 0
 			} else {

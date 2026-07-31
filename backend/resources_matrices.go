@@ -107,6 +107,15 @@ func generateResources(req SimulationRequest) ([]Resource, map[string]map[string
 			if left.ID == right.ID {
 				bandwidth[left.ID][right.ID] = 10000
 			} else if len(req.ResourceSpecs) > 0 {
+				if isRealNetworkStressScenario(req.ExperimentScenarioID) {
+					bandwidth[left.ID][right.ID] = realNetworkStressBandwidthMBps(left, right)
+					continue
+				}
+				if req.ExperimentScenarioID == "hybrid_communication_trap" ||
+					req.ExperimentScenarioID == "hybrid_heft_network_trap" {
+					bandwidth[left.ID][right.ID] = communicationTrapBandwidthMBps(left.ID, right.ID)
+					continue
+				}
 				multiplier := 1.0
 				if left.Location == right.Location && req.ExperimentScenarioID != "hybrid_raspberry_500mbps" {
 					multiplier = 1.5
@@ -122,6 +131,169 @@ func generateResources(req SimulationRequest) ([]Resource, map[string]map[string
 		}
 	}
 	return resources, bandwidth, nil
+}
+
+func realNetworkStressTier(resource Resource) string {
+	if strings.HasPrefix(resource.ID, "rpi-edge-") {
+		return "fog"
+	}
+	if resource.Kind == "cloud" {
+		return "cloud"
+	}
+	return "hpc"
+}
+
+func realNetworkStressDomain(resourceID string) int {
+	number := 0
+	multiplier := 1
+	for index := len(resourceID) - 1; index >= 0; index-- {
+		character := resourceID[index]
+		if character < '0' || character > '9' {
+			break
+		}
+		number += int(character-'0') * multiplier
+		multiplier *= 10
+	}
+	if number == 0 {
+		return int(stablePriority(resourceID) % 2)
+	}
+	return (number - 1) / 2
+}
+
+// Values are grounded in published interface/egress limits:
+// Raspberry Pi 3: 100 Mbps Ethernet and approximately 35 Mbps Wi-Fi;
+// Google H3/H4D: 200 Gbps internal and 1 Gbps outside the VPC;
+// Google C3: 23 Gbps internal for small VMs and 3 Gbps external per flow.
+func realNetworkStressBandwidthMBps(left, right Resource) float64 {
+	leftTier, rightTier := realNetworkStressTier(left), realNetworkStressTier(right)
+	if leftTier == rightTier {
+		sameDomain := realNetworkStressDomain(left.ID) == realNetworkStressDomain(right.ID)
+		switch leftTier {
+		case "fog":
+			if sameDomain {
+				return megabitsPerSecondToMegabytesPerSecond(100)
+			}
+			return megabitsPerSecondToMegabytesPerSecond(35)
+		case "cloud":
+			if sameDomain {
+				return gigabitsPerSecondToMegabytesPerSecond(23)
+			}
+			return gigabitsPerSecondToMegabytesPerSecond(3)
+		default:
+			if sameDomain {
+				return gigabitsPerSecondToMegabytesPerSecond(200)
+			}
+			return gigabitsPerSecondToMegabytesPerSecond(1)
+		}
+	}
+	pair := leftTier + "-" + rightTier
+	if pair == "fog-cloud" || pair == "cloud-fog" {
+		return megabitsPerSecondToMegabytesPerSecond(35)
+	}
+	if pair == "fog-hpc" || pair == "hpc-fog" {
+		return megabitsPerSecondToMegabytesPerSecond(100)
+	}
+	return gigabitsPerSecondToMegabytesPerSecond(1)
+}
+
+func realNetworkStressLatencySeconds(left, right Resource) float64 {
+	leftTier, rightTier := realNetworkStressTier(left), realNetworkStressTier(right)
+	if leftTier == rightTier {
+		if realNetworkStressDomain(left.ID) == realNetworkStressDomain(right.ID) {
+			return map[string]float64{"fog": 0.005, "hpc": 0.001, "cloud": 0.002}[leftTier]
+		}
+		return map[string]float64{"fog": 0.015, "hpc": 0.020, "cloud": 0.030}[leftTier]
+	}
+	pair := leftTier + "-" + rightTier
+	if pair == "fog-cloud" || pair == "cloud-fog" {
+		return 0.120
+	}
+	if pair == "fog-hpc" || pair == "hpc-fog" {
+		return 0.040
+	}
+	return 0.080
+}
+
+func communicationTrapTier(resourceID string) string {
+	if strings.HasPrefix(resourceID, "trap-fog-") || strings.HasPrefix(resourceID, "hefttrap-fog-") {
+		return "fog"
+	}
+	if strings.HasPrefix(resourceID, "trap-hpc-") || strings.HasPrefix(resourceID, "hefttrap-hpc-") {
+		return "hpc"
+	}
+	return "cloud"
+}
+
+func communicationTrapBandwidthMBps(leftID, rightID string) float64 {
+	leftTier, rightTier := communicationTrapTier(leftID), communicationTrapTier(rightID)
+	heftTrap := strings.HasPrefix(leftID, "hefttrap-") || strings.HasPrefix(rightID, "hefttrap-")
+	if heftTrap {
+		if leftTier == rightTier {
+			return megabitsPerSecondToMegabytesPerSecond(2000)
+		}
+		pair := leftTier + "-" + rightTier
+		if pair == "cloud-fog" || pair == "fog-cloud" {
+			return megabitsPerSecondToMegabytesPerSecond(5)
+		}
+		if pair == "fog-hpc" || pair == "hpc-fog" {
+			return megabitsPerSecondToMegabytesPerSecond(25)
+		}
+		return megabitsPerSecondToMegabytesPerSecond(20)
+	}
+	if leftTier == rightTier {
+		return megabitsPerSecondToMegabytesPerSecond(750)
+	}
+	pair := leftTier + "-" + rightTier
+	if pair == "cloud-fog" || pair == "fog-cloud" {
+		return megabitsPerSecondToMegabytesPerSecond(50)
+	}
+	if pair == "fog-hpc" || pair == "hpc-fog" {
+		return megabitsPerSecondToMegabytesPerSecond(100)
+	}
+	return megabitsPerSecondToMegabytesPerSecond(200)
+}
+
+func communicationTrapLatencySeconds(leftID, rightID string) float64 {
+	leftTier, rightTier := communicationTrapTier(leftID), communicationTrapTier(rightID)
+	heftTrap := strings.HasPrefix(leftID, "hefttrap-") || strings.HasPrefix(rightID, "hefttrap-")
+	if heftTrap {
+		if leftTier == rightTier {
+			switch leftTier {
+			case "fog":
+				return 0.005
+			case "hpc":
+				return 0.002
+			default:
+				return 0.025
+			}
+		}
+		pair := leftTier + "-" + rightTier
+		if pair == "cloud-fog" || pair == "fog-cloud" {
+			return 0.200
+		}
+		if pair == "fog-hpc" || pair == "hpc-fog" {
+			return 0.080
+		}
+		return 0.120
+	}
+	if leftTier == rightTier {
+		switch leftTier {
+		case "fog":
+			return 0.010
+		case "hpc":
+			return 0.003
+		default:
+			return 0.020
+		}
+	}
+	pair := leftTier + "-" + rightTier
+	if pair == "cloud-fog" || pair == "fog-cloud" {
+		return 0.130
+	}
+	if pair == "fog-hpc" || pair == "hpc-fog" {
+		return 0.030
+	}
+	return 0.080
 }
 
 func makeCores(resourceID string, count int) []Core {

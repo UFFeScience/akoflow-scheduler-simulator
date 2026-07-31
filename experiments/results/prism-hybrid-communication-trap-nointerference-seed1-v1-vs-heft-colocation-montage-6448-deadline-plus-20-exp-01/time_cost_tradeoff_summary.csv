@@ -1,0 +1,2 @@
+scenario_id,extra_time_mean,extra_time_ci95,saved_cost_mean,saved_cost_ci95,extra_time_cv,seconds_per_dollar
+hybrid_communication_trap,0.0,0.0,0.0,0.0,0.0,

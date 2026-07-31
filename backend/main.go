@@ -23,7 +23,7 @@ func main() {
 	experimentRecommendations := flag.Int("experiment-recommendations", 100, "maximum PRISM-CC recommendations exported per algorithm, environment, and seed")
 	experimentWorkers := flag.Int("experiment-workers", 0, "parallel environment/seed jobs (default: min(4, GOMAXPROCS))")
 	experimentPRISMCCPriority := flag.String("experiment-prism-priority", "topological_order", "PRISM-CC task priority: topological_order, upward_rank, ready_lookahead, or adaptive_ready")
-	experimentWorkflow := flag.String("experiment-workflow", "montage_050d", "experiment workflow: montage_050d or montage_dss_20d")
+	experimentWorkflow := flag.String("experiment-workflow", "montage_050d", "experiment workflow: montage_050d, montage_dss_20d, or image_dataflow_8")
 	experimentHEFTMode := flag.String("experiment-heft-mode", "classic_no_colocation", "HEFT baseline: classic_no_colocation or colocation")
 	experimentScenarios := flag.String("experiment-scenarios", "", "comma-separated experiment scenarios (default: all)")
 	experimentInterferenceRate := flag.Float64("experiment-interference-rate", 0.20, "controlled software interference penalty per overlapping task")
@@ -31,22 +31,28 @@ func main() {
 	experimentDeadlineLimit := flag.Float64("experiment-deadline-limit", 0, "fixed deadline limit; 0 calibrates from the selected HEFT baseline")
 	experimentBudgetMargin := flag.Float64("experiment-budget-margin", experimentSLAMargin, "budget multiplier over the per-scenario mean HEFT cost")
 	experimentDeadlineMargin := flag.Float64("experiment-deadline-margin", experimentSLAMargin, "deadline multiplier over the per-scenario mean HEFT makespan")
+	experimentDataScale := flag.Float64("experiment-data-scale", 1, "multiplier applied to every workflow dependency file size")
+	experimentExportSchedules := flag.Bool("experiment-export-schedules", false, "export complete schedule JSON files that can be imported by the frontend")
+	experimentDisableContainerOverhead := flag.Bool("experiment-disable-container-overhead", false, "set every task/resource container overhead to zero")
 	flag.Parse()
 	if *experimentOutput != "" {
 		if err := runExperimentalProtocol(ExperimentRunOptions{
 			OutputDirectory: *experimentOutput, Repetitions: *experimentRepetitions,
 			StructuralSeed: 42, BeamWidth: *experimentBeamWidth,
-			RecommendationCount: *experimentRecommendations,
-			Workers:             *experimentWorkers,
-			PRISMCCPriority:     *experimentPRISMCCPriority,
-			WorkflowID:          *experimentWorkflow,
-			HEFTMode:            *experimentHEFTMode,
-			ScenarioIDs:         splitNonEmptyCSV(*experimentScenarios),
-			InterferenceRate:    *experimentInterferenceRate,
-			FixedBudgetLimit:    *experimentBudgetLimit,
-			FixedDeadlineLimit:  *experimentDeadlineLimit,
-			BudgetMargin:        *experimentBudgetMargin,
-			DeadlineMargin:      *experimentDeadlineMargin,
+			RecommendationCount:      *experimentRecommendations,
+			Workers:                  *experimentWorkers,
+			PRISMCCPriority:          *experimentPRISMCCPriority,
+			WorkflowID:               *experimentWorkflow,
+			HEFTMode:                 *experimentHEFTMode,
+			ScenarioIDs:              splitNonEmptyCSV(*experimentScenarios),
+			InterferenceRate:         *experimentInterferenceRate,
+			FixedBudgetLimit:         *experimentBudgetLimit,
+			FixedDeadlineLimit:       *experimentDeadlineLimit,
+			BudgetMargin:             *experimentBudgetMargin,
+			DeadlineMargin:           *experimentDeadlineMargin,
+			DataScale:                *experimentDataScale,
+			ExportSchedules:          *experimentExportSchedules,
+			DisableContainerOverhead: *experimentDisableContainerOverhead,
 		}); err != nil {
 			log.Fatal(err)
 		}

@@ -1,0 +1,5 @@
+scenario_id,variant,metric,prism_mean,heft_mean,prism_gain_percent,winner
+hybrid_heft_network_trap,prism_cc_time,makespan,1846.394,4201.058,56.04930948346821,PRISM-CC
+hybrid_heft_network_trap,prism_cc_cost,makespan,2035.861,4201.058,51.539326522033264,PRISM-CC
+hybrid_heft_network_trap,prism_cc_time,budget_used,207.420057,243.310907,14.751023882377774,PRISM-CC
+hybrid_heft_network_trap,prism_cc_cost,budget_used,0.0,243.310907,100.0,PRISM-CC

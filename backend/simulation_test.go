@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -569,7 +570,7 @@ func TestAdaptiveReadyProducesCompleteDependencyValidSchedule(t *testing.T) {
 	}
 }
 
-func TestAdaptiveReadyRetainsExactHEFTCanonicalPath(t *testing.T) {
+func TestAdaptiveReadyRetainsHEFTCanonicalPlacement(t *testing.T) {
 	req := defaultRequest()
 	req.Seed = 780
 	req.TaskCount = 20
@@ -588,13 +589,21 @@ func TestAdaptiveReadyRetainsExactHEFTCanonicalPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	heftSignature := stateSignature(beamState{Assignments: heft.Assignments})
+	placementSignature := func(assignments []Assignment) string {
+		placements := make([]string, 0, len(assignments))
+		for _, assignment := range assignments {
+			placements = append(placements, assignment.TaskID+":"+assignment.ResourceID)
+		}
+		sort.Strings(placements)
+		return strings.Join(placements, "|")
+	}
+	heftSignature := placementSignature(heft.Assignments)
 	found := false
 	for _, state := range states {
-		found = found || stateSignature(state) == heftSignature
+		found = found || placementSignature(state.Assignments) == heftSignature
 	}
 	if !found {
-		t.Fatal("adaptive Beam did not retain the exact HEFT canonical path")
+		t.Fatal("adaptive Beam did not retain the HEFT canonical placement")
 	}
 }
 

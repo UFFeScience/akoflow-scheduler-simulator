@@ -1,0 +1,15 @@
+scenario_id,homogeneity,machine_id,kind,provider,machine_type,cpu_description,vcpus_or_threads,physical_cores,sockets,memory_gb,bandwidth_gbps,location,flops,speedup,ref_flops,price_per_hour_usd,network_price_per_gb_usd,pricing_model,price_source,network_latency_ms
+hybrid_heft_network_trap,hetero,hefttrap-fog-01,cluster,Fog Layer,fog-01,ARM fog node,4,4,1,4,2.0,fog-site-01,211.2,0.50,422.4,0,0,owned_fog,synthetic HEFT network trap,5
+hybrid_heft_network_trap,hetero,hefttrap-fog-02,cluster,Fog Layer,fog-02,ARM fog node,4,4,1,6,2.0,fog-site-02,253.4,0.60,422.4,0,0,owned_fog,synthetic HEFT network trap,5
+hybrid_heft_network_trap,hetero,hefttrap-fog-03,cluster,Fog Layer,fog-03,ARM fog node,4,4,1,8,2.0,fog-site-03,295.7,0.70,422.4,0,0,owned_fog,synthetic HEFT network trap,5
+hybrid_heft_network_trap,hetero,hefttrap-fog-04,cluster,Fog Layer,fog-04,ARM fog node,4,4,1,8,2.0,fog-site-04,337.9,0.80,422.4,0,0,owned_fog,synthetic HEFT network trap,5
+hybrid_heft_network_trap,hetero,hefttrap-fog-05,cluster,Fog Layer,fog-05,ARM fog node,4,4,1,12,2.0,fog-site-05,380.2,0.90,422.4,0,0,owned_fog,synthetic HEFT network trap,5
+hybrid_heft_network_trap,hetero,hefttrap-fog-06,cluster,Fog Layer,fog-06,ARM fog node,4,4,1,16,2.0,fog-site-06,422.4,1.00,422.4,0,0,owned_fog,synthetic HEFT network trap,5
+hybrid_heft_network_trap,hetero,hefttrap-fog-07,cluster,Fog Layer,fog-07,ARM fog node,4,4,1,16,2.0,fog-site-07,464.6,1.10,422.4,0,0,owned_fog,synthetic HEFT network trap,5
+hybrid_heft_network_trap,hetero,hefttrap-fog-08,cluster,Fog Layer,fog-08,ARM fog node,4,4,1,24,2.0,fog-site-08,506.9,1.20,422.4,0,0,owned_fog,synthetic HEFT network trap,5
+hybrid_heft_network_trap,hetero,hefttrap-fog-09,cluster,Fog Layer,fog-09,ARM fog node,4,4,1,24,2.0,fog-site-09,549.1,1.30,422.4,0,0,owned_fog,synthetic HEFT network trap,5
+hybrid_heft_network_trap,hetero,hefttrap-fog-10,cluster,Fog Layer,fog-10,ARM fog node,4,4,1,32,2.0,fog-site-10,591.4,1.40,422.4,0,0,owned_fog,synthetic HEFT network trap,5
+hybrid_heft_network_trap,hetero,hefttrap-hpc-01,cluster,HPC Center,hpc-01,8-core HPC node,8,8,1,64,2.0,hpc-site-01,2112.0,5.00,422.4,0,0,hpc_no_direct_charge,synthetic HEFT network trap,2
+hybrid_heft_network_trap,hetero,hefttrap-hpc-02,cluster,HPC Center,hpc-02,12-core HPC node,12,12,1,128,2.0,hpc-site-02,3379.2,8.00,422.4,0,0,hpc_no_direct_charge,synthetic HEFT network trap,2
+hybrid_heft_network_trap,hetero,hefttrap-cloud-01,cloud,Cloud Provider,cloud-fast,4-vCPU cloud instance,4,4,1,128,2.0,cloud-region-01,8448.0,20.00,422.4,1.80,0.05,on_demand,synthetic HEFT network trap,25
+hybrid_heft_network_trap,hetero,hefttrap-cloud-02,cloud,Cloud Provider,cloud-ultra,6-vCPU cloud instance,6,6,1,256,2.0,cloud-region-02,12672.0,30.00,422.4,4.50,0.09,on_demand,synthetic HEFT network trap,25

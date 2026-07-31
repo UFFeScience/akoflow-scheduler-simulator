@@ -34,6 +34,12 @@ def algorithm_order(data: pd.DataFrame) -> list[str]:
 
 def scenario_label(manifest: dict) -> str:
     scenarios = manifest.get("scenarios", [])
+    if scenarios == ["real_network_stress_cluster_hetero"]:
+        return "cluster heterogêneo com rede real"
+    if scenarios == ["real_network_stress_cloud_hetero"]:
+        return "cloud heterogênea com rede real"
+    if scenarios == ["real_network_stress_hybrid_raspberry_500mbps"]:
+        return "ambiente híbrido Fog–HPC–Cloud com rede real"
     if scenarios == ["edge_cloud_extreme"]:
         return "cenário edge–cloud extremo"
     if scenarios == ["edge_cloud_communication_dominant"]:
@@ -41,6 +47,12 @@ def scenario_label(manifest: dict) -> str:
     if scenarios == ["edge_cloud_interference_aware"]:
         return "cenário edge–cloud com interferência previsível"
     return "ambiente híbrido heterogêneo"
+
+
+def workflow_label(manifest: dict) -> str:
+    if manifest.get("workflow_id") == "image_dataflow_8":
+        return "workflow de processamento de imagens · 8 tarefas · saídas de 10 GB"
+    return f"Montage {manifest['task_count']:,}"
 
 
 def load_sweep(result_dir: Path) -> pd.DataFrame:
@@ -138,7 +150,7 @@ def plot_sweep(data: pd.DataFrame, output: Path, policy: str, manifest: dict) ->
     fig.legend(unique.values(), unique.keys(), loc="lower center", ncol=4, frameon=False)
     fig.suptitle(
         f"Impacto da interferência — {scenario_label(manifest)}\n"
-        f"Montage {manifest['task_count']:,} · {policy} · "
+        f"{workflow_label(manifest)} · {policy} · "
         f"{len(manifest['interference_seeds'])} sementes · Beam {manifest['beam_width']} · SLA fixo",
         fontsize=20,
         y=0.995,
@@ -283,7 +295,7 @@ def write_readme(
     baseline = LABELS[algorithm_order(data)[0]]
     text = f"""# Impacto da interferência de software
 
-Experimento no {scenario_label(manifest)} com Montage {manifest['task_count']:,},
+Experimento no {scenario_label(manifest)} com {workflow_label(manifest)},
 {len(manifest['interference_seeds'])} sementes pareadas,
 PRISM com **{policy}**, {baseline} e Beam {manifest['beam_width']}.
 

@@ -24,6 +24,15 @@ var experimentSupportedScenarioIDs = append(
 	append([]string(nil), experimentScenarioIDs...),
 	"edge_cloud_extreme", "edge_cloud_communication_dominant", "edge_cloud_interference_aware",
 	"hybrid_raspberry_500mbps",
+	"hybrid_communication_trap",
+	"hybrid_heft_network_trap",
+	"real_network_stress_cluster_homo",
+	"real_network_stress_cluster_hetero",
+	"real_network_stress_cloud_homo",
+	"real_network_stress_cloud_hetero",
+	"real_network_stress_hybrid_homo",
+	"real_network_stress_hybrid_hetero",
+	"real_network_stress_hybrid_raspberry_500mbps",
 )
 
 const (
@@ -35,21 +44,24 @@ const (
 )
 
 type ExperimentRunOptions struct {
-	OutputDirectory     string
-	Repetitions         int
-	StructuralSeed      int64
-	BeamWidth           int
-	RecommendationCount int
-	Workers             int
-	PRISMCCPriority     string
-	WorkflowID          string
-	HEFTMode            string
-	ScenarioIDs         []string
-	InterferenceRate    float64
-	FixedBudgetLimit    float64
-	FixedDeadlineLimit  float64
-	BudgetMargin        float64
-	DeadlineMargin      float64
+	OutputDirectory          string
+	Repetitions              int
+	StructuralSeed           int64
+	BeamWidth                int
+	RecommendationCount      int
+	Workers                  int
+	PRISMCCPriority          string
+	WorkflowID               string
+	HEFTMode                 string
+	ScenarioIDs              []string
+	InterferenceRate         float64
+	FixedBudgetLimit         float64
+	FixedDeadlineLimit       float64
+	BudgetMargin             float64
+	DeadlineMargin           float64
+	DataScale                float64
+	ExportSchedules          bool
+	DisableContainerOverhead bool
 }
 
 type ExperimentRecord struct {
@@ -87,25 +99,27 @@ type ExperimentRecommendationRecord struct {
 }
 
 type ExperimentManifest struct {
-	GeneratedAt         string                 `json:"generated_at"`
-	StructuralSeed      int64                  `json:"structural_seed"`
-	InterferenceSeeds   []int64                `json:"interference_seeds"`
-	Scenarios           []string               `json:"scenarios"`
-	Algorithms          []string               `json:"algorithms"`
-	WorkflowID          string                 `json:"workflow_id"`
-	TaskCount           int                    `json:"task_count"`
-	InterferenceRate    float64                `json:"interference_rate"`
-	SelectedActivities  int                    `json:"selected_activities"`
-	SLAMargin           float64                `json:"sla_margin"`
-	BudgetMargin        float64                `json:"budget_margin"`
-	DeadlineMargin      float64                `json:"deadline_margin"`
-	ScenarioSLAs        map[string]ScenarioSLA `json:"scenario_slas"`
-	ReferencePolicy     string                 `json:"reference_policy"`
-	Calibration         string                 `json:"calibration"`
-	HEFTMode            string                 `json:"heft_mode"`
-	PRISMCCPriority     string                 `json:"prism_cc_priority"`
-	BeamWidth           int                    `json:"beam_width"`
-	RecommendationCount int                    `json:"recommendation_count"`
+	GeneratedAt               string                 `json:"generated_at"`
+	StructuralSeed            int64                  `json:"structural_seed"`
+	InterferenceSeeds         []int64                `json:"interference_seeds"`
+	Scenarios                 []string               `json:"scenarios"`
+	Algorithms                []string               `json:"algorithms"`
+	WorkflowID                string                 `json:"workflow_id"`
+	TaskCount                 int                    `json:"task_count"`
+	InterferenceRate          float64                `json:"interference_rate"`
+	SelectedActivities        int                    `json:"selected_activities"`
+	SLAMargin                 float64                `json:"sla_margin"`
+	BudgetMargin              float64                `json:"budget_margin"`
+	DeadlineMargin            float64                `json:"deadline_margin"`
+	ScenarioSLAs              map[string]ScenarioSLA `json:"scenario_slas"`
+	ReferencePolicy           string                 `json:"reference_policy"`
+	Calibration               string                 `json:"calibration"`
+	HEFTMode                  string                 `json:"heft_mode"`
+	PRISMCCPriority           string                 `json:"prism_cc_priority"`
+	BeamWidth                 int                    `json:"beam_width"`
+	RecommendationCount       int                    `json:"recommendation_count"`
+	DataScale                 float64                `json:"data_scale"`
+	ContainerOverheadDisabled bool                   `json:"container_overhead_disabled"`
 }
 
 type ScenarioSLA struct {
@@ -164,6 +178,12 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	if options.InterferenceRate < 0 || options.InterferenceRate > 1 {
 		return fmt.Errorf("experiment interference rate must be between 0 and 1, got %v", options.InterferenceRate)
 	}
+	if options.DataScale == 0 {
+		options.DataScale = 1
+	}
+	if options.DataScale <= 0 {
+		return fmt.Errorf("experiment data scale must be greater than zero")
+	}
 	if options.BudgetMargin <= 0 {
 		options.BudgetMargin = experimentSLAMargin
 	}
@@ -186,7 +206,8 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	if (options.FixedBudgetLimit > 0) != (options.FixedDeadlineLimit > 0) {
 		return fmt.Errorf("fixed budget and deadline limits must be provided together")
 	}
-	if options.WorkflowID != "montage_050d" && options.WorkflowID != montageDSS20WorkflowID {
+	if options.WorkflowID != "montage_050d" && options.WorkflowID != montageDSS20WorkflowID &&
+		options.WorkflowID != imageDataflow8WorkflowID {
 		return fmt.Errorf("unsupported experiment workflow %q", options.WorkflowID)
 	}
 	if options.PRISMCCPriority != "topological_order" && options.PRISMCCPriority != "upward_rank" &&
@@ -212,6 +233,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		scenarioID       string
 		interferenceSeed int64
 		record           ExperimentRecord
+		result           SimulationResult
 	}
 	heftRuns := make([]calibratedHEFTRun, 0, len(scenarioIDs)*options.Repetitions)
 	heftMakespans := map[string][]float64{}
@@ -227,11 +249,15 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		referenceElapsed := 0.0
 		for repetition := 1; repetition <= options.Repetitions; repetition++ {
 			interferenceSeed := int64(repetition)
-			heftGenerated, generationErr := generateExperimentSimulationForWorkflowAtRate(
-				scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth, options.InterferenceRate,
+			heftGenerated, generationErr := generateExperimentSimulationForWorkflowAtRateAndDataScale(
+				scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false,
+				options.BeamWidth, options.InterferenceRate, options.DataScale,
 			)
 			if generationErr != nil {
 				return fmt.Errorf("%s seed %d HEFT generation: %w", scenarioID, interferenceSeed, generationErr)
+			}
+			if options.DisableContainerOverhead {
+				disableContainerOverhead(&heftGenerated)
 			}
 			if taskCount == 0 {
 				taskCount = len(heftGenerated.Workflow.Tasks)
@@ -251,6 +277,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 			heftResult.Experimental = heftGenerated.Experimental
 			heftRuns = append(heftRuns, calibratedHEFTRun{
 				scenarioID: scenarioID, interferenceSeed: interferenceSeed,
+				result: heftResult,
 				record: experimentRecordFromResult(
 					heftResult, baselineAlgorithm, scenarioID, interferenceSeed, 0, 0, referenceElapsed,
 				),
@@ -282,6 +309,17 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		record.DeadlineViolation = round(maxf(0, record.Makespan-sla.DeadlineLimit), 3)
 		record.Feasible = record.BudgetViolation == 0 && record.DeadlineViolation == 0
 		records = append(records, record)
+		if options.ExportSchedules {
+			result := heftRun.result
+			result.SLA.BudgetLimit = &sla.BudgetLimit
+			result.SLA.DeadlineLimit = &sla.DeadlineLimit
+			if err := writeExperimentSchedule(
+				options.OutputDirectory, heftRun.scenarioID, heftRun.interferenceSeed,
+				baselineAlgorithm, result,
+			); err != nil {
+				return err
+			}
+		}
 	}
 
 	type prismJob struct {
@@ -377,6 +415,8 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		Calibration:     "Per-scenario mean of the selected HEFT baseline runs",
 		HEFTMode:        options.HEFTMode, PRISMCCPriority: options.PRISMCCPriority,
 		BeamWidth: options.BeamWidth, RecommendationCount: options.RecommendationCount,
+		DataScale:                 options.DataScale,
+		ContainerOverheadDisabled: options.DisableContainerOverhead,
 	}
 	return writeJSONFile(filepath.Join(options.OutputDirectory, "manifest.json"), manifest)
 }
@@ -396,11 +436,15 @@ func scheduleHEFTBaseline(generated GeneratedSimulation, mode string) (Simulatio
 }
 
 func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, interferenceSeed int64, sla ScenarioSLA) ([]ExperimentRecord, error) {
-	generated, generationErr := generateExperimentSimulationForWorkflowAtRate(
-		scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false, options.BeamWidth, options.InterferenceRate,
+	generated, generationErr := generateExperimentSimulationForWorkflowAtRateAndDataScale(
+		scenarioID, options.WorkflowID, options.StructuralSeed, interferenceSeed, false,
+		options.BeamWidth, options.InterferenceRate, options.DataScale,
 	)
 	if generationErr != nil {
 		return nil, fmt.Errorf("%s seed %d generation: %w", scenarioID, interferenceSeed, generationErr)
+	}
+	if options.DisableContainerOverhead {
+		disableContainerOverhead(&generated)
 	}
 	generated.SLA.BudgetLimit = &sla.BudgetLimit
 	generated.SLA.DeadlineLimit = &sla.DeadlineLimit
@@ -434,6 +478,19 @@ func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, inte
 			return nil, fmt.Errorf("%s/%s seed %d: beam returned no schedule", scenarioID, algorithm, interferenceSeed)
 		}
 		selected := selectAnchoredPRISMResult(algorithm, heftAnchor, response, sla)
+		if selected.Experimental != nil {
+			metadata := *selected.Experimental
+			metadata.Algorithm = algorithm
+			metadata.PriorityPolicy = options.PRISMCCPriority
+			selected.Experimental = &metadata
+		}
+		if options.ExportSchedules {
+			if err := writeExperimentSchedule(
+				options.OutputDirectory, scenarioID, interferenceSeed, algorithm, selected,
+			); err != nil {
+				return nil, err
+			}
+		}
 		record := experimentRecordFromResult(
 			selected, algorithm, scenarioID, interferenceSeed, sla.BudgetLimit, sla.DeadlineLimit,
 			searchMilliseconds,
@@ -494,14 +551,23 @@ func generateExperimentSimulationForWorkflow(scenarioID, workflowID string, stru
 }
 
 func generateExperimentSimulationForWorkflowAtRate(scenarioID, workflowID string, structuralSeed, interferenceSeed int64, disabled bool, beamWidth int, interferenceRate float64) (GeneratedSimulation, error) {
+	return generateExperimentSimulationForWorkflowAtRateAndDataScale(
+		scenarioID, workflowID, structuralSeed, interferenceSeed, disabled, beamWidth, interferenceRate, 1,
+	)
+}
+
+func generateExperimentSimulationForWorkflowAtRateAndDataScale(scenarioID, workflowID string, structuralSeed, interferenceSeed int64, disabled bool, beamWidth int, interferenceRate, dataScale float64) (GeneratedSimulation, error) {
 	req := defaultRequest()
 	req.Preset = "Montage"
 	req.ExperimentScenarioID = scenarioID
 	req.ExperimentWorkflowID = workflowID
+	req.ExperimentDataScale = dataScale
 	req.Seed = structuralSeed
 	req.TaskCount = 58
 	if workflowID == montageDSS20WorkflowID {
 		req.TaskCount = 6448
+	} else if workflowID == imageDataflow8WorkflowID {
+		req.TaskCount = 8
 	}
 	req.OptionCount = 1
 	req.BeamWidth = beamWidth
@@ -528,11 +594,13 @@ func validateExperimentScenarios() error {
 	}
 	for _, scenarioID := range experimentSupportedScenarioIDs {
 		expected := 4
-		if scenarioID == "hybrid_raspberry_500mbps" {
+		baseScenarioID := realNetworkStressBaseScenario(scenarioID)
+		if baseScenarioID == "hybrid_raspberry_500mbps" || scenarioID == "hybrid_communication_trap" ||
+			scenarioID == "hybrid_heft_network_trap" {
 			expected = 14
 		}
-		if counts[scenarioID] != expected {
-			return fmt.Errorf("scenario %s must define exactly %d machines, got %d", scenarioID, expected, counts[scenarioID])
+		if counts[baseScenarioID] != expected {
+			return fmt.Errorf("scenario %s must define exactly %d machines, got %d", scenarioID, expected, counts[baseScenarioID])
 		}
 	}
 	return nil
@@ -746,4 +814,24 @@ func writeJSONFile(path string, value any) error {
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(value)
+}
+
+func writeExperimentSchedule(
+	outputDirectory, scenarioID string, seed int64, algorithm string, result SimulationResult,
+) error {
+	directory := filepath.Join(
+		outputDirectory, "schedules", scenarioID, fmt.Sprintf("seed-%d", seed),
+	)
+	if err := os.MkdirAll(directory, 0o755); err != nil {
+		return err
+	}
+	return writeJSONFile(filepath.Join(directory, algorithm+".json"), result)
+}
+
+func disableContainerOverhead(generated *GeneratedSimulation) {
+	for taskID, byResource := range generated.Matrices.ContainerOverhead {
+		for resourceID := range byResource {
+			generated.Matrices.ContainerOverhead[taskID][resourceID] = 0
+		}
+	}
 }

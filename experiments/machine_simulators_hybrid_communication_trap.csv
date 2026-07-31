@@ -1,0 +1,15 @@
+scenario_id,homogeneity,machine_id,kind,provider,machine_type,cpu_description,vcpus_or_threads,physical_cores,sockets,memory_gb,bandwidth_gbps,location,flops,speedup,ref_flops,price_per_hour_usd,network_price_per_gb_usd,pricing_model,price_source,network_latency_ms
+hybrid_communication_trap,hetero,trap-fog-01,cluster,Fog Layer,fog-small,ARM fog node,4,4,1,4,0.75,fog-site-01,211.2,0.50,422.4,0,0,owned_fog,synthetic communication stress test,10
+hybrid_communication_trap,hetero,trap-fog-02,cluster,Fog Layer,fog-small-plus,ARM fog node,4,4,1,6,0.75,fog-site-02,253.4,0.60,422.4,0,0,owned_fog,synthetic communication stress test,10
+hybrid_communication_trap,hetero,trap-fog-03,cluster,Fog Layer,fog-medium,ARM fog node,6,6,1,8,0.75,fog-site-03,295.7,0.70,422.4,0,0,owned_fog,synthetic communication stress test,10
+hybrid_communication_trap,hetero,trap-fog-04,cluster,Fog Layer,fog-medium-plus,ARM fog node,6,6,1,8,0.75,fog-site-04,337.9,0.80,422.4,0,0,owned_fog,synthetic communication stress test,10
+hybrid_communication_trap,hetero,trap-fog-05,cluster,Fog Layer,fog-large,ARM fog node,8,8,1,12,0.75,fog-site-05,380.2,0.90,422.4,0,0,owned_fog,synthetic communication stress test,10
+hybrid_communication_trap,hetero,trap-fog-06,cluster,Fog Layer,fog-large-plus,ARM fog node,8,8,1,16,0.75,fog-site-06,422.4,1.00,422.4,0,0,owned_fog,synthetic communication stress test,10
+hybrid_communication_trap,hetero,trap-fog-07,cluster,Fog Layer,fog-xlarge,ARM fog node,8,8,1,16,0.75,fog-site-07,464.6,1.10,422.4,0,0,owned_fog,synthetic communication stress test,10
+hybrid_communication_trap,hetero,trap-fog-08,cluster,Fog Layer,fog-xlarge-plus,ARM fog node,12,12,1,24,0.75,fog-site-08,506.9,1.20,422.4,0,0,owned_fog,synthetic communication stress test,10
+hybrid_communication_trap,hetero,trap-fog-09,cluster,Fog Layer,fog-2xlarge,ARM fog node,12,12,1,24,0.75,fog-site-09,549.1,1.30,422.4,0,0,owned_fog,synthetic communication stress test,10
+hybrid_communication_trap,hetero,trap-fog-10,cluster,Fog Layer,fog-2xlarge-plus,ARM fog node,16,16,1,32,0.75,fog-site-10,591.4,1.40,422.4,0,0,owned_fog,synthetic communication stress test,10
+hybrid_communication_trap,hetero,trap-hpc-01,cluster,HPC Center,hpc-standard,16-core Xeon HPC,16,16,1,64,0.75,hpc-site-01,1689.6,4.00,422.4,0,0,hpc_no_direct_charge,synthetic communication stress test,3
+hybrid_communication_trap,hetero,trap-hpc-02,cluster,HPC Center,hpc-fast,32-core Xeon HPC,32,32,2,128,0.75,hpc-site-02,3379.2,8.00,422.4,0,0,hpc_no_direct_charge,synthetic communication stress test,3
+hybrid_communication_trap,hetero,trap-cloud-01,cloud,Cloud Provider,compute-standard,32-vCPU cloud instance,32,32,1,128,0.75,cloud-region-01,5068.8,12.00,422.4,1.80,0.05,on_demand,synthetic communication stress test,20
+hybrid_communication_trap,hetero,trap-cloud-02,cloud,Cloud Provider,compute-accelerated,64-vCPU cloud instance,64,64,1,256,0.75,cloud-region-02,8448.0,20.00,422.4,4.50,0.09,on_demand,synthetic communication stress test,20

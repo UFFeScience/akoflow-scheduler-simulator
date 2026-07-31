@@ -66,7 +66,8 @@ func validateRequest(r SimulationRequest) error {
 	}
 	if r.ExperimentWorkflowID != "" &&
 		r.ExperimentWorkflowID != "montage_050d" &&
-		r.ExperimentWorkflowID != montageDSS20WorkflowID {
+		r.ExperimentWorkflowID != montageDSS20WorkflowID &&
+		r.ExperimentWorkflowID != imageDataflow8WorkflowID {
 		return fmt.Errorf("unsupported experiment workflow: %s", r.ExperimentWorkflowID)
 	}
 	maxTaskCount := 100

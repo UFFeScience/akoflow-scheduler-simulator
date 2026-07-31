@@ -1,0 +1,56 @@
+name: wf-image-dataflow-8
+spec:
+  runtime: experimental
+  image: scheduler/dataflow:latest
+  activities:
+    - name: t0
+      run: process d0 --output d1
+      memoryLimit: 2Gi
+      cpuLimit: 1
+
+    - name: t1
+      run: process d1 --output d2
+      memoryLimit: 2Gi
+      cpuLimit: 1
+      dependsOn:
+        - t0
+
+    - name: t2
+      run: fanout d2 --outputs d3,d5,d9,d10
+      memoryLimit: 4Gi
+      cpuLimit: 2
+      dependsOn:
+        - t1
+
+    - name: t3
+      run: process d6 --output d7
+      memoryLimit: 3Gi
+      cpuLimit: 1
+
+    - name: t4
+      run: process d7 --output d8
+      memoryLimit: 3Gi
+      cpuLimit: 1
+      dependsOn:
+        - t3
+
+    - name: t5
+      run: fanout d6 --outputs d11,d12
+      memoryLimit: 4Gi
+      cpuLimit: 2
+
+    - name: t7
+      run: process d11,d12 --output d13
+      memoryLimit: 4Gi
+      cpuLimit: 2
+      dependsOn:
+        - t5
+
+    - name: t6
+      run: merge d3,d5,d9,d10,d8,d13 --output d4
+      memoryLimit: 8Gi
+      cpuLimit: 4
+      dependsOn:
+        - t2
+        - t4
+        - t7

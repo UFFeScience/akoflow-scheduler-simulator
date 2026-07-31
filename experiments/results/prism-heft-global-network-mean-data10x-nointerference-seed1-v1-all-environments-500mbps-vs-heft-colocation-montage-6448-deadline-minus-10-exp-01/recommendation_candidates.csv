@@ -1,0 +1,22 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+cluster_hetero,heft_classic,On-prem heterogêneo · HEFT coalocado,477.438,477.438,0.0,0.0,,0.0,0.0,429.6942,0.0,111.1111111111111,11.111111111111093,0,False,True,1,,,
+hybrid_raspberry_500mbps,prism_cc_cost,Híbrido Raspberry Pi 500 Mbps · PRISM-CC - Cost,1014.233,1014.233,6.579816,6.579816,,100.0,335.305159,1103.5611,1.9623366427237106,91.90546857804249,0.0,0,True,True,2,1.9623366427237106,19.205642533068612,9.787129341075396
+cloud_homo,prism_cc_cost,Nuvem homogênea · PRISM-CC - Cost,128.174,128.174,54.63062,54.63062,,100.0,97.290131,146.349,56.152273039903704,87.58105624227021,0.0,0,True,True,3,54.18993639717999,4.32441233577228,0.07980102253815008
+hybrid_raspberry_500mbps,prism_cc_time,Híbrido Raspberry Pi 500 Mbps · PRISM-CC - Time,483.697,483.697,214.004125,214.004125,,100.0,335.305159,1103.5611,63.823689930162985,43.83055908730382,0.0,0,True,True,4,7.67141689025928,43.75049715496639,5.703053005829761
+cluster_hetero,prism_cc_cost,On-prem heterogêneo · PRISM-CC - Cost,477.438,477.438,0.0,0.0,,0.0,0.0,429.6942,0.0,111.1111111111111,11.111111111111093,0,False,False,,,,
+cluster_hetero,prism_cc_time,On-prem heterogêneo · PRISM-CC - Time,477.438,477.438,0.0,0.0,,0.0,0.0,429.6942,0.0,111.1111111111111,11.111111111111093,0,False,False,,,,
+cluster_homo,heft_classic,On-prem homogêneo · HEFT coalocado,527.462,527.462,0.0,0.0,,0.0,0.0,474.7158,0.0,111.1111111111111,11.111111111111116,0,False,False,,,,
+cluster_homo,prism_cc_cost,On-prem homogêneo · PRISM-CC - Cost,527.462,527.462,0.0,0.0,,0.0,0.0,474.7158,0.0,111.1111111111111,11.111111111111116,0,False,False,,,,
+cluster_homo,prism_cc_time,On-prem homogêneo · PRISM-CC - Time,527.462,527.462,0.0,0.0,,0.0,0.0,474.7158,0.0,111.1111111111111,11.111111111111116,0,False,False,,,,
+cloud_homo,prism_cc_time,Nuvem homogênea · PRISM-CC - Time,128.174,128.174,54.63062,54.63062,,100.0,97.290131,146.349,56.152273039903704,87.58105624227021,0.0,0,True,False,,,,
+cloud_hetero,prism_cc_cost,Nuvem heterogênea · PRISM-CC - Cost,150.502,150.502,52.032313,52.032313,,100.0,91.6987,154.4832,56.74269428028969,97.42289129173916,0.0,0,True,False,,,,
+cloud_hetero,prism_cc_time,Nuvem heterogênea · PRISM-CC - Time,150.502,150.502,52.032313,52.032313,,100.0,91.6987,154.4832,56.74269428028969,97.42289129173916,0.0,0,True,False,,,,
+hybrid_homo,prism_cc_time,Híbrido homogêneo · PRISM-CC - Time,183.361,183.361,36.313193,36.313193,,0.0,53.440937,171.3438,67.95014279034815,107.01350150982995,7.013501509829956,0,False,False,,,,
+hybrid_hetero,prism_cc_time,Híbrido heterogêneo · PRISM-CC - Time,156.235,156.235,29.781524,29.781524,,0.0,36.046415,146.8314,82.61993321665967,106.40435220259428,6.404352202594277,0,False,False,,,,
+hybrid_hetero,heft_classic,Híbrido heterogêneo · HEFT coalocado,163.146,163.146,30.038679,30.038679,,0.0,36.046415,146.8314,83.33333287096649,111.1111111111111,11.111111111111093,0,False,False,,,,
+hybrid_hetero,prism_cc_cost,Híbrido heterogêneo · PRISM-CC - Cost,163.146,163.146,30.038679,30.038679,,0.0,36.046415,146.8314,83.33333287096649,111.1111111111111,11.111111111111093,0,False,False,,,,
+cloud_hetero,heft_classic,Nuvem heterogênea · HEFT coalocado,171.648,171.648,76.415583,76.415583,,0.0,91.6987,154.4832,83.333332969824,111.1111111111111,11.111111111111093,0,False,False,,,,
+hybrid_homo,heft_classic,Híbrido homogêneo · HEFT coalocado,190.382,190.382,44.534114,44.534114,,0.0,53.440937,171.3438,83.33333302146255,111.11111111111113,11.111111111111116,0,False,False,,,,
+hybrid_homo,prism_cc_cost,Híbrido homogêneo · PRISM-CC - Cost,190.382,190.382,44.534114,44.534114,,0.0,53.440937,171.3438,83.33333302146255,111.11111111111113,11.111111111111116,0,False,False,,,,
+cloud_homo,heft_classic,Nuvem homogênea · HEFT coalocado,162.61,162.61,81.075109,81.075109,,0.0,97.290131,146.349,83.33333316202442,111.11111111111113,11.11111111111114,0,False,False,,,,
+hybrid_raspberry_500mbps,heft_classic,Híbrido Raspberry Pi 500 Mbps · HEFT coalocado,1226.179,1226.179,279.420966,279.420966,,0.0,335.305159,1103.5611,83.3333333830393,111.11111111111113,11.11111111111114,0,False,False,,,,

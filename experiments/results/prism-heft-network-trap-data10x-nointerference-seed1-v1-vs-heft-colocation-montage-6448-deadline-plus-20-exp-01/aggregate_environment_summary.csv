@@ -1,0 +1,4 @@
+scenario_id,algorithm,runs,makespan_mean,makespan_median,makespan_stddev,makespan_ci95,budget_used_mean,budget_used_median,budget_used_stddev,budget_used_ci95
+hybrid_heft_network_trap,heft_classic,1,4201.058,4201.058,0,0.0,243.310907,243.310907,0,0.0
+hybrid_heft_network_trap,prism_cc_cost,1,2035.861,2035.861,0,0.0,0.0,0.0,0,0.0
+hybrid_heft_network_trap,prism_cc_time,1,1846.394,1846.394,0,0.0,207.420057,207.420057,0,0.0

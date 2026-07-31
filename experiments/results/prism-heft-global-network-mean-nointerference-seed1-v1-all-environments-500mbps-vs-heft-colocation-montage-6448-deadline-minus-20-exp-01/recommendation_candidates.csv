@@ -1,0 +1,22 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+cluster_hetero,heft_classic,On-prem heterogêneo · HEFT coalocado,438.461,438.461,0.0,0.0,,0.0,0.0,350.7688,0.0,125.0,25.0,0,False,True,1,,,
+hybrid_hetero,prism_cc_time,Híbrido heterogêneo · PRISM-CC - Time,156.301,156.301,3.089814,3.089814,,0.0,3.787045,125.1992,81.5890489814618,124.84185202461356,24.84185202461355,0,False,True,2,81.5890489814618,0.15814797538644143,0.0019383480670595256
+hybrid_raspberry_500mbps,prism_cc_time,Híbrido Raspberry Pi 500 Mbps · PRISM-CC - Time,395.759,395.759,27.30789,27.30789,,0.0,33.244387,317.8184,82.14285918401804,124.52362732931763,24.523627329317634,0,False,True,3,0.5538102025562353,0.3182246952959247,0.5746096655985881
+cluster_hetero,prism_cc_cost,On-prem heterogêneo · PRISM-CC - Cost,438.461,438.461,0.0,0.0,,0.0,0.0,350.7688,0.0,125.0,25.0,0,False,False,,,,
+cluster_hetero,prism_cc_time,On-prem heterogêneo · PRISM-CC - Time,438.461,438.461,0.0,0.0,,0.0,0.0,350.7688,0.0,125.0,25.0,0,False,False,,,,
+cluster_homo,heft_classic,On-prem homogêneo · HEFT coalocado,490.855,490.855,0.0,0.0,,0.0,0.0,392.684,0.0,124.99999999999999,25.0,0,False,False,,,,
+cluster_homo,prism_cc_cost,On-prem homogêneo · PRISM-CC - Cost,490.855,490.855,0.0,0.0,,0.0,0.0,392.684,0.0,124.99999999999999,25.0,0,False,False,,,,
+cluster_homo,prism_cc_time,On-prem homogêneo · PRISM-CC - Time,490.855,490.855,0.0,0.0,,0.0,0.0,392.684,0.0,124.99999999999999,25.0,0,False,False,,,,
+hybrid_homo,heft_classic,Híbrido homogêneo · HEFT coalocado,142.665,142.665,5.313585,5.313585,,0.0,6.376302,114.132,83.33333333333333,125.0,24.99999999999998,0,False,False,,,,
+hybrid_homo,prism_cc_cost,Híbrido homogêneo · PRISM-CC - Cost,142.665,142.665,5.313585,5.313585,,0.0,6.376302,114.132,83.33333333333333,125.0,24.99999999999998,0,False,False,,,,
+hybrid_homo,prism_cc_time,Híbrido homogêneo · PRISM-CC - Time,142.665,142.665,5.313585,5.313585,,0.0,6.376302,114.132,83.33333333333333,125.0,24.99999999999998,0,False,False,,,,
+cloud_homo,heft_classic,Nuvem homogênea · HEFT coalocado,118.248,118.248,9.461985,9.461985,,0.0,11.354382,94.5984,83.33333333333334,125.00000000000001,25.0,0,False,False,,,,
+cloud_homo,prism_cc_cost,Nuvem homogênea · PRISM-CC - Cost,118.248,118.248,9.461985,9.461985,,0.0,11.354382,94.5984,83.33333333333334,125.00000000000001,25.0,0,False,False,,,,
+cloud_homo,prism_cc_time,Nuvem homogênea · PRISM-CC - Time,118.248,118.248,9.461985,9.461985,,0.0,11.354382,94.5984,83.33333333333334,125.00000000000001,25.0,0,False,False,,,,
+hybrid_raspberry_500mbps,heft_classic,Híbrido Raspberry Pi 500 Mbps · HEFT coalocado,397.273,397.273,27.703656,27.703656,,0.0,33.244387,317.8184,83.3333338346711,125.00000000000001,25.0,0,False,False,,,,
+hybrid_raspberry_500mbps,prism_cc_cost,Híbrido Raspberry Pi 500 Mbps · PRISM-CC - Cost,397.273,397.273,27.703656,27.703656,,0.0,33.244387,317.8184,83.3333338346711,125.00000000000001,25.0,0,False,False,,,,
+cloud_hetero,heft_classic,Nuvem heterogênea · HEFT coalocado,132.989,132.989,8.459216,8.459216,,0.0,10.151059,106.3912,83.33333497519816,125.0,25.0,0,False,False,,,,
+cloud_hetero,prism_cc_cost,Nuvem heterogênea · PRISM-CC - Cost,132.989,132.989,8.459216,8.459216,,0.0,10.151059,106.3912,83.33333497519816,125.0,25.0,0,False,False,,,,
+cloud_hetero,prism_cc_time,Nuvem heterogênea · PRISM-CC - Time,132.989,132.989,8.459216,8.459216,,0.0,10.151059,106.3912,83.33333497519816,125.0,25.0,0,False,False,,,,
+hybrid_hetero,heft_classic,Híbrido heterogêneo · HEFT coalocado,156.499,156.499,3.155871,3.155871,,0.0,3.787045,125.1992,83.33333773430206,124.99999999999999,25.0,0,False,False,,,,
+hybrid_hetero,prism_cc_cost,Híbrido heterogêneo · PRISM-CC - Cost,156.499,156.499,3.155871,3.155871,,0.0,3.787045,125.1992,83.33333773430206,124.99999999999999,25.0,0,False,False,,,,

@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-07-30T17:10:45Z",
+  "structural_seed": 42,
+  "interference_seeds": [
+    1
+  ],
+  "scenarios": [
+    "real_network_stress_cluster_homo",
+    "real_network_stress_cluster_hetero",
+    "real_network_stress_cloud_homo",
+    "real_network_stress_cloud_hetero",
+    "real_network_stress_hybrid_homo",
+    "real_network_stress_hybrid_hetero",
+    "real_network_stress_hybrid_raspberry_500mbps"
+  ],
+  "algorithms": [
+    "prism_cc_time",
+    "prism_cc_cost",
+    "heft_colocation"
+  ],
+  "workflow_id": "montage_dss_20d",
+  "task_count": 6448,
+  "interference_rate": 0,
+  "selected_activities": 3224,
+  "sla_margin": 1.2,
+  "budget_margin": 1.2,
+  "deadline_margin": 1.2,
+  "scenario_slas": {
+    "real_network_stress_cloud_hetero": {
+      "budget_limit": 10.472078,
+      "deadline_limit": 159.0372
+    },
+    "real_network_stress_cloud_homo": {
+      "budget_limit": 11.862654,
+      "deadline_limit": 142.776
+    },
+    "real_network_stress_cluster_hetero": {
+      "budget_limit": 0,
+      "deadline_limit": 528.03
+    },
+    "real_network_stress_cluster_homo": {
+      "budget_limit": 0,
+      "deadline_limit": 593.7216
+    },
+    "real_network_stress_hybrid_hetero": {
+      "budget_limit": 3.731831,
+      "deadline_limit": 189.1608
+    },
+    "real_network_stress_hybrid_homo": {
+      "budget_limit": 6.600113,
+      "deadline_limit": 171.978
+    },
+    "real_network_stress_hybrid_raspberry_500mbps": {
+      "budget_limit": 33.928938,
+      "deadline_limit": 430.0164
+    }
+  },
+  "reference_policy": "Per-scenario heft_colocation mean multiplied by explicit margins: 1.20x budget and 1.20x deadline",
+  "calibration": "Per-scenario mean of the selected HEFT baseline runs",
+  "heft_mode": "colocation",
+  "prism_cc_priority": "adaptive_ready",
+  "beam_width": 120,
+  "recommendation_count": 100,
+  "data_scale": 1
+}

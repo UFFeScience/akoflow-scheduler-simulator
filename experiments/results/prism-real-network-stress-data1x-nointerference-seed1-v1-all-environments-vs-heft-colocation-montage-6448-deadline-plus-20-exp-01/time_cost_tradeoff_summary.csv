@@ -1,0 +1,8 @@
+scenario_id,extra_time_mean,extra_time_ci95,saved_cost_mean,saved_cost_ci95,extra_time_cv,seconds_per_dollar
+real_network_stress_cluster_homo,0.0,0.0,0.0,0.0,0.0,
+real_network_stress_cluster_hetero,0.0,0.0,0.0,0.0,0.0,
+real_network_stress_cloud_homo,4.216000000000008,0.0,2.5470000000000006,0.0,0.0,1.6552807224185344
+real_network_stress_cloud_hetero,4.793000000000006,0.0,2.1660330000000005,0.0,0.0,2.2128010053401796
+real_network_stress_hybrid_homo,18.037000000000006,0.0,0.14867799999999942,0.0,0.0,121.31586381307307
+real_network_stress_hybrid_hetero,29.457000000000022,0.0,2.6797020000000003,0.0,0.0,10.992640226413243
+real_network_stress_hybrid_raspberry_500mbps,0.0,0.0,0.0,0.0,0.0,
