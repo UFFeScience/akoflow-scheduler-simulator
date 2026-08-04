@@ -33,6 +33,14 @@ var experimentSupportedScenarioIDs = append(
 	"real_network_stress_hybrid_homo",
 	"real_network_stress_hybrid_hetero",
 	"real_network_stress_hybrid_raspberry_500mbps",
+	"wfcommons_chameleon_dss20",
+	"network_hpc_local",
+	"network_hpc_multisite",
+	"network_cloud_multiregion",
+	"network_hpc_cloud",
+	"network_edge_cloud",
+	"network_fog_hpc_cloud",
+	"network_wfcommons_overlay",
 )
 
 const (
@@ -60,6 +68,8 @@ type ExperimentRunOptions struct {
 	BudgetMargin             float64
 	DeadlineMargin           float64
 	DataScale                float64
+	NetworkLatencyMS         float64
+	NetworkBandwidthMbps     float64
 	ExportSchedules          bool
 	DisableContainerOverhead bool
 }
@@ -120,6 +130,9 @@ type ExperimentManifest struct {
 	RecommendationCount       int                    `json:"recommendation_count"`
 	DataScale                 float64                `json:"data_scale"`
 	ContainerOverheadDisabled bool                   `json:"container_overhead_disabled"`
+	FileTransferParallelism   int                    `json:"file_transfer_parallelism"`
+	NetworkLatencyOverrideMS  float64                `json:"network_latency_override_ms,omitempty"`
+	NetworkBandwidthMbps      float64                `json:"network_bandwidth_override_mbps,omitempty"`
 }
 
 type ScenarioSLA struct {
@@ -184,6 +197,12 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	if options.DataScale <= 0 {
 		return fmt.Errorf("experiment data scale must be greater than zero")
 	}
+	if options.NetworkLatencyMS < 0 {
+		return fmt.Errorf("experiment network latency must be non-negative")
+	}
+	if options.NetworkBandwidthMbps < 0 {
+		return fmt.Errorf("experiment network bandwidth must be non-negative")
+	}
 	if options.BudgetMargin <= 0 {
 		options.BudgetMargin = experimentSLAMargin
 	}
@@ -206,8 +225,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	if (options.FixedBudgetLimit > 0) != (options.FixedDeadlineLimit > 0) {
 		return fmt.Errorf("fixed budget and deadline limits must be provided together")
 	}
-	if options.WorkflowID != "montage_050d" && options.WorkflowID != montageDSS20WorkflowID &&
-		options.WorkflowID != imageDataflow8WorkflowID {
+	if !experimentWorkflowSupported(options.WorkflowID) {
 		return fmt.Errorf("unsupported experiment workflow %q", options.WorkflowID)
 	}
 	if options.PRISMCCPriority != "topological_order" && options.PRISMCCPriority != "upward_rank" &&
@@ -256,6 +274,8 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 			if generationErr != nil {
 				return fmt.Errorf("%s seed %d HEFT generation: %w", scenarioID, interferenceSeed, generationErr)
 			}
+			applyNetworkLatencyOverride(&heftGenerated, options.NetworkLatencyMS)
+			applyNetworkBandwidthOverride(&heftGenerated, options.NetworkBandwidthMbps)
 			if options.DisableContainerOverhead {
 				disableContainerOverhead(&heftGenerated)
 			}
@@ -342,8 +362,12 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 	}
 	workerCount = min(workerCount, runtime.GOMAXPROCS(0), jobCount)
 	for worker := 0; worker < workerCount; worker++ {
-		go func() {
+		go func(workerID int) {
 			for job := range jobs {
+				log.Printf(
+					"worker %d started: scenario=%s seed=%d PRISM-CC-Time+Cost",
+					workerID, job.scenarioID, job.seed,
+				)
 				started := time.Now()
 				jobRecords, jobErr := runPRISMExperimentJob(
 					options, job.scenarioID, job.seed, scenarioSLAs[job.scenarioID],
@@ -353,7 +377,7 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 					records: jobRecords, err: jobErr,
 				}
 			}
-		}()
+		}(worker + 1)
 	}
 	protocolStarted := time.Now()
 	log.Printf(
@@ -417,6 +441,9 @@ func runExperimentalProtocol(options ExperimentRunOptions) error {
 		BeamWidth: options.BeamWidth, RecommendationCount: options.RecommendationCount,
 		DataScale:                 options.DataScale,
 		ContainerOverheadDisabled: options.DisableContainerOverhead,
+		FileTransferParallelism:   fileTransferParallelism,
+		NetworkLatencyOverrideMS:  options.NetworkLatencyMS,
+		NetworkBandwidthMbps:      options.NetworkBandwidthMbps,
 	}
 	return writeJSONFile(filepath.Join(options.OutputDirectory, "manifest.json"), manifest)
 }
@@ -443,6 +470,8 @@ func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, inte
 	if generationErr != nil {
 		return nil, fmt.Errorf("%s seed %d generation: %w", scenarioID, interferenceSeed, generationErr)
 	}
+	applyNetworkLatencyOverride(&generated, options.NetworkLatencyMS)
+	applyNetworkBandwidthOverride(&generated, options.NetworkBandwidthMbps)
 	if options.DisableContainerOverhead {
 		disableContainerOverhead(&generated)
 	}
@@ -510,6 +539,36 @@ func runPRISMExperimentJob(options ExperimentRunOptions, scenarioID string, inte
 	return records, nil
 }
 
+func applyNetworkLatencyOverride(generated *GeneratedSimulation, latencyMS float64) {
+	if latencyMS <= 0 {
+		return
+	}
+	latencySeconds := latencyMS / 1000.0
+	for sourceID, targets := range generated.Matrices.TransferDelay {
+		for targetID := range targets {
+			if sourceID == targetID {
+				targets[targetID] = 0
+			} else {
+				targets[targetID] = latencySeconds
+			}
+		}
+	}
+}
+
+func applyNetworkBandwidthOverride(generated *GeneratedSimulation, bandwidthMbps float64) {
+	if bandwidthMbps <= 0 {
+		return
+	}
+	bandwidthMBps := megabitsPerSecondToMegabytesPerSecond(bandwidthMbps)
+	for sourceID, targets := range generated.Matrices.BandwidthBW {
+		for targetID := range targets {
+			if sourceID != targetID {
+				targets[targetID] = bandwidthMBps
+			}
+		}
+	}
+}
+
 func selectAnchoredPRISMResult(algorithm string, heft SimulationResult, options []ScheduleOption, sla ScenarioSLA) SimulationResult {
 	selected := heft
 	for _, option := range options {
@@ -563,12 +622,7 @@ func generateExperimentSimulationForWorkflowAtRateAndDataScale(scenarioID, workf
 	req.ExperimentWorkflowID = workflowID
 	req.ExperimentDataScale = dataScale
 	req.Seed = structuralSeed
-	req.TaskCount = 58
-	if workflowID == montageDSS20WorkflowID {
-		req.TaskCount = 6448
-	} else if workflowID == imageDataflow8WorkflowID {
-		req.TaskCount = 8
-	}
+	req.TaskCount = experimentWorkflowTaskCount(workflowID)
 	req.OptionCount = 1
 	req.BeamWidth = beamWidth
 	generated, err := generateSimulation(req)
@@ -597,6 +651,12 @@ func validateExperimentScenarios() error {
 		baseScenarioID := realNetworkStressBaseScenario(scenarioID)
 		if baseScenarioID == "hybrid_raspberry_500mbps" || scenarioID == "hybrid_communication_trap" ||
 			scenarioID == "hybrid_heft_network_trap" {
+			expected = 14
+		} else if scenarioID == "wfcommons_chameleon_dss20" || scenarioID == "network_wfcommons_overlay" {
+			expected = 5
+		} else if scenarioID == "network_edge_cloud" {
+			expected = 4
+		} else if scenarioID == "network_fog_hpc_cloud" {
 			expected = 14
 		}
 		if counts[baseScenarioID] != expected {

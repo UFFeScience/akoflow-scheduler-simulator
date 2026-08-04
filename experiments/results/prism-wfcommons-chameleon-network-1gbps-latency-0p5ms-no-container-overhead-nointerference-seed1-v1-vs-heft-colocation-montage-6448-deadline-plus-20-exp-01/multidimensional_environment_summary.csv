@@ -1,0 +1,4 @@
+scenario_id,algorithm,runs,makespan_mean,makespan_median,makespan_stddev,makespan_ci95,budget_used_mean,budget_used_median,budget_used_stddev,budget_used_ci95,interference_seed,utilization_mean,utilization_imbalance,machines_used,interference_time_mean,interference_pairs_mean,interference_per_task,makespan_cv_percent,makespan_gain_percent,budget_gain_percent
+wfcommons_chameleon_dss20,heft_classic,1,1033.192,1033.192,0,0.0,0.0,0.0,0,0.0,1.0,0.5108724,0.2721503193682491,5.0,0.359,32186.0,5.5676178660049625e-05,0.0,,
+wfcommons_chameleon_dss20,prism_cc_cost,1,1033.192,1033.192,0,0.0,0.0,0.0,0,0.0,1.0,0.5108724,0.2721503193682491,5.0,0.359,32186.0,5.5676178660049625e-05,0.0,0.0,0.0
+wfcommons_chameleon_dss20,prism_cc_time,1,1033.192,1033.192,0,0.0,0.0,0.0,0,0.0,1.0,0.5108724,0.2721503193682491,5.0,0.359,32186.0,5.5676178660049625e-05,0.0,0.0,0.0

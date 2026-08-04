@@ -1,0 +1,3 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+network_hpc_local,prism_cc_cost,HPC local 200 Gbps · PRISM-CC - Cost,166.21,166.21,0.0,0.0,,100.0,0.0,234.0168,0.0,71.02481531240493,0,0,True,True,1,,,
+network_edge_cloud,prism_cc_cost,Edge–Cloud · PRISM-CC - Cost,97.003,97.003,0.121218,0.121218,,100.0,0.33511,173.6004,36.17260004177733,55.87717539821336,0,0,True,True,2,36.17260004177733,15.147639914191565,0.41876005309811537

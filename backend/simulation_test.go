@@ -651,6 +651,88 @@ func TestAdaptiveSelectionPreservesCanonicalRepresentativeBeforeDominance(t *tes
 	}
 }
 
+func TestAdaptiveSelectionRetainsEveryPersistentObjectiveLane(t *testing.T) {
+	states := make([]beamState, 0, beamFrontierCount+1)
+	canonical := beamState{
+		Assignments:     []Assignment{{TaskID: "a", ResourceID: "canonical"}},
+		PartialMakespan: 100, PartialBudgetUsed: 100, ScheduledTaskHash: 1,
+		TaskOrderSearch: true,
+	}
+	for index := range canonical.FrontierScores {
+		canonical.FrontierScores[index] = 1000
+	}
+	states = append(states, canonical)
+	for lane := 0; lane < beamFrontierCount; lane++ {
+		state := beamState{
+			Assignments:     []Assignment{{TaskID: "a", ResourceID: fmt.Sprintf("lane-%d", lane)}},
+			PartialMakespan: float64(lane + 1), PartialBudgetUsed: float64(beamFrontierCount - lane),
+			ScheduledTaskHash: 1, TaskOrderSearch: true, OrderDeviated: true,
+		}
+		for index := range state.FrontierScores {
+			state.FrontierScores[index] = 100 + float64(index+lane)
+		}
+		state.FrontierScores[lane] = float64(lane)
+		states = append(states, state)
+	}
+
+	selected := selectAdaptiveBeamStates(states, beamFrontierCount+1, GeneratedSimulation{}, optimizerContext{})
+	mask := uint16(0)
+	foundCanonical := false
+	for _, state := range selected {
+		mask |= state.FrontierMask
+		foundCanonical = foundCanonical || !state.OrderDeviated
+	}
+	wantMask := uint16(1<<beamFrontierCount) - 1
+	if mask != wantMask {
+		t.Fatalf("persistent lanes mask=%011b, want %011b", mask, wantMask)
+	}
+	if !foundCanonical {
+		t.Fatal("HEFT canonical anchor was not retained with persistent lanes")
+	}
+}
+
+func TestAdaptiveSuccessorLookaheadIncludesFutureTransfer(t *testing.T) {
+	resources := []Resource{
+		{ID: "near", CPU: 2, Memory: 4, Cores: []Core{{ID: "near-core"}}},
+		{ID: "remote", CPU: 1, Memory: 4, Cores: []Core{{ID: "remote-core"}}},
+	}
+	task := Task{ID: "producer", CPU: 1, Memory: 1}
+	successor := Task{ID: "consumer", CPU: 2, Memory: 1}
+	dependency := Dependency{Source: task.ID, Target: successor.ID, DataMB: 100}
+	generated := GeneratedSimulation{
+		Resources: resources,
+		Matrices: Matrices{
+			ET0: map[string]map[string]float64{
+				successor.ID: {"near": 1, "remote": 1},
+			},
+			ContainerOverhead: map[string]map[string]float64{
+				successor.ID: {"near": 0, "remote": 0},
+			},
+			BandwidthBW: map[string]map[string]float64{
+				"near":   {"near": 1000, "remote": 1},
+				"remote": {"near": 1, "remote": 1000},
+			},
+			TransferDelay: map[string]map[string]float64{
+				"near":   {"near": 0, "remote": 0},
+				"remote": {"near": 0, "remote": 0},
+			},
+		},
+	}
+	ctx := optimizerContext{
+		Tasks:        map[string]Task{task.ID: task, successor.ID: successor},
+		DepsBySource: map[string][]Dependency{task.ID: {dependency}},
+		DepsByTarget: map[string][]Dependency{successor.ID: {dependency}},
+	}
+	ctx.SuccessorDelay = buildAdaptiveSuccessorDelay(generated, ctx, map[string]int{task.ID: 1})
+	near := Assignment{TaskID: task.ID, ResourceID: "near", CoreID: "near-core", FinishTime: 10}
+	remote := Assignment{TaskID: task.ID, ResourceID: "remote", CoreID: "remote-core", FinishTime: 10}
+	nearFinish := adaptiveSuccessorLookaheadFinish(ctx, task, near, 1)
+	remoteFinish := adaptiveSuccessorLookaheadFinish(ctx, task, remote, 1)
+	if nearFinish != 11 || remoteFinish != 111 {
+		t.Fatalf("lookahead near=%v remote=%v, want 11 and 111", nearFinish, remoteFinish)
+	}
+}
+
 func TestBeamOptimizerRecommendationIsNotDominatedByReturnedOption(t *testing.T) {
 	req := defaultRequest()
 	req.Seed = 321

@@ -1,0 +1,22 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+network_hpc_local,prism_cc_cost,HPC local 200 Gbps · PRISM-CC - Cost,119.177,119.177,0.0,0.0,,100.0,0.0,143.0256,0.0,83.325642402479,0,0,True,True,1,,,
+network_hpc_cloud,prism_cc_time,HPC–Cloud · PRISM-CC - Time,80.581,80.581,0.125254,0.125254,,100.0,0.150496,96.7236,83.22746119498194,83.31058810879661,0,0,True,True,2,83.22746119498194,0.015054293682396747,0.00018088132770418354
+network_cloud_multiregion,prism_cc_time,Cloud multi-região · PRISM-CC - Time,142.792,142.792,0.218741,0.218741,,100.0,0.262628,171.4104,83.2892913169959,83.30416357467224,0,0,True,True,3,0.061830122013958544,0.00642453412436339,0.10390621779644897
+network_hpc_local,heft_classic,HPC local 200 Gbps · HEFT coalocado,119.188,119.188,0.0,0.0,,100.0,0.0,143.0256,0.0,83.33333333333334,0,0,True,False,,,,
+network_hpc_local,prism_cc_time,HPC local 200 Gbps · PRISM-CC - Time,119.177,119.177,0.0,0.0,,100.0,0.0,143.0256,0.0,83.325642402479,0,0,True,False,,,,
+network_hpc_multisite,heft_classic,HPC multi-site 500 Mbps WAN · HEFT coalocado,119.189,119.189,0.0,0.0,,100.0,0.0,143.0268,0.0,83.33333333333333,0,0,True,False,,,,
+network_hpc_multisite,prism_cc_cost,HPC multi-site 500 Mbps WAN · PRISM-CC - Cost,119.189,119.189,0.0,0.0,,100.0,0.0,143.0268,0.0,83.33333333333333,0,0,True,False,,,,
+network_hpc_multisite,prism_cc_time,HPC multi-site 500 Mbps WAN · PRISM-CC - Time,119.189,119.189,0.0,0.0,,100.0,0.0,143.0268,0.0,83.33333333333333,0,0,True,False,,,,
+network_wfcommons_overlay,heft_classic,WfCommons overlay multi-site · HEFT coalocado,466.137,466.137,0.0,0.0,,100.0,0.0,559.3644,0.0,83.33333333333331,0,0,True,False,,,,
+network_wfcommons_overlay,prism_cc_cost,WfCommons overlay multi-site · PRISM-CC - Cost,466.137,466.137,0.0,0.0,,100.0,0.0,559.3644,0.0,83.33333333333331,0,0,True,False,,,,
+network_wfcommons_overlay,prism_cc_time,WfCommons overlay multi-site · PRISM-CC - Time,466.137,466.137,0.0,0.0,,100.0,0.0,559.3644,0.0,83.33333333333331,0,0,True,False,,,,
+network_hpc_cloud,prism_cc_cost,HPC–Cloud · PRISM-CC - Cost,93.123,93.123,0.09022,0.09022,,100.0,0.150496,96.7236,59.94843716776526,96.27743384241282,0,0,True,False,,,,
+network_edge_cloud,prism_cc_cost,Edge–Cloud · PRISM-CC - Cost,129.298,129.298,0.161606,0.161606,,100.0,0.218242,138.0264,74.04899148651496,93.67628221847414,0,0,True,False,,,,
+network_fog_hpc_cloud,prism_cc_cost,Fog–HPC–Cloud · PRISM-CC - Cost,80.75,80.75,0.119353,0.119353,,100.0,0.150622,96.9,79.24008444981476,83.33333333333333,0,0,True,False,,,,
+network_cloud_multiregion,prism_cc_cost,Cloud multi-região · PRISM-CC - Cost,170.268,170.268,0.20886,0.20886,,100.0,0.262628,171.4104,79.52693543719634,99.33352935411152,0,0,True,False,,,,
+network_hpc_cloud,heft_classic,HPC–Cloud · HEFT coalocado,80.603,80.603,0.125413,0.125413,,100.0,0.150496,96.7236,83.33311184350416,83.33333333333333,0,0,True,False,,,,
+network_fog_hpc_cloud,heft_classic,Fog–HPC–Cloud · HEFT coalocado,80.75,80.75,0.125518,0.125518,,100.0,0.150622,96.9,83.33311202878728,83.33333333333333,0,0,True,False,,,,
+network_fog_hpc_cloud,prism_cc_time,Fog–HPC–Cloud · PRISM-CC - Time,80.75,80.75,0.125518,0.125518,,100.0,0.150622,96.9,83.33311202878728,83.33333333333333,0,0,True,False,,,,
+network_edge_cloud,heft_classic,Edge–Cloud · HEFT coalocado,115.022,115.022,0.181868,0.181868,,100.0,0.218242,138.0264,83.33318059768514,83.33333333333334,0,0,True,False,,,,
+network_edge_cloud,prism_cc_time,Edge–Cloud · PRISM-CC - Time,115.022,115.022,0.181868,0.181868,,100.0,0.218242,138.0264,83.33318059768514,83.33333333333334,0,0,True,False,,,,
+network_cloud_multiregion,heft_classic,Cloud multi-região · HEFT coalocado,142.842,142.842,0.218857,0.218857,,100.0,0.262628,171.4104,83.33346025557063,83.33333333333333,0,0,True,False,,,,

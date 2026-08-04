@@ -1,0 +1,6011 @@
+name: wfcommons-1000genome-902
+spec:
+  runtime: "k8s1"
+  namespace: "akoflow"
+  image: wfcommons/1000genome:latest
+  activities:
+    - name: individualsid0000001
+      run: "individuals ALL.chr1.250000.vcf 1 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000002
+      run: "individuals ALL.chr1.250000.vcf 1 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000003
+      run: "individuals ALL.chr1.250000.vcf 1 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000004
+      run: "individuals ALL.chr1.250000.vcf 1 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000005
+      run: "individuals ALL.chr1.250000.vcf 1 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000006
+      run: "individuals ALL.chr1.250000.vcf 1 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000007
+      run: "individuals ALL.chr1.250000.vcf 1 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000008
+      run: "individuals ALL.chr1.250000.vcf 1 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000009
+      run: "individuals ALL.chr1.250000.vcf 1 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000010
+      run: "individuals ALL.chr1.250000.vcf 1 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000011
+      run: "individuals ALL.chr1.250000.vcf 1 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000012
+      run: "individuals ALL.chr1.250000.vcf 1 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000013
+      run: "individuals ALL.chr1.250000.vcf 1 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000014
+      run: "individuals ALL.chr1.250000.vcf 1 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000015
+      run: "individuals ALL.chr1.250000.vcf 1 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000016
+      run: "individuals ALL.chr1.250000.vcf 1 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000017
+      run: "individuals ALL.chr1.250000.vcf 1 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000018
+      run: "individuals ALL.chr1.250000.vcf 1 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000019
+      run: "individuals ALL.chr1.250000.vcf 1 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000020
+      run: "individuals ALL.chr1.250000.vcf 1 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000021
+      run: "individuals ALL.chr1.250000.vcf 1 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000022
+      run: "individuals ALL.chr1.250000.vcf 1 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000023
+      run: "individuals ALL.chr1.250000.vcf 1 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000024
+      run: "individuals ALL.chr1.250000.vcf 1 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000025
+      run: "individuals ALL.chr1.250000.vcf 1 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000026
+      run: "individuals_merge 1 chr1n-1-1001.tar.gz chr1n-1001-2001.tar.gz chr1n-2001-3001.tar.gz chr1n-3001-4001.tar.gz chr1n-4001-5001.tar.gz chr1n-5001-6001.tar.gz chr1n-6001-7001.tar.gz chr1n-7001-8001.tar.gz chr1n-8001-9001.tar.gz chr1n-9001-10001.tar.gz chr1n-10001-11001.tar.gz chr1n-11001-12001.tar.gz chr1n-12001-13001.tar.gz chr1n-13001-14001.tar.gz chr1n-14001-15001.tar.gz chr1n-15001-16001.tar.gz chr1n-16001-17001.tar.gz chr1n-17001-18001.tar.gz chr1n-18001-19001.tar.gz chr1n-19001-20001.tar.gz chr1n-20001-21001.tar.gz chr1n-21001-22001.tar.gz chr1n-22001-23001.tar.gz chr1n-23001-24001.tar.gz chr1n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000004
+        - individualsid0000005
+        - individualsid0000006
+        - individualsid0000007
+        - individualsid0000001
+        - individualsid0000002
+        - individualsid0000003
+        - individualsid0000008
+        - individualsid0000009
+        - individualsid0000015
+        - individualsid0000016
+        - individualsid0000017
+        - individualsid0000018
+        - individualsid0000011
+        - individualsid0000012
+        - individualsid0000013
+        - individualsid0000014
+        - individualsid0000019
+        - individualsid0000010
+        - individualsid0000022
+        - individualsid0000023
+        - individualsid0000024
+        - individualsid0000025
+        - individualsid0000020
+        - individualsid0000021
+
+    - name: siftingid0000027
+      run: "sifting ALL.chr1.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 1"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000028
+      run: "individuals ALL.chr2.250000.vcf 2 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000029
+      run: "individuals ALL.chr2.250000.vcf 2 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000030
+      run: "individuals ALL.chr2.250000.vcf 2 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000031
+      run: "individuals ALL.chr2.250000.vcf 2 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000032
+      run: "individuals ALL.chr2.250000.vcf 2 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000033
+      run: "individuals ALL.chr2.250000.vcf 2 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000034
+      run: "individuals ALL.chr2.250000.vcf 2 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000035
+      run: "individuals ALL.chr2.250000.vcf 2 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000036
+      run: "individuals ALL.chr2.250000.vcf 2 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000037
+      run: "individuals ALL.chr2.250000.vcf 2 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000038
+      run: "individuals ALL.chr2.250000.vcf 2 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000039
+      run: "individuals ALL.chr2.250000.vcf 2 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000040
+      run: "individuals ALL.chr2.250000.vcf 2 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000041
+      run: "individuals ALL.chr2.250000.vcf 2 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000042
+      run: "individuals ALL.chr2.250000.vcf 2 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000043
+      run: "individuals ALL.chr2.250000.vcf 2 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000044
+      run: "individuals ALL.chr2.250000.vcf 2 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000045
+      run: "individuals ALL.chr2.250000.vcf 2 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000046
+      run: "individuals ALL.chr2.250000.vcf 2 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000047
+      run: "individuals ALL.chr2.250000.vcf 2 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000048
+      run: "individuals ALL.chr2.250000.vcf 2 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000049
+      run: "individuals ALL.chr2.250000.vcf 2 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000050
+      run: "individuals ALL.chr2.250000.vcf 2 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000051
+      run: "individuals ALL.chr2.250000.vcf 2 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000052
+      run: "individuals ALL.chr2.250000.vcf 2 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000053
+      run: "individuals_merge 2 chr2n-1-1001.tar.gz chr2n-1001-2001.tar.gz chr2n-2001-3001.tar.gz chr2n-3001-4001.tar.gz chr2n-4001-5001.tar.gz chr2n-5001-6001.tar.gz chr2n-6001-7001.tar.gz chr2n-7001-8001.tar.gz chr2n-8001-9001.tar.gz chr2n-9001-10001.tar.gz chr2n-10001-11001.tar.gz chr2n-11001-12001.tar.gz chr2n-12001-13001.tar.gz chr2n-13001-14001.tar.gz chr2n-14001-15001.tar.gz chr2n-15001-16001.tar.gz chr2n-16001-17001.tar.gz chr2n-17001-18001.tar.gz chr2n-18001-19001.tar.gz chr2n-19001-20001.tar.gz chr2n-20001-21001.tar.gz chr2n-21001-22001.tar.gz chr2n-22001-23001.tar.gz chr2n-23001-24001.tar.gz chr2n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000037
+        - individualsid0000038
+        - individualsid0000039
+        - individualsid0000033
+        - individualsid0000034
+        - individualsid0000035
+        - individualsid0000036
+        - individualsid0000030
+        - individualsid0000031
+        - individualsid0000032
+        - individualsid0000048
+        - individualsid0000049
+        - individualsid0000044
+        - individualsid0000045
+        - individualsid0000046
+        - individualsid0000047
+        - individualsid0000040
+        - individualsid0000041
+        - individualsid0000042
+        - individualsid0000043
+        - individualsid0000051
+        - individualsid0000052
+        - individualsid0000050
+        - individualsid0000028
+        - individualsid0000029
+
+    - name: siftingid0000054
+      run: "sifting ALL.chr2.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 2"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000055
+      run: "individuals ALL.chr3.250000.vcf 3 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000056
+      run: "individuals ALL.chr3.250000.vcf 3 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000057
+      run: "individuals ALL.chr3.250000.vcf 3 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000058
+      run: "individuals ALL.chr3.250000.vcf 3 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000059
+      run: "individuals ALL.chr3.250000.vcf 3 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000060
+      run: "individuals ALL.chr3.250000.vcf 3 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000061
+      run: "individuals ALL.chr3.250000.vcf 3 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000062
+      run: "individuals ALL.chr3.250000.vcf 3 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000063
+      run: "individuals ALL.chr3.250000.vcf 3 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000064
+      run: "individuals ALL.chr3.250000.vcf 3 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000065
+      run: "individuals ALL.chr3.250000.vcf 3 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000066
+      run: "individuals ALL.chr3.250000.vcf 3 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000067
+      run: "individuals ALL.chr3.250000.vcf 3 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000068
+      run: "individuals ALL.chr3.250000.vcf 3 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000069
+      run: "individuals ALL.chr3.250000.vcf 3 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000070
+      run: "individuals ALL.chr3.250000.vcf 3 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000071
+      run: "individuals ALL.chr3.250000.vcf 3 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000072
+      run: "individuals ALL.chr3.250000.vcf 3 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000073
+      run: "individuals ALL.chr3.250000.vcf 3 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000074
+      run: "individuals ALL.chr3.250000.vcf 3 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000075
+      run: "individuals ALL.chr3.250000.vcf 3 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000076
+      run: "individuals ALL.chr3.250000.vcf 3 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000077
+      run: "individuals ALL.chr3.250000.vcf 3 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000078
+      run: "individuals ALL.chr3.250000.vcf 3 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000079
+      run: "individuals ALL.chr3.250000.vcf 3 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000080
+      run: "individuals_merge 3 chr3n-1-1001.tar.gz chr3n-1001-2001.tar.gz chr3n-2001-3001.tar.gz chr3n-3001-4001.tar.gz chr3n-4001-5001.tar.gz chr3n-5001-6001.tar.gz chr3n-6001-7001.tar.gz chr3n-7001-8001.tar.gz chr3n-8001-9001.tar.gz chr3n-9001-10001.tar.gz chr3n-10001-11001.tar.gz chr3n-11001-12001.tar.gz chr3n-12001-13001.tar.gz chr3n-13001-14001.tar.gz chr3n-14001-15001.tar.gz chr3n-15001-16001.tar.gz chr3n-16001-17001.tar.gz chr3n-17001-18001.tar.gz chr3n-18001-19001.tar.gz chr3n-19001-20001.tar.gz chr3n-20001-21001.tar.gz chr3n-21001-22001.tar.gz chr3n-22001-23001.tar.gz chr3n-23001-24001.tar.gz chr3n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000077
+        - individualsid0000078
+        - individualsid0000079
+        - individualsid0000073
+        - individualsid0000074
+        - individualsid0000075
+        - individualsid0000076
+        - individualsid0000070
+        - individualsid0000071
+        - individualsid0000072
+        - individualsid0000059
+        - individualsid0000055
+        - individualsid0000056
+        - individualsid0000057
+        - individualsid0000058
+        - individualsid0000066
+        - individualsid0000067
+        - individualsid0000068
+        - individualsid0000069
+        - individualsid0000062
+        - individualsid0000063
+        - individualsid0000064
+        - individualsid0000065
+        - individualsid0000060
+        - individualsid0000061
+
+    - name: siftingid0000081
+      run: "sifting ALL.chr3.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 3"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000082
+      run: "individuals ALL.chr4.250000.vcf 4 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000083
+      run: "individuals ALL.chr4.250000.vcf 4 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000084
+      run: "individuals ALL.chr4.250000.vcf 4 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000085
+      run: "individuals ALL.chr4.250000.vcf 4 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000086
+      run: "individuals ALL.chr4.250000.vcf 4 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000087
+      run: "individuals ALL.chr4.250000.vcf 4 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000088
+      run: "individuals ALL.chr4.250000.vcf 4 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000089
+      run: "individuals ALL.chr4.250000.vcf 4 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000090
+      run: "individuals ALL.chr4.250000.vcf 4 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000091
+      run: "individuals ALL.chr4.250000.vcf 4 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000092
+      run: "individuals ALL.chr4.250000.vcf 4 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000093
+      run: "individuals ALL.chr4.250000.vcf 4 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000094
+      run: "individuals ALL.chr4.250000.vcf 4 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000095
+      run: "individuals ALL.chr4.250000.vcf 4 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000096
+      run: "individuals ALL.chr4.250000.vcf 4 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000097
+      run: "individuals ALL.chr4.250000.vcf 4 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000098
+      run: "individuals ALL.chr4.250000.vcf 4 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000099
+      run: "individuals ALL.chr4.250000.vcf 4 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000100
+      run: "individuals ALL.chr4.250000.vcf 4 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000101
+      run: "individuals ALL.chr4.250000.vcf 4 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000102
+      run: "individuals ALL.chr4.250000.vcf 4 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000103
+      run: "individuals ALL.chr4.250000.vcf 4 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000104
+      run: "individuals ALL.chr4.250000.vcf 4 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000105
+      run: "individuals ALL.chr4.250000.vcf 4 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000106
+      run: "individuals ALL.chr4.250000.vcf 4 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000107
+      run: "individuals_merge 4 chr4n-1-1001.tar.gz chr4n-1001-2001.tar.gz chr4n-2001-3001.tar.gz chr4n-3001-4001.tar.gz chr4n-4001-5001.tar.gz chr4n-5001-6001.tar.gz chr4n-6001-7001.tar.gz chr4n-7001-8001.tar.gz chr4n-8001-9001.tar.gz chr4n-9001-10001.tar.gz chr4n-10001-11001.tar.gz chr4n-11001-12001.tar.gz chr4n-12001-13001.tar.gz chr4n-13001-14001.tar.gz chr4n-14001-15001.tar.gz chr4n-15001-16001.tar.gz chr4n-16001-17001.tar.gz chr4n-17001-18001.tar.gz chr4n-18001-19001.tar.gz chr4n-19001-20001.tar.gz chr4n-20001-21001.tar.gz chr4n-21001-22001.tar.gz chr4n-22001-23001.tar.gz chr4n-23001-24001.tar.gz chr4n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000103
+        - individualsid0000104
+        - individualsid0000105
+        - individualsid0000106
+        - individualsid0000100
+        - individualsid0000101
+        - individualsid0000102
+        - individualsid0000088
+        - individualsid0000089
+        - individualsid0000084
+        - individualsid0000085
+        - individualsid0000086
+        - individualsid0000087
+        - individualsid0000082
+        - individualsid0000083
+        - individualsid0000099
+        - individualsid0000090
+        - individualsid0000095
+        - individualsid0000096
+        - individualsid0000097
+        - individualsid0000098
+        - individualsid0000091
+        - individualsid0000092
+        - individualsid0000093
+        - individualsid0000094
+
+    - name: siftingid0000108
+      run: "sifting ALL.chr4.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 4"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000109
+      run: "individuals ALL.chr5.250000.vcf 5 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000110
+      run: "individuals ALL.chr5.250000.vcf 5 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000111
+      run: "individuals ALL.chr5.250000.vcf 5 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000112
+      run: "individuals ALL.chr5.250000.vcf 5 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000113
+      run: "individuals ALL.chr5.250000.vcf 5 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000114
+      run: "individuals ALL.chr5.250000.vcf 5 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000115
+      run: "individuals ALL.chr5.250000.vcf 5 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000116
+      run: "individuals ALL.chr5.250000.vcf 5 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000117
+      run: "individuals ALL.chr5.250000.vcf 5 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000118
+      run: "individuals ALL.chr5.250000.vcf 5 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000119
+      run: "individuals ALL.chr5.250000.vcf 5 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000120
+      run: "individuals ALL.chr5.250000.vcf 5 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000121
+      run: "individuals ALL.chr5.250000.vcf 5 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000122
+      run: "individuals ALL.chr5.250000.vcf 5 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000123
+      run: "individuals ALL.chr5.250000.vcf 5 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000124
+      run: "individuals ALL.chr5.250000.vcf 5 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000125
+      run: "individuals ALL.chr5.250000.vcf 5 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000126
+      run: "individuals ALL.chr5.250000.vcf 5 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000127
+      run: "individuals ALL.chr5.250000.vcf 5 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000128
+      run: "individuals ALL.chr5.250000.vcf 5 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000129
+      run: "individuals ALL.chr5.250000.vcf 5 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000130
+      run: "individuals ALL.chr5.250000.vcf 5 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000131
+      run: "individuals ALL.chr5.250000.vcf 5 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000132
+      run: "individuals ALL.chr5.250000.vcf 5 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000133
+      run: "individuals ALL.chr5.250000.vcf 5 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000134
+      run: "individuals_merge 5 chr5n-1-1001.tar.gz chr5n-1001-2001.tar.gz chr5n-2001-3001.tar.gz chr5n-3001-4001.tar.gz chr5n-4001-5001.tar.gz chr5n-5001-6001.tar.gz chr5n-6001-7001.tar.gz chr5n-7001-8001.tar.gz chr5n-8001-9001.tar.gz chr5n-9001-10001.tar.gz chr5n-10001-11001.tar.gz chr5n-11001-12001.tar.gz chr5n-12001-13001.tar.gz chr5n-13001-14001.tar.gz chr5n-14001-15001.tar.gz chr5n-15001-16001.tar.gz chr5n-16001-17001.tar.gz chr5n-17001-18001.tar.gz chr5n-18001-19001.tar.gz chr5n-19001-20001.tar.gz chr5n-20001-21001.tar.gz chr5n-21001-22001.tar.gz chr5n-22001-23001.tar.gz chr5n-23001-24001.tar.gz chr5n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000114
+        - individualsid0000115
+        - individualsid0000116
+        - individualsid0000117
+        - individualsid0000110
+        - individualsid0000111
+        - individualsid0000112
+        - individualsid0000113
+        - individualsid0000118
+        - individualsid0000119
+        - individualsid0000125
+        - individualsid0000126
+        - individualsid0000127
+        - individualsid0000128
+        - individualsid0000121
+        - individualsid0000122
+        - individualsid0000123
+        - individualsid0000124
+        - individualsid0000129
+        - individualsid0000120
+        - individualsid0000132
+        - individualsid0000133
+        - individualsid0000130
+        - individualsid0000131
+        - individualsid0000109
+
+    - name: siftingid0000135
+      run: "sifting ALL.chr5.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 5"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000136
+      run: "individuals ALL.chr6.250000.vcf 6 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000137
+      run: "individuals ALL.chr6.250000.vcf 6 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000138
+      run: "individuals ALL.chr6.250000.vcf 6 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000139
+      run: "individuals ALL.chr6.250000.vcf 6 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000140
+      run: "individuals ALL.chr6.250000.vcf 6 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000141
+      run: "individuals ALL.chr6.250000.vcf 6 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000142
+      run: "individuals ALL.chr6.250000.vcf 6 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000143
+      run: "individuals ALL.chr6.250000.vcf 6 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000144
+      run: "individuals ALL.chr6.250000.vcf 6 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000145
+      run: "individuals ALL.chr6.250000.vcf 6 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000146
+      run: "individuals ALL.chr6.250000.vcf 6 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000147
+      run: "individuals ALL.chr6.250000.vcf 6 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000148
+      run: "individuals ALL.chr6.250000.vcf 6 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000149
+      run: "individuals ALL.chr6.250000.vcf 6 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000150
+      run: "individuals ALL.chr6.250000.vcf 6 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000151
+      run: "individuals ALL.chr6.250000.vcf 6 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000152
+      run: "individuals ALL.chr6.250000.vcf 6 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000153
+      run: "individuals ALL.chr6.250000.vcf 6 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000154
+      run: "individuals ALL.chr6.250000.vcf 6 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000155
+      run: "individuals ALL.chr6.250000.vcf 6 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000156
+      run: "individuals ALL.chr6.250000.vcf 6 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000157
+      run: "individuals ALL.chr6.250000.vcf 6 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000158
+      run: "individuals ALL.chr6.250000.vcf 6 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000159
+      run: "individuals ALL.chr6.250000.vcf 6 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000160
+      run: "individuals ALL.chr6.250000.vcf 6 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000161
+      run: "individuals_merge 6 chr6n-1-1001.tar.gz chr6n-1001-2001.tar.gz chr6n-2001-3001.tar.gz chr6n-3001-4001.tar.gz chr6n-4001-5001.tar.gz chr6n-5001-6001.tar.gz chr6n-6001-7001.tar.gz chr6n-7001-8001.tar.gz chr6n-8001-9001.tar.gz chr6n-9001-10001.tar.gz chr6n-10001-11001.tar.gz chr6n-11001-12001.tar.gz chr6n-12001-13001.tar.gz chr6n-13001-14001.tar.gz chr6n-14001-15001.tar.gz chr6n-15001-16001.tar.gz chr6n-16001-17001.tar.gz chr6n-17001-18001.tar.gz chr6n-18001-19001.tar.gz chr6n-19001-20001.tar.gz chr6n-20001-21001.tar.gz chr6n-21001-22001.tar.gz chr6n-22001-23001.tar.gz chr6n-23001-24001.tar.gz chr6n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000136
+        - individualsid0000137
+        - individualsid0000138
+        - individualsid0000139
+        - individualsid0000147
+        - individualsid0000148
+        - individualsid0000149
+        - individualsid0000143
+        - individualsid0000144
+        - individualsid0000145
+        - individualsid0000146
+        - individualsid0000140
+        - individualsid0000141
+        - individualsid0000142
+        - individualsid0000158
+        - individualsid0000159
+        - individualsid0000154
+        - individualsid0000155
+        - individualsid0000156
+        - individualsid0000157
+        - individualsid0000150
+        - individualsid0000151
+        - individualsid0000152
+        - individualsid0000153
+        - individualsid0000160
+
+    - name: siftingid0000162
+      run: "sifting ALL.chr6.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 6"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000163
+      run: "individuals ALL.chr7.250000.vcf 7 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000164
+      run: "individuals ALL.chr7.250000.vcf 7 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000165
+      run: "individuals ALL.chr7.250000.vcf 7 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000166
+      run: "individuals ALL.chr7.250000.vcf 7 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000167
+      run: "individuals ALL.chr7.250000.vcf 7 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000168
+      run: "individuals ALL.chr7.250000.vcf 7 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000169
+      run: "individuals ALL.chr7.250000.vcf 7 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000170
+      run: "individuals ALL.chr7.250000.vcf 7 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000171
+      run: "individuals ALL.chr7.250000.vcf 7 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000172
+      run: "individuals ALL.chr7.250000.vcf 7 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000173
+      run: "individuals ALL.chr7.250000.vcf 7 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000174
+      run: "individuals ALL.chr7.250000.vcf 7 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000175
+      run: "individuals ALL.chr7.250000.vcf 7 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000176
+      run: "individuals ALL.chr7.250000.vcf 7 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000177
+      run: "individuals ALL.chr7.250000.vcf 7 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000178
+      run: "individuals ALL.chr7.250000.vcf 7 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000179
+      run: "individuals ALL.chr7.250000.vcf 7 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000180
+      run: "individuals ALL.chr7.250000.vcf 7 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000181
+      run: "individuals ALL.chr7.250000.vcf 7 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000182
+      run: "individuals ALL.chr7.250000.vcf 7 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000183
+      run: "individuals ALL.chr7.250000.vcf 7 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000184
+      run: "individuals ALL.chr7.250000.vcf 7 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000185
+      run: "individuals ALL.chr7.250000.vcf 7 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000186
+      run: "individuals ALL.chr7.250000.vcf 7 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000187
+      run: "individuals ALL.chr7.250000.vcf 7 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000188
+      run: "individuals_merge 7 chr7n-1-1001.tar.gz chr7n-1001-2001.tar.gz chr7n-2001-3001.tar.gz chr7n-3001-4001.tar.gz chr7n-4001-5001.tar.gz chr7n-5001-6001.tar.gz chr7n-6001-7001.tar.gz chr7n-7001-8001.tar.gz chr7n-8001-9001.tar.gz chr7n-9001-10001.tar.gz chr7n-10001-11001.tar.gz chr7n-11001-12001.tar.gz chr7n-12001-13001.tar.gz chr7n-13001-14001.tar.gz chr7n-14001-15001.tar.gz chr7n-15001-16001.tar.gz chr7n-16001-17001.tar.gz chr7n-17001-18001.tar.gz chr7n-18001-19001.tar.gz chr7n-19001-20001.tar.gz chr7n-20001-21001.tar.gz chr7n-21001-22001.tar.gz chr7n-22001-23001.tar.gz chr7n-23001-24001.tar.gz chr7n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000169
+        - individualsid0000165
+        - individualsid0000166
+        - individualsid0000167
+        - individualsid0000168
+        - individualsid0000163
+        - individualsid0000164
+        - individualsid0000176
+        - individualsid0000177
+        - individualsid0000178
+        - individualsid0000179
+        - individualsid0000172
+        - individualsid0000173
+        - individualsid0000174
+        - individualsid0000175
+        - individualsid0000170
+        - individualsid0000171
+        - individualsid0000187
+        - individualsid0000183
+        - individualsid0000184
+        - individualsid0000185
+        - individualsid0000186
+        - individualsid0000180
+        - individualsid0000181
+        - individualsid0000182
+
+    - name: siftingid0000189
+      run: "sifting ALL.chr7.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 7"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000190
+      run: "individuals ALL.chr8.250000.vcf 8 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000191
+      run: "individuals ALL.chr8.250000.vcf 8 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000192
+      run: "individuals ALL.chr8.250000.vcf 8 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000193
+      run: "individuals ALL.chr8.250000.vcf 8 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000194
+      run: "individuals ALL.chr8.250000.vcf 8 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000195
+      run: "individuals ALL.chr8.250000.vcf 8 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000196
+      run: "individuals ALL.chr8.250000.vcf 8 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000197
+      run: "individuals ALL.chr8.250000.vcf 8 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000198
+      run: "individuals ALL.chr8.250000.vcf 8 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000199
+      run: "individuals ALL.chr8.250000.vcf 8 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000200
+      run: "individuals ALL.chr8.250000.vcf 8 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000201
+      run: "individuals ALL.chr8.250000.vcf 8 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000202
+      run: "individuals ALL.chr8.250000.vcf 8 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000203
+      run: "individuals ALL.chr8.250000.vcf 8 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000204
+      run: "individuals ALL.chr8.250000.vcf 8 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000205
+      run: "individuals ALL.chr8.250000.vcf 8 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000206
+      run: "individuals ALL.chr8.250000.vcf 8 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000207
+      run: "individuals ALL.chr8.250000.vcf 8 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000208
+      run: "individuals ALL.chr8.250000.vcf 8 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000209
+      run: "individuals ALL.chr8.250000.vcf 8 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000210
+      run: "individuals ALL.chr8.250000.vcf 8 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000211
+      run: "individuals ALL.chr8.250000.vcf 8 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000212
+      run: "individuals ALL.chr8.250000.vcf 8 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000213
+      run: "individuals ALL.chr8.250000.vcf 8 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000214
+      run: "individuals ALL.chr8.250000.vcf 8 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000215
+      run: "individuals_merge 8 chr8n-1-1001.tar.gz chr8n-1001-2001.tar.gz chr8n-2001-3001.tar.gz chr8n-3001-4001.tar.gz chr8n-4001-5001.tar.gz chr8n-5001-6001.tar.gz chr8n-6001-7001.tar.gz chr8n-7001-8001.tar.gz chr8n-8001-9001.tar.gz chr8n-9001-10001.tar.gz chr8n-10001-11001.tar.gz chr8n-11001-12001.tar.gz chr8n-12001-13001.tar.gz chr8n-13001-14001.tar.gz chr8n-14001-15001.tar.gz chr8n-15001-16001.tar.gz chr8n-16001-17001.tar.gz chr8n-17001-18001.tar.gz chr8n-18001-19001.tar.gz chr8n-19001-20001.tar.gz chr8n-20001-21001.tar.gz chr8n-21001-22001.tar.gz chr8n-22001-23001.tar.gz chr8n-23001-24001.tar.gz chr8n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000202
+        - individualsid0000203
+        - individualsid0000204
+        - individualsid0000205
+        - individualsid0000200
+        - individualsid0000201
+        - individualsid0000206
+        - individualsid0000207
+        - individualsid0000208
+        - individualsid0000209
+        - individualsid0000213
+        - individualsid0000214
+        - individualsid0000210
+        - individualsid0000211
+        - individualsid0000212
+        - individualsid0000198
+        - individualsid0000199
+        - individualsid0000194
+        - individualsid0000195
+        - individualsid0000196
+        - individualsid0000197
+        - individualsid0000190
+        - individualsid0000191
+        - individualsid0000192
+        - individualsid0000193
+
+    - name: siftingid0000216
+      run: "sifting ALL.chr8.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 8"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000217
+      run: "individuals ALL.chr9.250000.vcf 9 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000218
+      run: "individuals ALL.chr9.250000.vcf 9 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000219
+      run: "individuals ALL.chr9.250000.vcf 9 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000220
+      run: "individuals ALL.chr9.250000.vcf 9 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000221
+      run: "individuals ALL.chr9.250000.vcf 9 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000222
+      run: "individuals ALL.chr9.250000.vcf 9 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000223
+      run: "individuals ALL.chr9.250000.vcf 9 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000224
+      run: "individuals ALL.chr9.250000.vcf 9 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000225
+      run: "individuals ALL.chr9.250000.vcf 9 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000226
+      run: "individuals ALL.chr9.250000.vcf 9 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000227
+      run: "individuals ALL.chr9.250000.vcf 9 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000228
+      run: "individuals ALL.chr9.250000.vcf 9 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000229
+      run: "individuals ALL.chr9.250000.vcf 9 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000230
+      run: "individuals ALL.chr9.250000.vcf 9 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000231
+      run: "individuals ALL.chr9.250000.vcf 9 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000232
+      run: "individuals ALL.chr9.250000.vcf 9 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000233
+      run: "individuals ALL.chr9.250000.vcf 9 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000234
+      run: "individuals ALL.chr9.250000.vcf 9 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000235
+      run: "individuals ALL.chr9.250000.vcf 9 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000236
+      run: "individuals ALL.chr9.250000.vcf 9 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000237
+      run: "individuals ALL.chr9.250000.vcf 9 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000238
+      run: "individuals ALL.chr9.250000.vcf 9 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000239
+      run: "individuals ALL.chr9.250000.vcf 9 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000240
+      run: "individuals ALL.chr9.250000.vcf 9 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000241
+      run: "individuals ALL.chr9.250000.vcf 9 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000242
+      run: "individuals_merge 9 chr9n-1-1001.tar.gz chr9n-1001-2001.tar.gz chr9n-2001-3001.tar.gz chr9n-3001-4001.tar.gz chr9n-4001-5001.tar.gz chr9n-5001-6001.tar.gz chr9n-6001-7001.tar.gz chr9n-7001-8001.tar.gz chr9n-8001-9001.tar.gz chr9n-9001-10001.tar.gz chr9n-10001-11001.tar.gz chr9n-11001-12001.tar.gz chr9n-12001-13001.tar.gz chr9n-13001-14001.tar.gz chr9n-14001-15001.tar.gz chr9n-15001-16001.tar.gz chr9n-16001-17001.tar.gz chr9n-17001-18001.tar.gz chr9n-18001-19001.tar.gz chr9n-19001-20001.tar.gz chr9n-20001-21001.tar.gz chr9n-21001-22001.tar.gz chr9n-22001-23001.tar.gz chr9n-23001-24001.tar.gz chr9n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000235
+        - individualsid0000236
+        - individualsid0000237
+        - individualsid0000238
+        - individualsid0000231
+        - individualsid0000232
+        - individualsid0000233
+        - individualsid0000234
+        - individualsid0000239
+        - individualsid0000230
+        - individualsid0000240
+        - individualsid0000241
+        - individualsid0000217
+        - individualsid0000218
+        - individualsid0000219
+        - individualsid0000224
+        - individualsid0000225
+        - individualsid0000226
+        - individualsid0000227
+        - individualsid0000220
+        - individualsid0000221
+        - individualsid0000222
+        - individualsid0000223
+        - individualsid0000228
+        - individualsid0000229
+
+    - name: siftingid0000243
+      run: "sifting ALL.chr9.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 9"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000244
+      run: "individuals ALL.chr10.250000.vcf 10 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000245
+      run: "individuals ALL.chr10.250000.vcf 10 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000246
+      run: "individuals ALL.chr10.250000.vcf 10 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000247
+      run: "individuals ALL.chr10.250000.vcf 10 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000248
+      run: "individuals ALL.chr10.250000.vcf 10 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000249
+      run: "individuals ALL.chr10.250000.vcf 10 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000250
+      run: "individuals ALL.chr10.250000.vcf 10 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000251
+      run: "individuals ALL.chr10.250000.vcf 10 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000252
+      run: "individuals ALL.chr10.250000.vcf 10 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000253
+      run: "individuals ALL.chr10.250000.vcf 10 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000254
+      run: "individuals ALL.chr10.250000.vcf 10 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000255
+      run: "individuals ALL.chr10.250000.vcf 10 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000256
+      run: "individuals ALL.chr10.250000.vcf 10 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000257
+      run: "individuals ALL.chr10.250000.vcf 10 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000258
+      run: "individuals ALL.chr10.250000.vcf 10 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000259
+      run: "individuals ALL.chr10.250000.vcf 10 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000260
+      run: "individuals ALL.chr10.250000.vcf 10 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000261
+      run: "individuals ALL.chr10.250000.vcf 10 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000262
+      run: "individuals ALL.chr10.250000.vcf 10 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000263
+      run: "individuals ALL.chr10.250000.vcf 10 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000264
+      run: "individuals ALL.chr10.250000.vcf 10 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000265
+      run: "individuals ALL.chr10.250000.vcf 10 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000266
+      run: "individuals ALL.chr10.250000.vcf 10 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000267
+      run: "individuals ALL.chr10.250000.vcf 10 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000268
+      run: "individuals ALL.chr10.250000.vcf 10 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000269
+      run: "individuals_merge 10 chr10n-1-1001.tar.gz chr10n-1001-2001.tar.gz chr10n-2001-3001.tar.gz chr10n-3001-4001.tar.gz chr10n-4001-5001.tar.gz chr10n-5001-6001.tar.gz chr10n-6001-7001.tar.gz chr10n-7001-8001.tar.gz chr10n-8001-9001.tar.gz chr10n-9001-10001.tar.gz chr10n-10001-11001.tar.gz chr10n-11001-12001.tar.gz chr10n-12001-13001.tar.gz chr10n-13001-14001.tar.gz chr10n-14001-15001.tar.gz chr10n-15001-16001.tar.gz chr10n-16001-17001.tar.gz chr10n-17001-18001.tar.gz chr10n-18001-19001.tar.gz chr10n-19001-20001.tar.gz chr10n-20001-21001.tar.gz chr10n-21001-22001.tar.gz chr10n-22001-23001.tar.gz chr10n-23001-24001.tar.gz chr10n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000246
+        - individualsid0000247
+        - individualsid0000248
+        - individualsid0000249
+        - individualsid0000244
+        - individualsid0000245
+        - individualsid0000257
+        - individualsid0000258
+        - individualsid0000259
+        - individualsid0000253
+        - individualsid0000254
+        - individualsid0000255
+        - individualsid0000256
+        - individualsid0000250
+        - individualsid0000251
+        - individualsid0000252
+        - individualsid0000268
+        - individualsid0000264
+        - individualsid0000265
+        - individualsid0000266
+        - individualsid0000267
+        - individualsid0000260
+        - individualsid0000261
+        - individualsid0000262
+        - individualsid0000263
+
+    - name: siftingid0000270
+      run: "sifting ALL.chr10.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 10"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000271
+      run: "individuals ALL.chr11.250000.vcf 11 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000272
+      run: "individuals ALL.chr11.250000.vcf 11 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000273
+      run: "individuals ALL.chr11.250000.vcf 11 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000274
+      run: "individuals ALL.chr11.250000.vcf 11 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000275
+      run: "individuals ALL.chr11.250000.vcf 11 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000276
+      run: "individuals ALL.chr11.250000.vcf 11 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000277
+      run: "individuals ALL.chr11.250000.vcf 11 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000278
+      run: "individuals ALL.chr11.250000.vcf 11 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000279
+      run: "individuals ALL.chr11.250000.vcf 11 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000280
+      run: "individuals ALL.chr11.250000.vcf 11 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000281
+      run: "individuals ALL.chr11.250000.vcf 11 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000282
+      run: "individuals ALL.chr11.250000.vcf 11 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000283
+      run: "individuals ALL.chr11.250000.vcf 11 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000284
+      run: "individuals ALL.chr11.250000.vcf 11 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000285
+      run: "individuals ALL.chr11.250000.vcf 11 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000286
+      run: "individuals ALL.chr11.250000.vcf 11 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000287
+      run: "individuals ALL.chr11.250000.vcf 11 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000288
+      run: "individuals ALL.chr11.250000.vcf 11 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000289
+      run: "individuals ALL.chr11.250000.vcf 11 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000290
+      run: "individuals ALL.chr11.250000.vcf 11 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000291
+      run: "individuals ALL.chr11.250000.vcf 11 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000292
+      run: "individuals ALL.chr11.250000.vcf 11 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000293
+      run: "individuals ALL.chr11.250000.vcf 11 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000294
+      run: "individuals ALL.chr11.250000.vcf 11 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000295
+      run: "individuals ALL.chr11.250000.vcf 11 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000296
+      run: "individuals_merge 11 chr11n-1-1001.tar.gz chr11n-1001-2001.tar.gz chr11n-2001-3001.tar.gz chr11n-3001-4001.tar.gz chr11n-4001-5001.tar.gz chr11n-5001-6001.tar.gz chr11n-6001-7001.tar.gz chr11n-7001-8001.tar.gz chr11n-8001-9001.tar.gz chr11n-9001-10001.tar.gz chr11n-10001-11001.tar.gz chr11n-11001-12001.tar.gz chr11n-12001-13001.tar.gz chr11n-13001-14001.tar.gz chr11n-14001-15001.tar.gz chr11n-15001-16001.tar.gz chr11n-16001-17001.tar.gz chr11n-17001-18001.tar.gz chr11n-18001-19001.tar.gz chr11n-19001-20001.tar.gz chr11n-20001-21001.tar.gz chr11n-21001-22001.tar.gz chr11n-22001-23001.tar.gz chr11n-23001-24001.tar.gz chr11n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000279
+        - individualsid0000275
+        - individualsid0000276
+        - individualsid0000277
+        - individualsid0000278
+        - individualsid0000271
+        - individualsid0000272
+        - individualsid0000273
+        - individualsid0000274
+        - individualsid0000286
+        - individualsid0000287
+        - individualsid0000288
+        - individualsid0000289
+        - individualsid0000282
+        - individualsid0000283
+        - individualsid0000284
+        - individualsid0000285
+        - individualsid0000280
+        - individualsid0000281
+        - individualsid0000293
+        - individualsid0000294
+        - individualsid0000295
+        - individualsid0000290
+        - individualsid0000291
+        - individualsid0000292
+
+    - name: siftingid0000297
+      run: "sifting ALL.chr11.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 11"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000298
+      run: "individuals ALL.chr12.250000.vcf 12 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000299
+      run: "individuals ALL.chr12.250000.vcf 12 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000300
+      run: "individuals ALL.chr12.250000.vcf 12 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000301
+      run: "individuals ALL.chr12.250000.vcf 12 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000302
+      run: "individuals ALL.chr12.250000.vcf 12 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000303
+      run: "individuals ALL.chr12.250000.vcf 12 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000304
+      run: "individuals ALL.chr12.250000.vcf 12 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000305
+      run: "individuals ALL.chr12.250000.vcf 12 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000306
+      run: "individuals ALL.chr12.250000.vcf 12 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000307
+      run: "individuals ALL.chr12.250000.vcf 12 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000308
+      run: "individuals ALL.chr12.250000.vcf 12 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000309
+      run: "individuals ALL.chr12.250000.vcf 12 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000310
+      run: "individuals ALL.chr12.250000.vcf 12 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000311
+      run: "individuals ALL.chr12.250000.vcf 12 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000312
+      run: "individuals ALL.chr12.250000.vcf 12 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000313
+      run: "individuals ALL.chr12.250000.vcf 12 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000314
+      run: "individuals ALL.chr12.250000.vcf 12 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000315
+      run: "individuals ALL.chr12.250000.vcf 12 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000316
+      run: "individuals ALL.chr12.250000.vcf 12 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000317
+      run: "individuals ALL.chr12.250000.vcf 12 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000318
+      run: "individuals ALL.chr12.250000.vcf 12 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000319
+      run: "individuals ALL.chr12.250000.vcf 12 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000320
+      run: "individuals ALL.chr12.250000.vcf 12 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000321
+      run: "individuals ALL.chr12.250000.vcf 12 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000322
+      run: "individuals ALL.chr12.250000.vcf 12 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000323
+      run: "individuals_merge 12 chr12n-1-1001.tar.gz chr12n-1001-2001.tar.gz chr12n-2001-3001.tar.gz chr12n-3001-4001.tar.gz chr12n-4001-5001.tar.gz chr12n-5001-6001.tar.gz chr12n-6001-7001.tar.gz chr12n-7001-8001.tar.gz chr12n-8001-9001.tar.gz chr12n-9001-10001.tar.gz chr12n-10001-11001.tar.gz chr12n-11001-12001.tar.gz chr12n-12001-13001.tar.gz chr12n-13001-14001.tar.gz chr12n-14001-15001.tar.gz chr12n-15001-16001.tar.gz chr12n-16001-17001.tar.gz chr12n-17001-18001.tar.gz chr12n-18001-19001.tar.gz chr12n-19001-20001.tar.gz chr12n-20001-21001.tar.gz chr12n-21001-22001.tar.gz chr12n-22001-23001.tar.gz chr12n-23001-24001.tar.gz chr12n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000312
+        - individualsid0000313
+        - individualsid0000314
+        - individualsid0000315
+        - individualsid0000310
+        - individualsid0000311
+        - individualsid0000316
+        - individualsid0000317
+        - individualsid0000318
+        - individualsid0000319
+        - individualsid0000320
+        - individualsid0000321
+        - individualsid0000322
+        - individualsid0000301
+        - individualsid0000302
+        - individualsid0000303
+        - individualsid0000304
+        - individualsid0000300
+        - individualsid0000309
+        - individualsid0000305
+        - individualsid0000306
+        - individualsid0000307
+        - individualsid0000308
+        - individualsid0000298
+        - individualsid0000299
+
+    - name: siftingid0000324
+      run: "sifting ALL.chr12.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 12"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000325
+      run: "individuals ALL.chr13.250000.vcf 13 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000326
+      run: "individuals ALL.chr13.250000.vcf 13 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000327
+      run: "individuals ALL.chr13.250000.vcf 13 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000328
+      run: "individuals ALL.chr13.250000.vcf 13 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000329
+      run: "individuals ALL.chr13.250000.vcf 13 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000330
+      run: "individuals ALL.chr13.250000.vcf 13 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000331
+      run: "individuals ALL.chr13.250000.vcf 13 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000332
+      run: "individuals ALL.chr13.250000.vcf 13 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000333
+      run: "individuals ALL.chr13.250000.vcf 13 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000334
+      run: "individuals ALL.chr13.250000.vcf 13 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000335
+      run: "individuals ALL.chr13.250000.vcf 13 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000336
+      run: "individuals ALL.chr13.250000.vcf 13 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000337
+      run: "individuals ALL.chr13.250000.vcf 13 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000338
+      run: "individuals ALL.chr13.250000.vcf 13 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000339
+      run: "individuals ALL.chr13.250000.vcf 13 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000340
+      run: "individuals ALL.chr13.250000.vcf 13 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000341
+      run: "individuals ALL.chr13.250000.vcf 13 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000342
+      run: "individuals ALL.chr13.250000.vcf 13 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000343
+      run: "individuals ALL.chr13.250000.vcf 13 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000344
+      run: "individuals ALL.chr13.250000.vcf 13 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000345
+      run: "individuals ALL.chr13.250000.vcf 13 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000346
+      run: "individuals ALL.chr13.250000.vcf 13 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000347
+      run: "individuals ALL.chr13.250000.vcf 13 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000348
+      run: "individuals ALL.chr13.250000.vcf 13 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000349
+      run: "individuals ALL.chr13.250000.vcf 13 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000350
+      run: "individuals_merge 13 chr13n-1-1001.tar.gz chr13n-1001-2001.tar.gz chr13n-2001-3001.tar.gz chr13n-3001-4001.tar.gz chr13n-4001-5001.tar.gz chr13n-5001-6001.tar.gz chr13n-6001-7001.tar.gz chr13n-7001-8001.tar.gz chr13n-8001-9001.tar.gz chr13n-9001-10001.tar.gz chr13n-10001-11001.tar.gz chr13n-11001-12001.tar.gz chr13n-12001-13001.tar.gz chr13n-13001-14001.tar.gz chr13n-14001-15001.tar.gz chr13n-15001-16001.tar.gz chr13n-16001-17001.tar.gz chr13n-17001-18001.tar.gz chr13n-18001-19001.tar.gz chr13n-19001-20001.tar.gz chr13n-20001-21001.tar.gz chr13n-21001-22001.tar.gz chr13n-22001-23001.tar.gz chr13n-23001-24001.tar.gz chr13n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000325
+        - individualsid0000326
+        - individualsid0000327
+        - individualsid0000328
+        - individualsid0000329
+        - individualsid0000334
+        - individualsid0000335
+        - individualsid0000336
+        - individualsid0000337
+        - individualsid0000330
+        - individualsid0000331
+        - individualsid0000332
+        - individualsid0000333
+        - individualsid0000338
+        - individualsid0000339
+        - individualsid0000345
+        - individualsid0000346
+        - individualsid0000347
+        - individualsid0000348
+        - individualsid0000341
+        - individualsid0000342
+        - individualsid0000343
+        - individualsid0000344
+        - individualsid0000349
+        - individualsid0000340
+
+    - name: siftingid0000351
+      run: "sifting ALL.chr13.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 13"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000352
+      run: "individuals ALL.chr14.250000.vcf 14 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000353
+      run: "individuals ALL.chr14.250000.vcf 14 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000354
+      run: "individuals ALL.chr14.250000.vcf 14 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000355
+      run: "individuals ALL.chr14.250000.vcf 14 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000356
+      run: "individuals ALL.chr14.250000.vcf 14 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000357
+      run: "individuals ALL.chr14.250000.vcf 14 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000358
+      run: "individuals ALL.chr14.250000.vcf 14 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000359
+      run: "individuals ALL.chr14.250000.vcf 14 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000360
+      run: "individuals ALL.chr14.250000.vcf 14 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000361
+      run: "individuals ALL.chr14.250000.vcf 14 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000362
+      run: "individuals ALL.chr14.250000.vcf 14 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000363
+      run: "individuals ALL.chr14.250000.vcf 14 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000364
+      run: "individuals ALL.chr14.250000.vcf 14 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000365
+      run: "individuals ALL.chr14.250000.vcf 14 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000366
+      run: "individuals ALL.chr14.250000.vcf 14 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000367
+      run: "individuals ALL.chr14.250000.vcf 14 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000368
+      run: "individuals ALL.chr14.250000.vcf 14 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000369
+      run: "individuals ALL.chr14.250000.vcf 14 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000370
+      run: "individuals ALL.chr14.250000.vcf 14 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000371
+      run: "individuals ALL.chr14.250000.vcf 14 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000372
+      run: "individuals ALL.chr14.250000.vcf 14 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000373
+      run: "individuals ALL.chr14.250000.vcf 14 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000374
+      run: "individuals ALL.chr14.250000.vcf 14 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000375
+      run: "individuals ALL.chr14.250000.vcf 14 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000376
+      run: "individuals ALL.chr14.250000.vcf 14 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000377
+      run: "individuals_merge 14 chr14n-1-1001.tar.gz chr14n-1001-2001.tar.gz chr14n-2001-3001.tar.gz chr14n-3001-4001.tar.gz chr14n-4001-5001.tar.gz chr14n-5001-6001.tar.gz chr14n-6001-7001.tar.gz chr14n-7001-8001.tar.gz chr14n-8001-9001.tar.gz chr14n-9001-10001.tar.gz chr14n-10001-11001.tar.gz chr14n-11001-12001.tar.gz chr14n-12001-13001.tar.gz chr14n-13001-14001.tar.gz chr14n-14001-15001.tar.gz chr14n-15001-16001.tar.gz chr14n-16001-17001.tar.gz chr14n-17001-18001.tar.gz chr14n-18001-19001.tar.gz chr14n-19001-20001.tar.gz chr14n-20001-21001.tar.gz chr14n-21001-22001.tar.gz chr14n-22001-23001.tar.gz chr14n-23001-24001.tar.gz chr14n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000356
+        - individualsid0000357
+        - individualsid0000358
+        - individualsid0000359
+        - individualsid0000352
+        - individualsid0000353
+        - individualsid0000354
+        - individualsid0000355
+        - individualsid0000367
+        - individualsid0000368
+        - individualsid0000369
+        - individualsid0000363
+        - individualsid0000364
+        - individualsid0000365
+        - individualsid0000366
+        - individualsid0000360
+        - individualsid0000361
+        - individualsid0000362
+        - individualsid0000374
+        - individualsid0000375
+        - individualsid0000376
+        - individualsid0000370
+        - individualsid0000371
+        - individualsid0000372
+        - individualsid0000373
+
+    - name: siftingid0000378
+      run: "sifting ALL.chr14.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 14"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000379
+      run: "individuals ALL.chr15.250000.vcf 15 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000380
+      run: "individuals ALL.chr15.250000.vcf 15 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000381
+      run: "individuals ALL.chr15.250000.vcf 15 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000382
+      run: "individuals ALL.chr15.250000.vcf 15 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000383
+      run: "individuals ALL.chr15.250000.vcf 15 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000384
+      run: "individuals ALL.chr15.250000.vcf 15 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000385
+      run: "individuals ALL.chr15.250000.vcf 15 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000386
+      run: "individuals ALL.chr15.250000.vcf 15 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000387
+      run: "individuals ALL.chr15.250000.vcf 15 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000388
+      run: "individuals ALL.chr15.250000.vcf 15 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000389
+      run: "individuals ALL.chr15.250000.vcf 15 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000390
+      run: "individuals ALL.chr15.250000.vcf 15 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000391
+      run: "individuals ALL.chr15.250000.vcf 15 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000392
+      run: "individuals ALL.chr15.250000.vcf 15 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000393
+      run: "individuals ALL.chr15.250000.vcf 15 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000394
+      run: "individuals ALL.chr15.250000.vcf 15 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000395
+      run: "individuals ALL.chr15.250000.vcf 15 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000396
+      run: "individuals ALL.chr15.250000.vcf 15 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000397
+      run: "individuals ALL.chr15.250000.vcf 15 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000398
+      run: "individuals ALL.chr15.250000.vcf 15 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000399
+      run: "individuals ALL.chr15.250000.vcf 15 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000400
+      run: "individuals ALL.chr15.250000.vcf 15 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000401
+      run: "individuals ALL.chr15.250000.vcf 15 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000402
+      run: "individuals ALL.chr15.250000.vcf 15 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000403
+      run: "individuals ALL.chr15.250000.vcf 15 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000404
+      run: "individuals_merge 15 chr15n-1-1001.tar.gz chr15n-1001-2001.tar.gz chr15n-2001-3001.tar.gz chr15n-3001-4001.tar.gz chr15n-4001-5001.tar.gz chr15n-5001-6001.tar.gz chr15n-6001-7001.tar.gz chr15n-7001-8001.tar.gz chr15n-8001-9001.tar.gz chr15n-9001-10001.tar.gz chr15n-10001-11001.tar.gz chr15n-11001-12001.tar.gz chr15n-12001-13001.tar.gz chr15n-13001-14001.tar.gz chr15n-14001-15001.tar.gz chr15n-15001-16001.tar.gz chr15n-16001-17001.tar.gz chr15n-17001-18001.tar.gz chr15n-18001-19001.tar.gz chr15n-19001-20001.tar.gz chr15n-20001-21001.tar.gz chr15n-21001-22001.tar.gz chr15n-22001-23001.tar.gz chr15n-23001-24001.tar.gz chr15n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000379
+        - individualsid0000389
+        - individualsid0000385
+        - individualsid0000386
+        - individualsid0000387
+        - individualsid0000388
+        - individualsid0000381
+        - individualsid0000382
+        - individualsid0000383
+        - individualsid0000384
+        - individualsid0000380
+        - individualsid0000400
+        - individualsid0000401
+        - individualsid0000402
+        - individualsid0000403
+        - individualsid0000396
+        - individualsid0000397
+        - individualsid0000398
+        - individualsid0000399
+        - individualsid0000392
+        - individualsid0000393
+        - individualsid0000394
+        - individualsid0000395
+        - individualsid0000390
+        - individualsid0000391
+
+    - name: siftingid0000405
+      run: "sifting ALL.chr15.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 15"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000406
+      run: "individuals ALL.chr16.250000.vcf 16 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000407
+      run: "individuals ALL.chr16.250000.vcf 16 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000408
+      run: "individuals ALL.chr16.250000.vcf 16 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000409
+      run: "individuals ALL.chr16.250000.vcf 16 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000410
+      run: "individuals ALL.chr16.250000.vcf 16 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000411
+      run: "individuals ALL.chr16.250000.vcf 16 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000412
+      run: "individuals ALL.chr16.250000.vcf 16 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000413
+      run: "individuals ALL.chr16.250000.vcf 16 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000414
+      run: "individuals ALL.chr16.250000.vcf 16 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000415
+      run: "individuals ALL.chr16.250000.vcf 16 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000416
+      run: "individuals ALL.chr16.250000.vcf 16 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000417
+      run: "individuals ALL.chr16.250000.vcf 16 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000418
+      run: "individuals ALL.chr16.250000.vcf 16 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000419
+      run: "individuals ALL.chr16.250000.vcf 16 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000420
+      run: "individuals ALL.chr16.250000.vcf 16 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000421
+      run: "individuals ALL.chr16.250000.vcf 16 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000422
+      run: "individuals ALL.chr16.250000.vcf 16 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000423
+      run: "individuals ALL.chr16.250000.vcf 16 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000424
+      run: "individuals ALL.chr16.250000.vcf 16 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000425
+      run: "individuals ALL.chr16.250000.vcf 16 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000426
+      run: "individuals ALL.chr16.250000.vcf 16 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000427
+      run: "individuals ALL.chr16.250000.vcf 16 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000428
+      run: "individuals ALL.chr16.250000.vcf 16 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000429
+      run: "individuals ALL.chr16.250000.vcf 16 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000430
+      run: "individuals ALL.chr16.250000.vcf 16 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000431
+      run: "individuals_merge 16 chr16n-1-1001.tar.gz chr16n-1001-2001.tar.gz chr16n-2001-3001.tar.gz chr16n-3001-4001.tar.gz chr16n-4001-5001.tar.gz chr16n-5001-6001.tar.gz chr16n-6001-7001.tar.gz chr16n-7001-8001.tar.gz chr16n-8001-9001.tar.gz chr16n-9001-10001.tar.gz chr16n-10001-11001.tar.gz chr16n-11001-12001.tar.gz chr16n-12001-13001.tar.gz chr16n-13001-14001.tar.gz chr16n-14001-15001.tar.gz chr16n-15001-16001.tar.gz chr16n-16001-17001.tar.gz chr16n-17001-18001.tar.gz chr16n-18001-19001.tar.gz chr16n-19001-20001.tar.gz chr16n-20001-21001.tar.gz chr16n-21001-22001.tar.gz chr16n-22001-23001.tar.gz chr16n-23001-24001.tar.gz chr16n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000430
+        - individualsid0000408
+        - individualsid0000409
+        - individualsid0000406
+        - individualsid0000407
+        - individualsid0000411
+        - individualsid0000412
+        - individualsid0000413
+        - individualsid0000414
+        - individualsid0000410
+        - individualsid0000419
+        - individualsid0000415
+        - individualsid0000416
+        - individualsid0000417
+        - individualsid0000418
+        - individualsid0000422
+        - individualsid0000423
+        - individualsid0000424
+        - individualsid0000425
+        - individualsid0000420
+        - individualsid0000421
+        - individualsid0000426
+        - individualsid0000427
+        - individualsid0000428
+        - individualsid0000429
+
+    - name: siftingid0000432
+      run: "sifting ALL.chr16.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 16"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000433
+      run: "individuals ALL.chr17.250000.vcf 17 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000434
+      run: "individuals ALL.chr17.250000.vcf 17 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000435
+      run: "individuals ALL.chr17.250000.vcf 17 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000436
+      run: "individuals ALL.chr17.250000.vcf 17 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000437
+      run: "individuals ALL.chr17.250000.vcf 17 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000438
+      run: "individuals ALL.chr17.250000.vcf 17 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000439
+      run: "individuals ALL.chr17.250000.vcf 17 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000440
+      run: "individuals ALL.chr17.250000.vcf 17 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000441
+      run: "individuals ALL.chr17.250000.vcf 17 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000442
+      run: "individuals ALL.chr17.250000.vcf 17 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000443
+      run: "individuals ALL.chr17.250000.vcf 17 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000444
+      run: "individuals ALL.chr17.250000.vcf 17 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000445
+      run: "individuals ALL.chr17.250000.vcf 17 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000446
+      run: "individuals ALL.chr17.250000.vcf 17 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000447
+      run: "individuals ALL.chr17.250000.vcf 17 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000448
+      run: "individuals ALL.chr17.250000.vcf 17 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000449
+      run: "individuals ALL.chr17.250000.vcf 17 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000450
+      run: "individuals ALL.chr17.250000.vcf 17 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000451
+      run: "individuals ALL.chr17.250000.vcf 17 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000452
+      run: "individuals ALL.chr17.250000.vcf 17 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000453
+      run: "individuals ALL.chr17.250000.vcf 17 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000454
+      run: "individuals ALL.chr17.250000.vcf 17 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000455
+      run: "individuals ALL.chr17.250000.vcf 17 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000456
+      run: "individuals ALL.chr17.250000.vcf 17 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000457
+      run: "individuals ALL.chr17.250000.vcf 17 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000458
+      run: "individuals_merge 17 chr17n-1-1001.tar.gz chr17n-1001-2001.tar.gz chr17n-2001-3001.tar.gz chr17n-3001-4001.tar.gz chr17n-4001-5001.tar.gz chr17n-5001-6001.tar.gz chr17n-6001-7001.tar.gz chr17n-7001-8001.tar.gz chr17n-8001-9001.tar.gz chr17n-9001-10001.tar.gz chr17n-10001-11001.tar.gz chr17n-11001-12001.tar.gz chr17n-12001-13001.tar.gz chr17n-13001-14001.tar.gz chr17n-14001-15001.tar.gz chr17n-15001-16001.tar.gz chr17n-16001-17001.tar.gz chr17n-17001-18001.tar.gz chr17n-18001-19001.tar.gz chr17n-19001-20001.tar.gz chr17n-20001-21001.tar.gz chr17n-21001-22001.tar.gz chr17n-22001-23001.tar.gz chr17n-23001-24001.tar.gz chr17n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000433
+        - individualsid0000434
+        - individualsid0000435
+        - individualsid0000436
+        - individualsid0000437
+        - individualsid0000438
+        - individualsid0000439
+        - individualsid0000444
+        - individualsid0000445
+        - individualsid0000446
+        - individualsid0000447
+        - individualsid0000440
+        - individualsid0000441
+        - individualsid0000442
+        - individualsid0000443
+        - individualsid0000448
+        - individualsid0000449
+        - individualsid0000455
+        - individualsid0000456
+        - individualsid0000457
+        - individualsid0000451
+        - individualsid0000452
+        - individualsid0000453
+        - individualsid0000454
+        - individualsid0000450
+
+    - name: siftingid0000459
+      run: "sifting ALL.chr17.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 17"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000460
+      run: "individuals ALL.chr18.250000.vcf 18 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000461
+      run: "individuals ALL.chr18.250000.vcf 18 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000462
+      run: "individuals ALL.chr18.250000.vcf 18 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000463
+      run: "individuals ALL.chr18.250000.vcf 18 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000464
+      run: "individuals ALL.chr18.250000.vcf 18 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000465
+      run: "individuals ALL.chr18.250000.vcf 18 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000466
+      run: "individuals ALL.chr18.250000.vcf 18 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000467
+      run: "individuals ALL.chr18.250000.vcf 18 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000468
+      run: "individuals ALL.chr18.250000.vcf 18 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000469
+      run: "individuals ALL.chr18.250000.vcf 18 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000470
+      run: "individuals ALL.chr18.250000.vcf 18 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000471
+      run: "individuals ALL.chr18.250000.vcf 18 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000472
+      run: "individuals ALL.chr18.250000.vcf 18 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000473
+      run: "individuals ALL.chr18.250000.vcf 18 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000474
+      run: "individuals ALL.chr18.250000.vcf 18 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000475
+      run: "individuals ALL.chr18.250000.vcf 18 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000476
+      run: "individuals ALL.chr18.250000.vcf 18 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000477
+      run: "individuals ALL.chr18.250000.vcf 18 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000478
+      run: "individuals ALL.chr18.250000.vcf 18 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000479
+      run: "individuals ALL.chr18.250000.vcf 18 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000480
+      run: "individuals ALL.chr18.250000.vcf 18 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000481
+      run: "individuals ALL.chr18.250000.vcf 18 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000482
+      run: "individuals ALL.chr18.250000.vcf 18 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000483
+      run: "individuals ALL.chr18.250000.vcf 18 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000484
+      run: "individuals ALL.chr18.250000.vcf 18 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000485
+      run: "individuals_merge 18 chr18n-1-1001.tar.gz chr18n-1001-2001.tar.gz chr18n-2001-3001.tar.gz chr18n-3001-4001.tar.gz chr18n-4001-5001.tar.gz chr18n-5001-6001.tar.gz chr18n-6001-7001.tar.gz chr18n-7001-8001.tar.gz chr18n-8001-9001.tar.gz chr18n-9001-10001.tar.gz chr18n-10001-11001.tar.gz chr18n-11001-12001.tar.gz chr18n-12001-13001.tar.gz chr18n-13001-14001.tar.gz chr18n-14001-15001.tar.gz chr18n-15001-16001.tar.gz chr18n-16001-17001.tar.gz chr18n-17001-18001.tar.gz chr18n-18001-19001.tar.gz chr18n-19001-20001.tar.gz chr18n-20001-21001.tar.gz chr18n-21001-22001.tar.gz chr18n-22001-23001.tar.gz chr18n-23001-24001.tar.gz chr18n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000477
+        - individualsid0000478
+        - individualsid0000479
+        - individualsid0000473
+        - individualsid0000474
+        - individualsid0000475
+        - individualsid0000476
+        - individualsid0000470
+        - individualsid0000471
+        - individualsid0000472
+        - individualsid0000484
+        - individualsid0000480
+        - individualsid0000481
+        - individualsid0000482
+        - individualsid0000483
+        - individualsid0000466
+        - individualsid0000467
+        - individualsid0000468
+        - individualsid0000469
+        - individualsid0000462
+        - individualsid0000463
+        - individualsid0000464
+        - individualsid0000465
+        - individualsid0000460
+        - individualsid0000461
+
+    - name: siftingid0000486
+      run: "sifting ALL.chr18.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 18"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000487
+      run: "individuals ALL.chr19.250000.vcf 19 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000488
+      run: "individuals ALL.chr19.250000.vcf 19 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000489
+      run: "individuals ALL.chr19.250000.vcf 19 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000490
+      run: "individuals ALL.chr19.250000.vcf 19 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000491
+      run: "individuals ALL.chr19.250000.vcf 19 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000492
+      run: "individuals ALL.chr19.250000.vcf 19 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000493
+      run: "individuals ALL.chr19.250000.vcf 19 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000494
+      run: "individuals ALL.chr19.250000.vcf 19 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000495
+      run: "individuals ALL.chr19.250000.vcf 19 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000496
+      run: "individuals ALL.chr19.250000.vcf 19 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000497
+      run: "individuals ALL.chr19.250000.vcf 19 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000498
+      run: "individuals ALL.chr19.250000.vcf 19 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000499
+      run: "individuals ALL.chr19.250000.vcf 19 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000500
+      run: "individuals ALL.chr19.250000.vcf 19 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000501
+      run: "individuals ALL.chr19.250000.vcf 19 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000502
+      run: "individuals ALL.chr19.250000.vcf 19 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000503
+      run: "individuals ALL.chr19.250000.vcf 19 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000504
+      run: "individuals ALL.chr19.250000.vcf 19 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000505
+      run: "individuals ALL.chr19.250000.vcf 19 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000506
+      run: "individuals ALL.chr19.250000.vcf 19 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000507
+      run: "individuals ALL.chr19.250000.vcf 19 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000508
+      run: "individuals ALL.chr19.250000.vcf 19 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000509
+      run: "individuals ALL.chr19.250000.vcf 19 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000510
+      run: "individuals ALL.chr19.250000.vcf 19 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000511
+      run: "individuals ALL.chr19.250000.vcf 19 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000512
+      run: "individuals_merge 19 chr19n-1-1001.tar.gz chr19n-1001-2001.tar.gz chr19n-2001-3001.tar.gz chr19n-3001-4001.tar.gz chr19n-4001-5001.tar.gz chr19n-5001-6001.tar.gz chr19n-6001-7001.tar.gz chr19n-7001-8001.tar.gz chr19n-8001-9001.tar.gz chr19n-9001-10001.tar.gz chr19n-10001-11001.tar.gz chr19n-11001-12001.tar.gz chr19n-12001-13001.tar.gz chr19n-13001-14001.tar.gz chr19n-14001-15001.tar.gz chr19n-15001-16001.tar.gz chr19n-16001-17001.tar.gz chr19n-17001-18001.tar.gz chr19n-18001-19001.tar.gz chr19n-19001-20001.tar.gz chr19n-20001-21001.tar.gz chr19n-21001-22001.tar.gz chr19n-22001-23001.tar.gz chr19n-23001-24001.tar.gz chr19n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000510
+        - individualsid0000511
+        - individualsid0000500
+        - individualsid0000501
+        - individualsid0000502
+        - individualsid0000507
+        - individualsid0000508
+        - individualsid0000509
+        - individualsid0000503
+        - individualsid0000504
+        - individualsid0000505
+        - individualsid0000506
+        - individualsid0000488
+        - individualsid0000489
+        - individualsid0000487
+        - individualsid0000499
+        - individualsid0000495
+        - individualsid0000496
+        - individualsid0000497
+        - individualsid0000498
+        - individualsid0000491
+        - individualsid0000492
+        - individualsid0000493
+        - individualsid0000494
+        - individualsid0000490
+
+    - name: siftingid0000513
+      run: "sifting ALL.chr19.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 19"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000514
+      run: "individuals ALL.chr20.250000.vcf 20 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000515
+      run: "individuals ALL.chr20.250000.vcf 20 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000516
+      run: "individuals ALL.chr20.250000.vcf 20 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000517
+      run: "individuals ALL.chr20.250000.vcf 20 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000518
+      run: "individuals ALL.chr20.250000.vcf 20 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000519
+      run: "individuals ALL.chr20.250000.vcf 20 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000520
+      run: "individuals ALL.chr20.250000.vcf 20 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000521
+      run: "individuals ALL.chr20.250000.vcf 20 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000522
+      run: "individuals ALL.chr20.250000.vcf 20 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000523
+      run: "individuals ALL.chr20.250000.vcf 20 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000524
+      run: "individuals ALL.chr20.250000.vcf 20 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000525
+      run: "individuals ALL.chr20.250000.vcf 20 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000526
+      run: "individuals ALL.chr20.250000.vcf 20 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000527
+      run: "individuals ALL.chr20.250000.vcf 20 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000528
+      run: "individuals ALL.chr20.250000.vcf 20 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000529
+      run: "individuals ALL.chr20.250000.vcf 20 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000530
+      run: "individuals ALL.chr20.250000.vcf 20 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000531
+      run: "individuals ALL.chr20.250000.vcf 20 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000532
+      run: "individuals ALL.chr20.250000.vcf 20 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000533
+      run: "individuals ALL.chr20.250000.vcf 20 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000534
+      run: "individuals ALL.chr20.250000.vcf 20 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000535
+      run: "individuals ALL.chr20.250000.vcf 20 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000536
+      run: "individuals ALL.chr20.250000.vcf 20 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000537
+      run: "individuals ALL.chr20.250000.vcf 20 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000538
+      run: "individuals ALL.chr20.250000.vcf 20 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000539
+      run: "individuals_merge 20 chr20n-1-1001.tar.gz chr20n-1001-2001.tar.gz chr20n-2001-3001.tar.gz chr20n-3001-4001.tar.gz chr20n-4001-5001.tar.gz chr20n-5001-6001.tar.gz chr20n-6001-7001.tar.gz chr20n-7001-8001.tar.gz chr20n-8001-9001.tar.gz chr20n-9001-10001.tar.gz chr20n-10001-11001.tar.gz chr20n-11001-12001.tar.gz chr20n-12001-13001.tar.gz chr20n-13001-14001.tar.gz chr20n-14001-15001.tar.gz chr20n-15001-16001.tar.gz chr20n-16001-17001.tar.gz chr20n-17001-18001.tar.gz chr20n-18001-19001.tar.gz chr20n-19001-20001.tar.gz chr20n-20001-21001.tar.gz chr20n-21001-22001.tar.gz chr20n-22001-23001.tar.gz chr20n-23001-24001.tar.gz chr20n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000518
+        - individualsid0000519
+        - individualsid0000514
+        - individualsid0000515
+        - individualsid0000516
+        - individualsid0000517
+        - individualsid0000521
+        - individualsid0000522
+        - individualsid0000523
+        - individualsid0000524
+        - individualsid0000520
+        - individualsid0000529
+        - individualsid0000525
+        - individualsid0000526
+        - individualsid0000527
+        - individualsid0000528
+        - individualsid0000532
+        - individualsid0000533
+        - individualsid0000534
+        - individualsid0000535
+        - individualsid0000530
+        - individualsid0000531
+        - individualsid0000536
+        - individualsid0000537
+        - individualsid0000538
+
+    - name: siftingid0000540
+      run: "sifting ALL.chr20.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 20"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000541
+      run: "individuals ALL.chr21.250000.vcf 21 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000542
+      run: "individuals ALL.chr21.250000.vcf 21 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000543
+      run: "individuals ALL.chr21.250000.vcf 21 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000544
+      run: "individuals ALL.chr21.250000.vcf 21 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000545
+      run: "individuals ALL.chr21.250000.vcf 21 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000546
+      run: "individuals ALL.chr21.250000.vcf 21 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000547
+      run: "individuals ALL.chr21.250000.vcf 21 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000548
+      run: "individuals ALL.chr21.250000.vcf 21 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000549
+      run: "individuals ALL.chr21.250000.vcf 21 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000550
+      run: "individuals ALL.chr21.250000.vcf 21 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000551
+      run: "individuals ALL.chr21.250000.vcf 21 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000552
+      run: "individuals ALL.chr21.250000.vcf 21 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000553
+      run: "individuals ALL.chr21.250000.vcf 21 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000554
+      run: "individuals ALL.chr21.250000.vcf 21 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000555
+      run: "individuals ALL.chr21.250000.vcf 21 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000556
+      run: "individuals ALL.chr21.250000.vcf 21 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000557
+      run: "individuals ALL.chr21.250000.vcf 21 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000558
+      run: "individuals ALL.chr21.250000.vcf 21 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000559
+      run: "individuals ALL.chr21.250000.vcf 21 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000560
+      run: "individuals ALL.chr21.250000.vcf 21 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000561
+      run: "individuals ALL.chr21.250000.vcf 21 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000562
+      run: "individuals ALL.chr21.250000.vcf 21 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000563
+      run: "individuals ALL.chr21.250000.vcf 21 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000564
+      run: "individuals ALL.chr21.250000.vcf 21 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000565
+      run: "individuals ALL.chr21.250000.vcf 21 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000566
+      run: "individuals_merge 21 chr21n-1-1001.tar.gz chr21n-1001-2001.tar.gz chr21n-2001-3001.tar.gz chr21n-3001-4001.tar.gz chr21n-4001-5001.tar.gz chr21n-5001-6001.tar.gz chr21n-6001-7001.tar.gz chr21n-7001-8001.tar.gz chr21n-8001-9001.tar.gz chr21n-9001-10001.tar.gz chr21n-10001-11001.tar.gz chr21n-11001-12001.tar.gz chr21n-12001-13001.tar.gz chr21n-13001-14001.tar.gz chr21n-14001-15001.tar.gz chr21n-15001-16001.tar.gz chr21n-16001-17001.tar.gz chr21n-17001-18001.tar.gz chr21n-18001-19001.tar.gz chr21n-19001-20001.tar.gz chr21n-20001-21001.tar.gz chr21n-21001-22001.tar.gz chr21n-22001-23001.tar.gz chr21n-23001-24001.tar.gz chr21n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000554
+        - individualsid0000555
+        - individualsid0000556
+        - individualsid0000557
+        - individualsid0000550
+        - individualsid0000551
+        - individualsid0000552
+        - individualsid0000553
+        - individualsid0000558
+        - individualsid0000559
+        - individualsid0000565
+        - individualsid0000561
+        - individualsid0000562
+        - individualsid0000563
+        - individualsid0000564
+        - individualsid0000560
+        - individualsid0000543
+        - individualsid0000544
+        - individualsid0000545
+        - individualsid0000546
+        - individualsid0000541
+        - individualsid0000542
+        - individualsid0000547
+        - individualsid0000548
+        - individualsid0000549
+
+    - name: siftingid0000567
+      run: "sifting ALL.chr21.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 21"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000568
+      run: "individuals ALL.chr22.250000.vcf 22 1 1001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000569
+      run: "individuals ALL.chr22.250000.vcf 22 1001 2001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000570
+      run: "individuals ALL.chr22.250000.vcf 22 2001 3001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000571
+      run: "individuals ALL.chr22.250000.vcf 22 3001 4001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000572
+      run: "individuals ALL.chr22.250000.vcf 22 4001 5001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000573
+      run: "individuals ALL.chr22.250000.vcf 22 5001 6001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000574
+      run: "individuals ALL.chr22.250000.vcf 22 6001 7001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000575
+      run: "individuals ALL.chr22.250000.vcf 22 7001 8001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000576
+      run: "individuals ALL.chr22.250000.vcf 22 8001 9001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000577
+      run: "individuals ALL.chr22.250000.vcf 22 9001 10001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000578
+      run: "individuals ALL.chr22.250000.vcf 22 10001 11001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000579
+      run: "individuals ALL.chr22.250000.vcf 22 11001 12001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000580
+      run: "individuals ALL.chr22.250000.vcf 22 12001 13001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000581
+      run: "individuals ALL.chr22.250000.vcf 22 13001 14001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000582
+      run: "individuals ALL.chr22.250000.vcf 22 14001 15001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000583
+      run: "individuals ALL.chr22.250000.vcf 22 15001 16001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000584
+      run: "individuals ALL.chr22.250000.vcf 22 16001 17001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000585
+      run: "individuals ALL.chr22.250000.vcf 22 17001 18001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000586
+      run: "individuals ALL.chr22.250000.vcf 22 18001 19001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000587
+      run: "individuals ALL.chr22.250000.vcf 22 19001 20001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000588
+      run: "individuals ALL.chr22.250000.vcf 22 20001 21001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000589
+      run: "individuals ALL.chr22.250000.vcf 22 21001 22001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000590
+      run: "individuals ALL.chr22.250000.vcf 22 22001 23001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000591
+      run: "individuals ALL.chr22.250000.vcf 22 23001 24001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsid0000592
+      run: "individuals ALL.chr22.250000.vcf 22 24001 25001 25000"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: individualsmergeid0000593
+      run: "individuals_merge 22 chr22n-1-1001.tar.gz chr22n-1001-2001.tar.gz chr22n-2001-3001.tar.gz chr22n-3001-4001.tar.gz chr22n-4001-5001.tar.gz chr22n-5001-6001.tar.gz chr22n-6001-7001.tar.gz chr22n-7001-8001.tar.gz chr22n-8001-9001.tar.gz chr22n-9001-10001.tar.gz chr22n-10001-11001.tar.gz chr22n-11001-12001.tar.gz chr22n-12001-13001.tar.gz chr22n-13001-14001.tar.gz chr22n-14001-15001.tar.gz chr22n-15001-16001.tar.gz chr22n-16001-17001.tar.gz chr22n-17001-18001.tar.gz chr22n-18001-19001.tar.gz chr22n-19001-20001.tar.gz chr22n-20001-21001.tar.gz chr22n-21001-22001.tar.gz chr22n-22001-23001.tar.gz chr22n-23001-24001.tar.gz chr22n-24001-25001.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsid0000590
+        - individualsid0000591
+        - individualsid0000592
+        - individualsid0000568
+        - individualsid0000569
+        - individualsid0000576
+        - individualsid0000577
+        - individualsid0000578
+        - individualsid0000579
+        - individualsid0000572
+        - individualsid0000573
+        - individualsid0000574
+        - individualsid0000575
+        - individualsid0000570
+        - individualsid0000571
+        - individualsid0000587
+        - individualsid0000588
+        - individualsid0000589
+        - individualsid0000583
+        - individualsid0000584
+        - individualsid0000585
+        - individualsid0000586
+        - individualsid0000580
+        - individualsid0000581
+        - individualsid0000582
+
+    - name: siftingid0000594
+      run: "sifting ALL.chr22.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 22"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: mutationoverlapid0000595
+      run: "mutation_overlap -c 1 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: frequencyid0000596
+      run: "frequency -c 1 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: mutationoverlapid0000597
+      run: "mutation_overlap -c 1 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: frequencyid0000598
+      run: "frequency -c 1 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: mutationoverlapid0000599
+      run: "mutation_overlap -c 1 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: frequencyid0000600
+      run: "frequency -c 1 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: mutationoverlapid0000601
+      run: "mutation_overlap -c 1 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: frequencyid0000602
+      run: "frequency -c 1 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: mutationoverlapid0000603
+      run: "mutation_overlap -c 1 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: frequencyid0000604
+      run: "frequency -c 1 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: mutationoverlapid0000605
+      run: "mutation_overlap -c 1 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: frequencyid0000606
+      run: "frequency -c 1 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: mutationoverlapid0000607
+      run: "mutation_overlap -c 1 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: frequencyid0000608
+      run: "frequency -c 1 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000026
+        - siftingid0000027
+
+    - name: mutationoverlapid0000609
+      run: "mutation_overlap -c 2 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: frequencyid0000610
+      run: "frequency -c 2 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: mutationoverlapid0000611
+      run: "mutation_overlap -c 2 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: frequencyid0000612
+      run: "frequency -c 2 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: mutationoverlapid0000613
+      run: "mutation_overlap -c 2 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: frequencyid0000614
+      run: "frequency -c 2 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: mutationoverlapid0000615
+      run: "mutation_overlap -c 2 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: frequencyid0000616
+      run: "frequency -c 2 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: mutationoverlapid0000617
+      run: "mutation_overlap -c 2 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: frequencyid0000618
+      run: "frequency -c 2 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: mutationoverlapid0000619
+      run: "mutation_overlap -c 2 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: frequencyid0000620
+      run: "frequency -c 2 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: mutationoverlapid0000621
+      run: "mutation_overlap -c 2 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: frequencyid0000622
+      run: "frequency -c 2 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000053
+        - siftingid0000054
+
+    - name: mutationoverlapid0000623
+      run: "mutation_overlap -c 3 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: frequencyid0000624
+      run: "frequency -c 3 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: mutationoverlapid0000625
+      run: "mutation_overlap -c 3 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: frequencyid0000626
+      run: "frequency -c 3 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: mutationoverlapid0000627
+      run: "mutation_overlap -c 3 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: frequencyid0000628
+      run: "frequency -c 3 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: mutationoverlapid0000629
+      run: "mutation_overlap -c 3 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: frequencyid0000630
+      run: "frequency -c 3 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: mutationoverlapid0000631
+      run: "mutation_overlap -c 3 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: frequencyid0000632
+      run: "frequency -c 3 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: mutationoverlapid0000633
+      run: "mutation_overlap -c 3 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: frequencyid0000634
+      run: "frequency -c 3 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: mutationoverlapid0000635
+      run: "mutation_overlap -c 3 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: frequencyid0000636
+      run: "frequency -c 3 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000080
+        - siftingid0000081
+
+    - name: mutationoverlapid0000637
+      run: "mutation_overlap -c 4 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: frequencyid0000638
+      run: "frequency -c 4 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: mutationoverlapid0000639
+      run: "mutation_overlap -c 4 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: frequencyid0000640
+      run: "frequency -c 4 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: mutationoverlapid0000641
+      run: "mutation_overlap -c 4 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: frequencyid0000642
+      run: "frequency -c 4 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: mutationoverlapid0000643
+      run: "mutation_overlap -c 4 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: frequencyid0000644
+      run: "frequency -c 4 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: mutationoverlapid0000645
+      run: "mutation_overlap -c 4 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: frequencyid0000646
+      run: "frequency -c 4 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: mutationoverlapid0000647
+      run: "mutation_overlap -c 4 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: frequencyid0000648
+      run: "frequency -c 4 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: mutationoverlapid0000649
+      run: "mutation_overlap -c 4 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: frequencyid0000650
+      run: "frequency -c 4 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000107
+        - siftingid0000108
+
+    - name: mutationoverlapid0000651
+      run: "mutation_overlap -c 5 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: frequencyid0000652
+      run: "frequency -c 5 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: mutationoverlapid0000653
+      run: "mutation_overlap -c 5 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: frequencyid0000654
+      run: "frequency -c 5 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: mutationoverlapid0000655
+      run: "mutation_overlap -c 5 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: frequencyid0000656
+      run: "frequency -c 5 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: mutationoverlapid0000657
+      run: "mutation_overlap -c 5 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: frequencyid0000658
+      run: "frequency -c 5 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: mutationoverlapid0000659
+      run: "mutation_overlap -c 5 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: frequencyid0000660
+      run: "frequency -c 5 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: mutationoverlapid0000661
+      run: "mutation_overlap -c 5 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: frequencyid0000662
+      run: "frequency -c 5 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: mutationoverlapid0000663
+      run: "mutation_overlap -c 5 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: frequencyid0000664
+      run: "frequency -c 5 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000134
+        - siftingid0000135
+
+    - name: mutationoverlapid0000665
+      run: "mutation_overlap -c 6 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: frequencyid0000666
+      run: "frequency -c 6 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: mutationoverlapid0000667
+      run: "mutation_overlap -c 6 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: frequencyid0000668
+      run: "frequency -c 6 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: mutationoverlapid0000669
+      run: "mutation_overlap -c 6 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: frequencyid0000670
+      run: "frequency -c 6 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: mutationoverlapid0000671
+      run: "mutation_overlap -c 6 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: frequencyid0000672
+      run: "frequency -c 6 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: mutationoverlapid0000673
+      run: "mutation_overlap -c 6 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: frequencyid0000674
+      run: "frequency -c 6 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: mutationoverlapid0000675
+      run: "mutation_overlap -c 6 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: frequencyid0000676
+      run: "frequency -c 6 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: mutationoverlapid0000677
+      run: "mutation_overlap -c 6 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: frequencyid0000678
+      run: "frequency -c 6 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000161
+        - siftingid0000162
+
+    - name: mutationoverlapid0000679
+      run: "mutation_overlap -c 7 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: frequencyid0000680
+      run: "frequency -c 7 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: mutationoverlapid0000681
+      run: "mutation_overlap -c 7 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: frequencyid0000682
+      run: "frequency -c 7 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: mutationoverlapid0000683
+      run: "mutation_overlap -c 7 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: frequencyid0000684
+      run: "frequency -c 7 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: mutationoverlapid0000685
+      run: "mutation_overlap -c 7 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: frequencyid0000686
+      run: "frequency -c 7 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: mutationoverlapid0000687
+      run: "mutation_overlap -c 7 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: frequencyid0000688
+      run: "frequency -c 7 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: mutationoverlapid0000689
+      run: "mutation_overlap -c 7 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: frequencyid0000690
+      run: "frequency -c 7 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: mutationoverlapid0000691
+      run: "mutation_overlap -c 7 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: frequencyid0000692
+      run: "frequency -c 7 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000188
+        - siftingid0000189
+
+    - name: mutationoverlapid0000693
+      run: "mutation_overlap -c 8 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: frequencyid0000694
+      run: "frequency -c 8 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: mutationoverlapid0000695
+      run: "mutation_overlap -c 8 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: frequencyid0000696
+      run: "frequency -c 8 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: mutationoverlapid0000697
+      run: "mutation_overlap -c 8 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: frequencyid0000698
+      run: "frequency -c 8 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: mutationoverlapid0000699
+      run: "mutation_overlap -c 8 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: frequencyid0000700
+      run: "frequency -c 8 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: mutationoverlapid0000701
+      run: "mutation_overlap -c 8 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: frequencyid0000702
+      run: "frequency -c 8 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: mutationoverlapid0000703
+      run: "mutation_overlap -c 8 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: frequencyid0000704
+      run: "frequency -c 8 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: mutationoverlapid0000705
+      run: "mutation_overlap -c 8 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: frequencyid0000706
+      run: "frequency -c 8 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000216
+        - individualsmergeid0000215
+
+    - name: mutationoverlapid0000707
+      run: "mutation_overlap -c 9 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: frequencyid0000708
+      run: "frequency -c 9 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: mutationoverlapid0000709
+      run: "mutation_overlap -c 9 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: frequencyid0000710
+      run: "frequency -c 9 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: mutationoverlapid0000711
+      run: "mutation_overlap -c 9 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: frequencyid0000712
+      run: "frequency -c 9 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: mutationoverlapid0000713
+      run: "mutation_overlap -c 9 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: frequencyid0000714
+      run: "frequency -c 9 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: mutationoverlapid0000715
+      run: "mutation_overlap -c 9 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: frequencyid0000716
+      run: "frequency -c 9 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: mutationoverlapid0000717
+      run: "mutation_overlap -c 9 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: frequencyid0000718
+      run: "frequency -c 9 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: mutationoverlapid0000719
+      run: "mutation_overlap -c 9 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: frequencyid0000720
+      run: "frequency -c 9 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000242
+        - siftingid0000243
+
+    - name: mutationoverlapid0000721
+      run: "mutation_overlap -c 10 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: frequencyid0000722
+      run: "frequency -c 10 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: mutationoverlapid0000723
+      run: "mutation_overlap -c 10 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: frequencyid0000724
+      run: "frequency -c 10 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: mutationoverlapid0000725
+      run: "mutation_overlap -c 10 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: frequencyid0000726
+      run: "frequency -c 10 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: mutationoverlapid0000727
+      run: "mutation_overlap -c 10 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: frequencyid0000728
+      run: "frequency -c 10 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: mutationoverlapid0000729
+      run: "mutation_overlap -c 10 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: frequencyid0000730
+      run: "frequency -c 10 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: mutationoverlapid0000731
+      run: "mutation_overlap -c 10 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: frequencyid0000732
+      run: "frequency -c 10 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: mutationoverlapid0000733
+      run: "mutation_overlap -c 10 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: frequencyid0000734
+      run: "frequency -c 10 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000269
+        - siftingid0000270
+
+    - name: mutationoverlapid0000735
+      run: "mutation_overlap -c 11 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: frequencyid0000736
+      run: "frequency -c 11 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: mutationoverlapid0000737
+      run: "mutation_overlap -c 11 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: frequencyid0000738
+      run: "frequency -c 11 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: mutationoverlapid0000739
+      run: "mutation_overlap -c 11 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: frequencyid0000740
+      run: "frequency -c 11 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: mutationoverlapid0000741
+      run: "mutation_overlap -c 11 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: frequencyid0000742
+      run: "frequency -c 11 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: mutationoverlapid0000743
+      run: "mutation_overlap -c 11 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: frequencyid0000744
+      run: "frequency -c 11 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: mutationoverlapid0000745
+      run: "mutation_overlap -c 11 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: frequencyid0000746
+      run: "frequency -c 11 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: mutationoverlapid0000747
+      run: "mutation_overlap -c 11 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: frequencyid0000748
+      run: "frequency -c 11 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000296
+        - siftingid0000297
+
+    - name: mutationoverlapid0000749
+      run: "mutation_overlap -c 12 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: frequencyid0000750
+      run: "frequency -c 12 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: mutationoverlapid0000751
+      run: "mutation_overlap -c 12 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: frequencyid0000752
+      run: "frequency -c 12 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: mutationoverlapid0000753
+      run: "mutation_overlap -c 12 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: frequencyid0000754
+      run: "frequency -c 12 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: mutationoverlapid0000755
+      run: "mutation_overlap -c 12 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: frequencyid0000756
+      run: "frequency -c 12 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: mutationoverlapid0000757
+      run: "mutation_overlap -c 12 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: frequencyid0000758
+      run: "frequency -c 12 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: mutationoverlapid0000759
+      run: "mutation_overlap -c 12 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: frequencyid0000760
+      run: "frequency -c 12 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: mutationoverlapid0000761
+      run: "mutation_overlap -c 12 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: frequencyid0000762
+      run: "frequency -c 12 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000323
+        - siftingid0000324
+
+    - name: mutationoverlapid0000763
+      run: "mutation_overlap -c 13 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: frequencyid0000764
+      run: "frequency -c 13 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: mutationoverlapid0000765
+      run: "mutation_overlap -c 13 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: frequencyid0000766
+      run: "frequency -c 13 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: mutationoverlapid0000767
+      run: "mutation_overlap -c 13 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: frequencyid0000768
+      run: "frequency -c 13 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: mutationoverlapid0000769
+      run: "mutation_overlap -c 13 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: frequencyid0000770
+      run: "frequency -c 13 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: mutationoverlapid0000771
+      run: "mutation_overlap -c 13 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: frequencyid0000772
+      run: "frequency -c 13 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: mutationoverlapid0000773
+      run: "mutation_overlap -c 13 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: frequencyid0000774
+      run: "frequency -c 13 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: mutationoverlapid0000775
+      run: "mutation_overlap -c 13 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: frequencyid0000776
+      run: "frequency -c 13 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000350
+        - siftingid0000351
+
+    - name: mutationoverlapid0000777
+      run: "mutation_overlap -c 14 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: frequencyid0000778
+      run: "frequency -c 14 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: mutationoverlapid0000779
+      run: "mutation_overlap -c 14 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: frequencyid0000780
+      run: "frequency -c 14 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: mutationoverlapid0000781
+      run: "mutation_overlap -c 14 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: frequencyid0000782
+      run: "frequency -c 14 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: mutationoverlapid0000783
+      run: "mutation_overlap -c 14 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: frequencyid0000784
+      run: "frequency -c 14 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: mutationoverlapid0000785
+      run: "mutation_overlap -c 14 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: frequencyid0000786
+      run: "frequency -c 14 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: mutationoverlapid0000787
+      run: "mutation_overlap -c 14 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: frequencyid0000788
+      run: "frequency -c 14 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: mutationoverlapid0000789
+      run: "mutation_overlap -c 14 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: frequencyid0000790
+      run: "frequency -c 14 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000377
+        - siftingid0000378
+
+    - name: mutationoverlapid0000791
+      run: "mutation_overlap -c 15 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: frequencyid0000792
+      run: "frequency -c 15 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: mutationoverlapid0000793
+      run: "mutation_overlap -c 15 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: frequencyid0000794
+      run: "frequency -c 15 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: mutationoverlapid0000795
+      run: "mutation_overlap -c 15 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: frequencyid0000796
+      run: "frequency -c 15 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: mutationoverlapid0000797
+      run: "mutation_overlap -c 15 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: frequencyid0000798
+      run: "frequency -c 15 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: mutationoverlapid0000799
+      run: "mutation_overlap -c 15 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: frequencyid0000800
+      run: "frequency -c 15 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: mutationoverlapid0000801
+      run: "mutation_overlap -c 15 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: frequencyid0000802
+      run: "frequency -c 15 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: mutationoverlapid0000803
+      run: "mutation_overlap -c 15 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: frequencyid0000804
+      run: "frequency -c 15 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000405
+        - individualsmergeid0000404
+
+    - name: mutationoverlapid0000805
+      run: "mutation_overlap -c 16 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: frequencyid0000806
+      run: "frequency -c 16 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: mutationoverlapid0000807
+      run: "mutation_overlap -c 16 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: frequencyid0000808
+      run: "frequency -c 16 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: mutationoverlapid0000809
+      run: "mutation_overlap -c 16 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: frequencyid0000810
+      run: "frequency -c 16 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: mutationoverlapid0000811
+      run: "mutation_overlap -c 16 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: frequencyid0000812
+      run: "frequency -c 16 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: mutationoverlapid0000813
+      run: "mutation_overlap -c 16 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: frequencyid0000814
+      run: "frequency -c 16 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: mutationoverlapid0000815
+      run: "mutation_overlap -c 16 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: frequencyid0000816
+      run: "frequency -c 16 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: mutationoverlapid0000817
+      run: "mutation_overlap -c 16 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: frequencyid0000818
+      run: "frequency -c 16 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000432
+        - individualsmergeid0000431
+
+    - name: mutationoverlapid0000819
+      run: "mutation_overlap -c 17 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: frequencyid0000820
+      run: "frequency -c 17 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: mutationoverlapid0000821
+      run: "mutation_overlap -c 17 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: frequencyid0000822
+      run: "frequency -c 17 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: mutationoverlapid0000823
+      run: "mutation_overlap -c 17 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: frequencyid0000824
+      run: "frequency -c 17 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: mutationoverlapid0000825
+      run: "mutation_overlap -c 17 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: frequencyid0000826
+      run: "frequency -c 17 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: mutationoverlapid0000827
+      run: "mutation_overlap -c 17 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: frequencyid0000828
+      run: "frequency -c 17 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: mutationoverlapid0000829
+      run: "mutation_overlap -c 17 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: frequencyid0000830
+      run: "frequency -c 17 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: mutationoverlapid0000831
+      run: "mutation_overlap -c 17 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: frequencyid0000832
+      run: "frequency -c 17 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - siftingid0000459
+        - individualsmergeid0000458
+
+    - name: mutationoverlapid0000833
+      run: "mutation_overlap -c 18 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: frequencyid0000834
+      run: "frequency -c 18 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: mutationoverlapid0000835
+      run: "mutation_overlap -c 18 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: frequencyid0000836
+      run: "frequency -c 18 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: mutationoverlapid0000837
+      run: "mutation_overlap -c 18 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: frequencyid0000838
+      run: "frequency -c 18 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: mutationoverlapid0000839
+      run: "mutation_overlap -c 18 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: frequencyid0000840
+      run: "frequency -c 18 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: mutationoverlapid0000841
+      run: "mutation_overlap -c 18 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: frequencyid0000842
+      run: "frequency -c 18 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: mutationoverlapid0000843
+      run: "mutation_overlap -c 18 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: frequencyid0000844
+      run: "frequency -c 18 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: mutationoverlapid0000845
+      run: "mutation_overlap -c 18 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: frequencyid0000846
+      run: "frequency -c 18 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000485
+        - siftingid0000486
+
+    - name: mutationoverlapid0000847
+      run: "mutation_overlap -c 19 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: frequencyid0000848
+      run: "frequency -c 19 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: mutationoverlapid0000849
+      run: "mutation_overlap -c 19 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: frequencyid0000850
+      run: "frequency -c 19 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: mutationoverlapid0000851
+      run: "mutation_overlap -c 19 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: frequencyid0000852
+      run: "frequency -c 19 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: mutationoverlapid0000853
+      run: "mutation_overlap -c 19 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: frequencyid0000854
+      run: "frequency -c 19 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: mutationoverlapid0000855
+      run: "mutation_overlap -c 19 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: frequencyid0000856
+      run: "frequency -c 19 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: mutationoverlapid0000857
+      run: "mutation_overlap -c 19 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: frequencyid0000858
+      run: "frequency -c 19 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: mutationoverlapid0000859
+      run: "mutation_overlap -c 19 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: frequencyid0000860
+      run: "frequency -c 19 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000512
+        - siftingid0000513
+
+    - name: mutationoverlapid0000861
+      run: "mutation_overlap -c 20 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: frequencyid0000862
+      run: "frequency -c 20 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: mutationoverlapid0000863
+      run: "mutation_overlap -c 20 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: frequencyid0000864
+      run: "frequency -c 20 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: mutationoverlapid0000865
+      run: "mutation_overlap -c 20 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: frequencyid0000866
+      run: "frequency -c 20 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: mutationoverlapid0000867
+      run: "mutation_overlap -c 20 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: frequencyid0000868
+      run: "frequency -c 20 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: mutationoverlapid0000869
+      run: "mutation_overlap -c 20 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: frequencyid0000870
+      run: "frequency -c 20 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: mutationoverlapid0000871
+      run: "mutation_overlap -c 20 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: frequencyid0000872
+      run: "frequency -c 20 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: mutationoverlapid0000873
+      run: "mutation_overlap -c 20 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: frequencyid0000874
+      run: "frequency -c 20 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000539
+        - siftingid0000540
+
+    - name: mutationoverlapid0000875
+      run: "mutation_overlap -c 21 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: frequencyid0000876
+      run: "frequency -c 21 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: mutationoverlapid0000877
+      run: "mutation_overlap -c 21 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: frequencyid0000878
+      run: "frequency -c 21 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: mutationoverlapid0000879
+      run: "mutation_overlap -c 21 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: frequencyid0000880
+      run: "frequency -c 21 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: mutationoverlapid0000881
+      run: "mutation_overlap -c 21 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: frequencyid0000882
+      run: "frequency -c 21 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: mutationoverlapid0000883
+      run: "mutation_overlap -c 21 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: frequencyid0000884
+      run: "frequency -c 21 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: mutationoverlapid0000885
+      run: "mutation_overlap -c 21 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: frequencyid0000886
+      run: "frequency -c 21 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: mutationoverlapid0000887
+      run: "mutation_overlap -c 21 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: frequencyid0000888
+      run: "frequency -c 21 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000566
+        - siftingid0000567
+
+    - name: mutationoverlapid0000889
+      run: "mutation_overlap -c 22 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: frequencyid0000890
+      run: "frequency -c 22 -pop AFR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: mutationoverlapid0000891
+      run: "mutation_overlap -c 22 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: frequencyid0000892
+      run: "frequency -c 22 -pop GBR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: mutationoverlapid0000893
+      run: "mutation_overlap -c 22 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: frequencyid0000894
+      run: "frequency -c 22 -pop ALL"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: mutationoverlapid0000895
+      run: "mutation_overlap -c 22 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: frequencyid0000896
+      run: "frequency -c 22 -pop SAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: mutationoverlapid0000897
+      run: "mutation_overlap -c 22 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: frequencyid0000898
+      run: "frequency -c 22 -pop EAS"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: mutationoverlapid0000899
+      run: "mutation_overlap -c 22 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: frequencyid0000900
+      run: "frequency -c 22 -pop AMR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: mutationoverlapid0000901
+      run: "mutation_overlap -c 22 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594
+
+    - name: frequencyid0000902
+      run: "frequency -c 22 -pop EUR"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - individualsmergeid0000593
+        - siftingid0000594

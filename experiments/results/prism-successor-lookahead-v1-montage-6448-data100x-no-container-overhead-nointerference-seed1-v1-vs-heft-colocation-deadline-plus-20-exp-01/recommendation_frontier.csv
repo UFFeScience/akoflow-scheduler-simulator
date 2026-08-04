@@ -1,0 +1,3 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+network_hpc_cloud,prism_cc_cost,HPC–Cloud · PRISM-CC - Cost,314.404,314.404,0.0,0.0,,100.0,2425.75088,1382.676,0.0,22.738805041817464,0,0,True,True,1,,,
+network_fog_hpc_cloud,prism_cc_time,Fog–HPC–Cloud · PRISM-CC - Time,280.869,280.869,39.561405,39.561405,,100.0,2005.152749,1353.54,1.972987096356119,20.75069816924509,0,0,True,True,2,1.972987096356119,1.9881068725723736,1.007663393361355

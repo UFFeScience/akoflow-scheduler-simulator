@@ -10,25 +10,89 @@ import (
 )
 
 const (
-	machineSimulatorsCSV         = "machine_simulators.csv"
-	edgeCloudMachinesCSV         = "machine_simulators_edge_cloud_extreme.csv"
-	communicationMachinesCSV     = "machine_simulators_communication_dominant.csv"
-	interferenceMachinesCSV      = "machine_simulators_interference_aware.csv"
-	hybridRaspberryMachinesCSV   = "machine_simulators_hybrid_raspberry_500mbps.csv"
-	communicationTrapMachinesCSV = "machine_simulators_hybrid_communication_trap.csv"
-	heftNetworkTrapMachinesCSV   = "machine_simulators_hybrid_heft_network_trap.csv"
-	montageRuntimesCSV           = "montage_c3d_standard_16_runtimes.csv"
-	montageWorkflowYAML          = "wf-montage-050d-gcp.yaml"
-	montageDSS20WorkflowID       = "montage_dss_20d"
-	montageDSS20WorkflowYAML     = "wf-montage-chameleon-dss-20d-001.yaml"
-	montageDSS20RuntimesCSV      = "montage_chameleon_dss_20d_001_runtimes.csv"
-	montageDSS20DependenciesCSV  = "montage_chameleon_dss_20d_001_dependencies.csv"
-	imageDataflow8WorkflowID     = "image_dataflow_8"
-	imageDataflow8WorkflowYAML   = "wf-image-dataflow-8.yaml"
-	megabitsPerGigabit           = 1000.0
-	bitsPerByte                  = 8.0
-	clusterBandwidthLimitMbps    = 500.0
+	machineSimulatorsCSV          = "machine_simulators.csv"
+	edgeCloudMachinesCSV          = "machine_simulators_edge_cloud_extreme.csv"
+	communicationMachinesCSV      = "machine_simulators_communication_dominant.csv"
+	interferenceMachinesCSV       = "machine_simulators_interference_aware.csv"
+	hybridRaspberryMachinesCSV    = "machine_simulators_hybrid_raspberry_500mbps.csv"
+	communicationTrapMachinesCSV  = "machine_simulators_hybrid_communication_trap.csv"
+	heftNetworkTrapMachinesCSV    = "machine_simulators_hybrid_heft_network_trap.csv"
+	wfcommonsChameleonMachinesCSV = "machine_simulators_wfcommons_chameleon.csv"
+	networkCriticalMachinesCSV    = "machine_simulators_network_critical.csv"
+	montageRuntimesCSV            = "montage_c3d_standard_16_runtimes.csv"
+	montageWorkflowYAML           = "wf-montage-050d-gcp.yaml"
+	montageDSS20WorkflowID        = "montage_dss_20d"
+	montageDSS20WorkflowYAML      = "wf-montage-chameleon-dss-20d-001.yaml"
+	montageDSS20RuntimesCSV       = "montage_chameleon_dss_20d_001_runtimes.csv"
+	montageDSS20DependenciesCSV   = "montage_chameleon_dss_20d_001_dependencies.csv"
+	imageDataflow8WorkflowID      = "image_dataflow_8"
+	imageDataflow8WorkflowYAML    = "wf-image-dataflow-8.yaml"
+	megabitsPerGigabit            = 1000.0
+	bitsPerByte                   = 8.0
+	clusterBandwidthLimitMbps     = 500.0
 )
+
+type wfcommonsWorkflowDataset struct {
+	YAMLFile         string
+	RuntimesFile     string
+	DependenciesFile string
+	TaskCount        int
+}
+
+var wfcommonsWorkflowDatasets = map[string]wfcommonsWorkflowDataset{
+	"wfcommons_1000genome_902": {
+		"wf-wfcommons-1000genome-902.yaml", "wfcommons_1000genome_902_runtimes.csv", "wfcommons_1000genome_902_dependencies.csv", 902,
+	},
+	"wfcommons_cycles_6543": {
+		"wf-wfcommons-cycles-6543.yaml", "wfcommons_cycles_6543_runtimes.csv", "wfcommons_cycles_6543_dependencies.csv", 6543,
+	},
+	"wfcommons_epigenomics_1695": {
+		"wf-wfcommons-epigenomics-1695.yaml", "wfcommons_epigenomics_1695_runtimes.csv", "wfcommons_epigenomics_1695_dependencies.csv", 1695,
+	},
+	"wfcommons_seismology_1101": {
+		"wf-wfcommons-seismology-1101.yaml", "wfcommons_seismology_1101_runtimes.csv", "wfcommons_seismology_1101_dependencies.csv", 1101,
+	},
+	"wfcommons_soykb_676": {
+		"wf-wfcommons-soykb-676.yaml", "wfcommons_soykb_676_runtimes.csv", "wfcommons_soykb_676_dependencies.csv", 676,
+	},
+	"wfcommons_srasearch_104": {
+		"wf-wfcommons-srasearch-104.yaml", "wfcommons_srasearch_104_runtimes.csv", "wfcommons_srasearch_104_dependencies.csv", 104,
+	},
+}
+
+func experimentWorkflowSupported(workflowID string) bool {
+	if workflowID == "montage_050d" || workflowID == montageDSS20WorkflowID || workflowID == imageDataflow8WorkflowID {
+		return true
+	}
+	_, exists := wfcommonsWorkflowDatasets[workflowID]
+	return exists
+}
+
+func experimentWorkflowTaskCount(workflowID string) int {
+	if workflowID == montageDSS20WorkflowID {
+		return 6448
+	}
+	if workflowID == imageDataflow8WorkflowID {
+		return 8
+	}
+	if dataset, exists := wfcommonsWorkflowDatasets[workflowID]; exists {
+		return dataset.TaskCount
+	}
+	return 58
+}
+
+func experimentWorkflowYAMLFile(workflowID string) string {
+	if workflowID == montageDSS20WorkflowID {
+		return montageDSS20WorkflowYAML
+	}
+	if workflowID == imageDataflow8WorkflowID {
+		return imageDataflow8WorkflowYAML
+	}
+	if dataset, exists := wfcommonsWorkflowDatasets[workflowID]; exists {
+		return dataset.YAMLFile
+	}
+	return montageWorkflowYAML
+}
 
 type ExperimentScenario struct {
 	ID           string `json:"id"`
@@ -68,9 +132,10 @@ type montageDSS20RuntimeRow struct {
 }
 
 type montageDSS20DependencyRow struct {
-	Source string
-	Target string
-	DataMB float64
+	Source    string
+	Target    string
+	DataMB    float64
+	FileCount int
 }
 
 func experimentScenarioResources(scenarioID string) ([]ResourceSpec, error) {
@@ -240,20 +305,70 @@ func applyMontageDSS20ExperimentData(workflow *Workflow) error {
 		task.WorkflowStage = row.Stage
 		task.Label = row.ActivityID
 	}
-	dataByEdge := make(map[string]float64, len(dependencies))
+	dataByEdge := make(map[string]montageDSS20DependencyRow, len(dependencies))
 	for _, row := range dependencies {
-		dataByEdge[row.Source+"\x00"+row.Target] = row.DataMB
+		dataByEdge[row.Source+"\x00"+row.Target] = row
 	}
 	if len(workflow.Dependencies) != len(dependencies) {
 		return fmt.Errorf("Montage DSS 20d edge mismatch: %d YAML edges, %d data edges", len(workflow.Dependencies), len(dependencies))
 	}
 	for index := range workflow.Dependencies {
 		dependency := &workflow.Dependencies[index]
-		dataMB, ok := dataByEdge[dependency.Source+"\x00"+dependency.Target]
+		row, ok := dataByEdge[dependency.Source+"\x00"+dependency.Target]
 		if !ok {
 			return fmt.Errorf("data dependency missing for %s -> %s", dependency.Source, dependency.Target)
 		}
-		dependency.DataMB = round(dataMB, 9)
+		dependency.DataMB = round(row.DataMB, 9)
+		dependency.FileCount = row.FileCount
+	}
+	return nil
+}
+
+func applyWfcommonsExperimentData(workflowID string, workflow *Workflow) error {
+	dataset, exists := wfcommonsWorkflowDatasets[workflowID]
+	if !exists {
+		return fmt.Errorf("unknown WfCommons workflow %q", workflowID)
+	}
+	runtimes, err := readWfcommonsRuntimes(dataset.RuntimesFile)
+	if err != nil {
+		return err
+	}
+	dependencies, err := readWfcommonsDependencies(dataset.DependenciesFile)
+	if err != nil {
+		return err
+	}
+	if len(workflow.Tasks) != dataset.TaskCount || len(runtimes) != dataset.TaskCount {
+		return fmt.Errorf("%s task/runtime mismatch: %d tasks, %d runtimes, expected %d", workflowID, len(workflow.Tasks), len(runtimes), dataset.TaskCount)
+	}
+	runtimeByID := make(map[string]montageDSS20RuntimeRow, len(runtimes))
+	for _, row := range runtimes {
+		runtimeByID[row.ActivityID] = row
+	}
+	for index := range workflow.Tasks {
+		task := &workflow.Tasks[index]
+		row, ok := runtimeByID[task.ID]
+		if !ok {
+			return fmt.Errorf("runtime missing for %s activity %s", workflowID, task.ID)
+		}
+		task.BaseRuntime = round(row.ET0Seconds, 6)
+		task.WorkflowStage = row.Stage
+		task.Label = row.ActivityID
+	}
+	dataByEdge := make(map[string]montageDSS20DependencyRow, len(dependencies))
+	for _, row := range dependencies {
+		dataByEdge[row.Source+"\x00"+row.Target] = row
+	}
+	if len(workflow.Dependencies) != len(dependencies) {
+		return fmt.Errorf("%s edge mismatch: %d YAML edges, %d data edges", workflowID, len(workflow.Dependencies), len(dependencies))
+	}
+	for index := range workflow.Dependencies {
+		dependency := &workflow.Dependencies[index]
+		row, ok := dataByEdge[dependency.Source+"\x00"+dependency.Target]
+		if !ok {
+			return fmt.Errorf("data dependency missing for %s edge %s -> %s", workflowID, dependency.Source, dependency.Target)
+		}
+		dependency.DataMB = round(row.DataMB, 9)
+		dependency.FileCount = row.FileCount
 	}
 	return nil
 }
@@ -319,6 +434,8 @@ func readExperimentMachines() ([]experimentMachineRow, error) {
 		hybridRaspberryMachinesCSV,
 		communicationTrapMachinesCSV,
 		heftNetworkTrapMachinesCSV,
+		wfcommonsChameleonMachinesCSV,
+		networkCriticalMachinesCSV,
 	} {
 		records, err := readExperimentCSV(filename)
 		if err != nil {
@@ -417,9 +534,66 @@ func readMontageDSS20Dependencies() ([]montageDSS20DependencyRow, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid DSS 20d data_mb on row %d: %w", i+1, err)
 		}
-		rows = append(rows, montageDSS20DependencyRow{Source: record[0], Target: record[1], DataMB: dataMB})
+		rows = append(rows, montageDSS20DependencyRow{
+			Source: record[0], Target: record[1], DataMB: dataMB,
+			FileCount: dependencyCSVFileCount(record),
+		})
 	}
 	return rows, nil
+}
+
+func readWfcommonsRuntimes(filename string) ([]montageDSS20RuntimeRow, error) {
+	records, err := readExperimentCSV(filename)
+	if err != nil {
+		return nil, err
+	}
+	rows := make([]montageDSS20RuntimeRow, 0, len(records)-1)
+	for index, record := range records[1:] {
+		if len(record) < 10 {
+			return nil, fmt.Errorf("%s: invalid runtime row %d", filename, index+2)
+		}
+		et0, err := strconv.ParseFloat(record[9], 64)
+		if err != nil {
+			return nil, fmt.Errorf("%s: invalid et0_c3d_seconds on row %d: %w", filename, index+2, err)
+		}
+		rows = append(rows, montageDSS20RuntimeRow{ActivityID: record[0], Stage: record[1], ET0Seconds: et0})
+	}
+	return rows, nil
+}
+
+func readWfcommonsDependencies(filename string) ([]montageDSS20DependencyRow, error) {
+	records, err := readExperimentCSV(filename)
+	if err != nil {
+		return nil, err
+	}
+	rows := make([]montageDSS20DependencyRow, 0, len(records)-1)
+	for index, record := range records[1:] {
+		if len(record) < 3 {
+			return nil, fmt.Errorf("%s: invalid dependency row %d", filename, index+2)
+		}
+		dataMB, err := strconv.ParseFloat(record[2], 64)
+		if err != nil {
+			return nil, fmt.Errorf("%s: invalid data_mb on row %d: %w", filename, index+2, err)
+		}
+		rows = append(rows, montageDSS20DependencyRow{
+			Source: record[0], Target: record[1], DataMB: dataMB,
+			FileCount: dependencyCSVFileCount(record),
+		})
+	}
+	return rows, nil
+}
+
+func dependencyCSVFileCount(record []string) int {
+	if len(record) < 5 || strings.TrimSpace(record[4]) == "" {
+		return 1
+	}
+	count := 0
+	for _, filename := range strings.Split(record[4], "|") {
+		if strings.TrimSpace(filename) != "" {
+			count++
+		}
+	}
+	return max(1, count)
 }
 
 func readExperimentCSV(name string) ([][]string, error) {

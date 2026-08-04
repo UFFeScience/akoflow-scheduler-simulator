@@ -1,0 +1,2 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+network_hpc_local,prism_cc_time,HPC local 200 Gbps · PRISM-CC - Time,56.873,56.873,0.0,0.0,,0.0,0.0,54.359,0.0,104.62480913924097,4.624809139240971,0.0,False,True,1,,,

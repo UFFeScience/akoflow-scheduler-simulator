@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-08-01T23:40:53Z",
+  "structural_seed": 42,
+  "interference_seeds": [
+    1
+  ],
+  "scenarios": [
+    "network_hpc_cloud"
+  ],
+  "algorithms": [
+    "prism_cc_time",
+    "prism_cc_cost",
+    "heft_colocation"
+  ],
+  "workflow_id": "wfcommons_soykb_676",
+  "task_count": 676,
+  "interference_rate": 0,
+  "selected_activities": 338,
+  "sla_margin": 1.2,
+  "budget_margin": 1.2,
+  "deadline_margin": 1.2,
+  "scenario_slas": {
+    "network_hpc_cloud": {
+      "budget_limit": 5.702744,
+      "deadline_limit": 4608.9492
+    }
+  },
+  "reference_policy": "Per-scenario heft_colocation mean multiplied by explicit margins: 1.20x budget and 1.20x deadline",
+  "calibration": "Per-scenario mean of the selected HEFT baseline runs",
+  "heft_mode": "colocation",
+  "prism_cc_priority": "adaptive_ready",
+  "beam_width": 120,
+  "recommendation_count": 1,
+  "data_scale": 1,
+  "container_overhead_disabled": true
+}

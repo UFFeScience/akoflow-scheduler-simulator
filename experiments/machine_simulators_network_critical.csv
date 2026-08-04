@@ -1,0 +1,40 @@
+scenario_id,homogeneity,machine_id,kind,provider,machine_type,cpu_description,vcpus_or_threads,physical_cores,sockets,memory_gb,bandwidth_gbps,location,flops,speedup,ref_flops,price_per_hour_usd,network_price_per_gb_usd,pricing_model,price_source,network_latency_ms
+network_hpc_local,homo,hpc-local-01,cluster,HPC Local,hpc-48,48-core HPC,48,48,2,192,200,hpc-local,3379.2,8,422.4,0,0,owned_hpc,synthetic network-sensitive scenario,1
+network_hpc_local,homo,hpc-local-02,cluster,HPC Local,hpc-48,48-core HPC,48,48,2,192,200,hpc-local,3379.2,8,422.4,0,0,owned_hpc,synthetic network-sensitive scenario,1
+network_hpc_local,homo,hpc-local-03,cluster,HPC Local,hpc-48,48-core HPC,48,48,2,192,200,hpc-local,3379.2,8,422.4,0,0,owned_hpc,synthetic network-sensitive scenario,1
+network_hpc_local,homo,hpc-local-04,cluster,HPC Local,hpc-48,48-core HPC,48,48,2,192,200,hpc-local,3379.2,8,422.4,0,0,owned_hpc,synthetic network-sensitive scenario,1
+network_hpc_multisite,homo,hpc-a-01,cluster,HPC Site A,hpc-48,48-core HPC,48,48,2,192,200,hpc-site-a,3379.2,8,422.4,0,0,owned_hpc,synthetic network-sensitive scenario,1
+network_hpc_multisite,homo,hpc-a-02,cluster,HPC Site A,hpc-48,48-core HPC,48,48,2,192,200,hpc-site-a,3379.2,8,422.4,0,0,owned_hpc,synthetic network-sensitive scenario,1
+network_hpc_multisite,homo,hpc-b-01,cluster,HPC Site B,hpc-48,48-core HPC,48,48,2,192,200,hpc-site-b,3379.2,8,422.4,0,0,owned_hpc,synthetic network-sensitive scenario,1
+network_hpc_multisite,homo,hpc-b-02,cluster,HPC Site B,hpc-48,48-core HPC,48,48,2,192,200,hpc-site-b,3379.2,8,422.4,0,0,owned_hpc,synthetic network-sensitive scenario,1
+network_cloud_multiregion,hetero,cloud-a-01,cloud,Cloud Region A,compute-standard,16-vCPU cloud,16,16,1,64,10,cloud-region-a,3379.2,8,422.4,1.20,0.04,on_demand,synthetic network-sensitive scenario,2
+network_cloud_multiregion,hetero,cloud-a-02,cloud,Cloud Region A,compute-fast,32-vCPU cloud,32,32,1,128,10,cloud-region-a,5068.8,12,422.4,2.20,0.04,on_demand,synthetic network-sensitive scenario,2
+network_cloud_multiregion,hetero,cloud-b-01,cloud,Cloud Region B,compute-economy,16-vCPU cloud,16,16,1,64,10,cloud-region-b,2534.4,6,422.4,0.80,0.03,on_demand,synthetic network-sensitive scenario,2
+network_cloud_multiregion,hetero,cloud-b-02,cloud,Cloud Region B,compute-fast,32-vCPU cloud,32,32,1,128,10,cloud-region-b,4224,10,422.4,1.60,0.03,on_demand,synthetic network-sensitive scenario,2
+network_hpc_cloud,hetero,hpc-hybrid-01,cluster,HPC Center,hpc-standard,32-core HPC,32,32,2,128,200,hpc-site,3379.2,8,422.4,0,0,owned_hpc,synthetic network-sensitive scenario,1
+network_hpc_cloud,hetero,hpc-hybrid-02,cluster,HPC Center,hpc-fast,48-core HPC,48,48,2,192,200,hpc-site,5068.8,12,422.4,0,0,owned_hpc,synthetic network-sensitive scenario,1
+network_hpc_cloud,hetero,cloud-hybrid-01,cloud,Cloud Provider,compute-standard,16-vCPU cloud,16,16,1,64,10,cloud-region,3379.2,8,422.4,1.20,0.04,on_demand,synthetic network-sensitive scenario,2
+network_hpc_cloud,hetero,cloud-hybrid-02,cloud,Cloud Provider,compute-fast,64-vCPU cloud,64,64,1,256,10,cloud-region,6758.4,16,422.4,4.50,0.09,on_demand,synthetic network-sensitive scenario,2
+network_edge_cloud,hetero,edge-data-01,cluster,Edge Site,edge-node,Dual-core edge,2,2,1,4,0.5,edge-site,10.56,0.025,422.4,0,0,owned_edge,synthetic network-sensitive scenario,10
+network_edge_cloud,hetero,edge-data-02,cluster,Edge Site,edge-node,Dual-core edge,2,2,1,4,0.5,edge-site,10.56,0.025,422.4,0,0,owned_edge,synthetic network-sensitive scenario,10
+network_edge_cloud,hetero,cloud-edge-01,cloud,Cloud Provider,compute-standard,16-vCPU cloud,16,16,1,64,10,cloud-region,3379.2,8,422.4,1.20,0.04,on_demand,synthetic network-sensitive scenario,2
+network_edge_cloud,hetero,cloud-edge-02,cloud,Cloud Provider,compute-fast,64-vCPU cloud,64,64,1,256,10,cloud-region,6758.4,16,422.4,4.50,0.09,on_demand,synthetic network-sensitive scenario,2
+network_fog_hpc_cloud,hetero,edge-fog-01,cluster,Fog Layer,edge-node,Dual-core edge,2,2,1,4,0.5,edge-site,10.56,0.025,422.4,0,0,owned_edge,synthetic network-sensitive scenario,10
+network_fog_hpc_cloud,hetero,edge-fog-02,cluster,Fog Layer,edge-node,Dual-core edge,2,2,1,4,0.5,edge-site,10.56,0.025,422.4,0,0,owned_edge,synthetic network-sensitive scenario,10
+network_fog_hpc_cloud,hetero,edge-fog-03,cluster,Fog Layer,edge-node,Dual-core edge,2,2,1,4,0.5,edge-site,10.56,0.025,422.4,0,0,owned_edge,synthetic network-sensitive scenario,10
+network_fog_hpc_cloud,hetero,edge-fog-04,cluster,Fog Layer,edge-node,Dual-core edge,2,2,1,4,0.5,edge-site,10.56,0.025,422.4,0,0,owned_edge,synthetic network-sensitive scenario,10
+network_fog_hpc_cloud,hetero,edge-fog-05,cluster,Fog Layer,edge-node,Dual-core edge,2,2,1,4,0.5,edge-site,10.56,0.025,422.4,0,0,owned_edge,synthetic network-sensitive scenario,10
+network_fog_hpc_cloud,hetero,edge-fog-06,cluster,Fog Layer,edge-node,Dual-core edge,2,2,1,4,0.5,edge-site,10.56,0.025,422.4,0,0,owned_edge,synthetic network-sensitive scenario,10
+network_fog_hpc_cloud,hetero,edge-fog-07,cluster,Fog Layer,edge-node,Dual-core edge,2,2,1,4,0.5,edge-site,10.56,0.025,422.4,0,0,owned_edge,synthetic network-sensitive scenario,10
+network_fog_hpc_cloud,hetero,edge-fog-08,cluster,Fog Layer,edge-node,Dual-core edge,2,2,1,4,0.5,edge-site,10.56,0.025,422.4,0,0,owned_edge,synthetic network-sensitive scenario,10
+network_fog_hpc_cloud,hetero,edge-fog-09,cluster,Fog Layer,edge-node,Dual-core edge,2,2,1,4,0.5,edge-site,10.56,0.025,422.4,0,0,owned_edge,synthetic network-sensitive scenario,10
+network_fog_hpc_cloud,hetero,edge-fog-10,cluster,Fog Layer,edge-node,Dual-core edge,2,2,1,4,0.5,edge-site,10.56,0.025,422.4,0,0,owned_edge,synthetic network-sensitive scenario,10
+network_fog_hpc_cloud,hetero,hpc-fog-01,cluster,HPC Center,hpc-standard,32-core HPC,32,32,2,128,200,hpc-site,3379.2,8,422.4,0,0,owned_hpc,synthetic network-sensitive scenario,1
+network_fog_hpc_cloud,hetero,hpc-fog-02,cluster,HPC Center,hpc-fast,48-core HPC,48,48,2,192,200,hpc-site,5068.8,12,422.4,0,0,owned_hpc,synthetic network-sensitive scenario,1
+network_fog_hpc_cloud,hetero,cloud-fog-01,cloud,Cloud Provider,compute-standard,16-vCPU cloud,16,16,1,64,10,cloud-region,3379.2,8,422.4,1.20,0.04,on_demand,synthetic network-sensitive scenario,2
+network_fog_hpc_cloud,hetero,cloud-fog-02,cloud,Cloud Provider,compute-fast,64-vCPU cloud,64,64,1,256,10,cloud-region,6758.4,16,422.4,4.50,0.09,on_demand,synthetic network-sensitive scenario,2
+network_wfcommons_overlay,hetero,compute-3,cloud,AWS EC2,m6i.12xlarge,48-vCPU equivalent of WfCommons compute-3,48,48,1,131.795984,10,wf-site-a,998.4,2.363636364,422.4,2.304,0.09,on_demand,https://aws.amazon.com/ec2/pricing/on-demand/,0.5
+network_wfcommons_overlay,hetero,compute-4,cloud,AWS EC2,m6i.12xlarge,48-vCPU equivalent of WfCommons compute-4,48,48,1,131.795984,10,wf-site-a,460.8,1.090909091,422.4,2.304,0.09,on_demand,https://aws.amazon.com/ec2/pricing/on-demand/,0.5
+network_wfcommons_overlay,hetero,compute-5,cloud,AWS EC2,m6i.12xlarge,48-vCPU equivalent of WfCommons compute-5,48,48,1,131.795984,10,wf-site-b,460.8,1.090909091,422.4,2.304,0.09,on_demand,https://aws.amazon.com/ec2/pricing/on-demand/,0.5
+network_wfcommons_overlay,hetero,compute-6,cloud,AWS EC2,m6i.12xlarge,48-vCPU equivalent of WfCommons compute-6,48,48,1,131.795984,10,wf-site-b,568.32,1.345454545,422.4,2.304,0.09,on_demand,https://aws.amazon.com/ec2/pricing/on-demand/,0.5
+network_wfcommons_overlay,hetero,compute-7,cloud,AWS EC2,m6i.12xlarge,48-vCPU equivalent of WfCommons compute-7,48,48,1,131.795984,10,wf-site-b,460.8,1.090909091,422.4,2.304,0.09,on_demand,https://aws.amazon.com/ec2/pricing/on-demand/,0.5

@@ -1,0 +1,2 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+network_hpc_local,heft_classic,HPC local 200 Gbps · HEFT coalocado,121.772,121.772,0.0,0.0,,0.0,0.0,97.4176,0.0,125.00000000000001,25.00000000000002,0.0,False,True,1,,,

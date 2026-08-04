@@ -45,6 +45,14 @@ SCENARIO_LABELS = {
     "real_network_stress_hybrid_homo": "Híbrido homogêneo\nrede real heterogênea",
     "real_network_stress_hybrid_hetero": "Híbrido heterogêneo\nrede real heterogênea",
     "real_network_stress_hybrid_raspberry_500mbps": "Fog híbrido\nrede real heterogênea",
+    "wfcommons_chameleon_dss20": "Chameleon/WfCommons\n5 nós observados",
+    "network_hpc_local": "HPC local\n200 Gbps",
+    "network_hpc_multisite": "HPC multi-site\n500 Mbps WAN",
+    "network_cloud_multiregion": "Cloud multi-região",
+    "network_hpc_cloud": "HPC–Cloud",
+    "network_edge_cloud": "Edge–Cloud",
+    "network_fog_hpc_cloud": "Fog–HPC–Cloud",
+    "network_wfcommons_overlay": "WfCommons\noverlay multi-site",
 }
 ALGORITHM_ORDER = ["prism_cc_time", "prism_cc_cost", "heft_classic"]
 ALGORITHM_LABELS = {
@@ -684,7 +692,16 @@ def plot_18_bars_and_gain_lines(
             finite_gains.extend(
                 (100 * (heft[valid] - prism[valid]) / heft[valid]).tolist()
             )
-        gain_axis.set_ylim(min(-10, min(finite_gains) - 10), max(105, max(finite_gains) + 10))
+        if finite_gains:
+            gain_axis.set_ylim(
+                min(-10, min(finite_gains) - 10),
+                max(105, max(finite_gains) + 10),
+            )
+        else:
+            # Free environments have HEFT cost equal to zero, so relative cost
+            # gains are undefined. Keep a neutral axis instead of failing the
+            # complete 26-figure protocol.
+            gain_axis.set_ylim(-10, 10)
 
     axes[-1].set_xticks(x)
     axes[-1].set_xticklabels(

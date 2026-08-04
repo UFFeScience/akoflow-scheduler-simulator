@@ -1,0 +1,4 @@
+scenario_id,algorithm,runs,makespan_mean,makespan_median,makespan_stddev,makespan_ci95,budget_used_mean,budget_used_median,budget_used_stddev,budget_used_ci95
+wfcommons_chameleon_dss20,heft_classic,1,749.692,749.692,0,0.0,0.0,0.0,0,0.0
+wfcommons_chameleon_dss20,prism_cc_cost,1,749.692,749.692,0,0.0,0.0,0.0,0,0.0
+wfcommons_chameleon_dss20,prism_cc_time,1,749.692,749.692,0,0.0,0.0,0.0,0,0.0

@@ -1,0 +1,22 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+network_hpc_local,prism_cc_time,HPC local 200 Gbps · PRISM-CC - Time,286.131,286.131,0.0,0.0,,0.0,0.0,247.808,0.0,115.46479532541322,15.464795325413206,0.0,False,True,1,,,
+network_fog_hpc_cloud,prism_cc_time,Fog–HPC–Cloud · PRISM-CC - Time,163.609,163.609,18.133827,18.133827,,0.0,14.523022,145.776,124.86262845294871,112.23315223356383,12.233152233563827,24.86262845294871,False,True,2,124.86262845294871,3.231643091849392,0.025881587884938318
+network_cloud_multiregion,prism_cc_time,Cloud multi-região · PRISM-CC - Time,258.657,258.657,27.192076,27.192076,,0.0,21.756393,232.7048,124.98430231518617,111.15241284236508,11.152412842365077,24.984302315186156,False,True,3,0.1216738622374578,1.0807393911987475,8.88226420469488
+network_hpc_local,heft_classic,HPC local 200 Gbps · HEFT coalocado,309.76,309.76,0.0,0.0,,0.0,0.0,247.808,0.0,125.0,25.0,0.0,False,False,,,,
+network_hpc_local,prism_cc_cost,HPC local 200 Gbps · PRISM-CC - Cost,309.76,309.76,0.0,0.0,,0.0,0.0,247.808,0.0,125.0,25.0,0.0,False,False,,,,
+network_hpc_multisite,heft_classic,HPC multi-site 500 Mbps WAN · HEFT coalocado,309.76,309.76,0.0,0.0,,0.0,0.0,247.808,0.0,125.0,25.0,0.0,False,False,,,,
+network_hpc_multisite,prism_cc_cost,HPC multi-site 500 Mbps WAN · PRISM-CC - Cost,309.76,309.76,0.0,0.0,,0.0,0.0,247.808,0.0,125.0,25.0,0.0,False,False,,,,
+network_hpc_multisite,prism_cc_time,HPC multi-site 500 Mbps WAN · PRISM-CC - Time,286.131,286.131,0.0,0.0,,0.0,0.0,247.808,0.0,115.46479532541322,15.464795325413206,0.0,False,False,,,,
+network_wfcommons_overlay,prism_cc_time,WfCommons overlay multi-site · PRISM-CC - Time,1060.232,1060.232,42.80022,42.80022,,0.0,79.556118,848.8256,53.79877886952704,124.9057521356566,24.9057521356566,0.0,False,False,,,,
+network_fog_hpc_cloud,heft_classic,Fog–HPC–Cloud · HEFT coalocado,182.22,182.22,18.153777,18.153777,,0.0,14.523022,145.776,124.99999655719039,124.99999999999999,25.0,24.999996557190386,False,False,,,,
+network_fog_hpc_cloud,prism_cc_cost,Fog–HPC–Cloud · PRISM-CC - Cost,182.22,182.22,18.153777,18.153777,,0.0,14.523022,145.776,124.99999655719039,124.99999999999999,25.0,24.999996557190386,False,False,,,,
+network_cloud_multiregion,heft_classic,Cloud multi-região · HEFT coalocado,290.881,290.881,27.195491,27.195491,,0.0,21.756393,232.7048,124.99999885091248,124.99999999999999,24.99999999999998,24.999998850912462,False,False,,,,
+network_cloud_multiregion,prism_cc_cost,Cloud multi-região · PRISM-CC - Cost,290.881,290.881,27.195491,27.195491,,0.0,21.756393,232.7048,124.99999885091248,124.99999999999999,24.99999999999998,24.999998850912462,False,False,,,,
+network_wfcommons_overlay,heft_classic,WfCommons overlay multi-site · HEFT coalocado,1061.032,1061.032,99.445148,99.445148,,0.0,79.556118,848.8256,125.00000062848719,125.0,25.0,25.00000062848717,False,False,,,,
+network_wfcommons_overlay,prism_cc_cost,WfCommons overlay multi-site · PRISM-CC - Cost,1061.032,1061.032,99.445148,99.445148,,0.0,79.556118,848.8256,125.00000062848719,125.0,25.0,25.00000062848717,False,False,,,,
+network_edge_cloud,heft_classic,Edge–Cloud · HEFT coalocado,209.431,209.431,25.530429,25.530429,,0.0,20.424343,167.5448,125.0000012240296,125.0,25.0,25.00000122402959,False,False,,,,
+network_edge_cloud,prism_cc_cost,Edge–Cloud · PRISM-CC - Cost,209.431,209.431,25.530429,25.530429,,0.0,20.424343,167.5448,125.0000012240296,125.0,25.0,25.00000122402959,False,False,,,,
+network_edge_cloud,prism_cc_time,Edge–Cloud · PRISM-CC - Time,209.431,209.431,25.530429,25.530429,,0.0,20.424343,167.5448,125.0000012240296,125.0,25.0,25.00000122402959,False,False,,,,
+network_hpc_cloud,heft_classic,HPC–Cloud · HEFT coalocado,181.496,181.496,18.177119,18.177119,,0.0,14.541695,145.1968,125.00000171919436,125.00000000000001,25.0,25.000001719194366,False,False,,,,
+network_hpc_cloud,prism_cc_cost,HPC–Cloud · PRISM-CC - Cost,181.496,181.496,18.177119,18.177119,,0.0,14.541695,145.1968,125.00000171919436,125.00000000000001,25.0,25.000001719194366,False,False,,,,
+network_hpc_cloud,prism_cc_time,HPC–Cloud · PRISM-CC - Time,161.712,161.712,24.162056,24.162056,,0.0,14.541695,145.1968,166.15708141313647,111.37435535769383,11.374355357693823,66.1570814131365,False,False,,,,

@@ -1,0 +1,8 @@
+scenario_id,extra_time_mean,extra_time_ci95,saved_cost_mean,saved_cost_ci95,extra_time_cv,seconds_per_dollar
+network_hpc_local,0.0,0.0,0.0,0.0,0.0,
+network_hpc_multisite,0.0,0.0,0.0,0.0,0.0,
+network_cloud_multiregion,11.167000000000002,0.0,0.43014099999999994,0.0,0.0,25.961254565363458
+network_hpc_cloud,9.301000000000002,0.0,0.34302699999999997,0.0,0.0,27.114483699533864
+network_edge_cloud,9.189000000000007,0.0,1.421029,0.0,0.0,6.466440867849992
+network_fog_hpc_cloud,8.222000000000001,0.0,0.350872,0.0,0.0,23.433046809092776
+network_wfcommons_overlay,25.90900000000005,0.0,0.923549,0.0,0.0,28.053736185086066

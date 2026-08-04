@@ -1,0 +1,22 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+network_hpc_cloud,prism_cc_time,HPC–Cloud · PRISM-CC - Time,11.179,11.179,0.0,0.0,,0.0,0.0,10.63715,0.0,105.09393963608674,5.093939636086731,0.0,False,True,1,,,
+network_cloud_multiregion,prism_cc_cost,Cloud multi-região · PRISM-CC - Cost,21.872,21.872,0.004869,0.004869,,100.0,0.02584,21.93455,18.842879256965947,99.71483344768868,0.0,0.0,True,True,2,18.842879256965947,5.379106188398069,0.28547156276074365
+network_wfcommons_overlay,prism_cc_cost,WfCommons overlay multi-site · PRISM-CC - Cost,20.49,20.49,0.013103,0.013103,,100.0,0.051475,24.0825,25.455075279261777,85.08252880722516,0.0,0.0,True,True,3,6.61219602229583,14.632304640463516,2.2129266269669685
+network_fog_hpc_cloud,heft_classic,Fog–HPC–Cloud · HEFT coalocado,11.201,11.201,0.0,0.0,,0.0,0.0,10.64095,0.0,105.26315789473685,5.263157894736836,0.0,False,False,,,,
+network_fog_hpc_cloud,prism_cc_cost,Fog–HPC–Cloud · PRISM-CC - Cost,11.201,11.201,0.0,0.0,,0.0,0.0,10.64095,0.0,105.26315789473685,5.263157894736836,0.0,False,False,,,,
+network_fog_hpc_cloud,prism_cc_time,Fog–HPC–Cloud · PRISM-CC - Time,11.186,11.186,0.0,0.0,,0.0,0.0,10.64095,0.0,105.12219303727579,5.122193037275813,0.0,False,False,,,,
+network_hpc_cloud,heft_classic,HPC–Cloud · HEFT coalocado,11.197,11.197,0.0,0.0,,0.0,0.0,10.63715,0.0,105.26315789473682,5.263157894736836,0.0,False,False,,,,
+network_hpc_cloud,prism_cc_cost,HPC–Cloud · PRISM-CC - Cost,11.197,11.197,0.0,0.0,,0.0,0.0,10.63715,0.0,105.26315789473682,5.263157894736836,0.0,False,False,,,,
+network_hpc_local,heft_classic,HPC local 200 Gbps · HEFT coalocado,10.782,10.782,0.0,0.0,,0.0,0.0,10.2429,0.0,105.26315789473684,5.263157894736836,0.0,False,False,,,,
+network_hpc_local,prism_cc_cost,HPC local 200 Gbps · PRISM-CC - Cost,10.782,10.782,0.0,0.0,,0.0,0.0,10.2429,0.0,105.26315789473684,5.263157894736836,0.0,False,False,,,,
+network_hpc_local,prism_cc_time,HPC local 200 Gbps · PRISM-CC - Time,10.782,10.782,0.0,0.0,,0.0,0.0,10.2429,0.0,105.26315789473684,5.263157894736836,0.0,False,False,,,,
+network_hpc_multisite,heft_classic,HPC multi-site 500 Mbps WAN · HEFT coalocado,10.782,10.782,0.0,0.0,,0.0,0.0,10.2429,0.0,105.26315789473684,5.263157894736836,0.0,False,False,,,,
+network_hpc_multisite,prism_cc_cost,HPC multi-site 500 Mbps WAN · PRISM-CC - Cost,10.782,10.782,0.0,0.0,,0.0,0.0,10.2429,0.0,105.26315789473684,5.263157894736836,0.0,False,False,,,,
+network_hpc_multisite,prism_cc_time,HPC multi-site 500 Mbps WAN · PRISM-CC - Time,10.782,10.782,0.0,0.0,,0.0,0.0,10.2429,0.0,105.26315789473684,5.263157894736836,0.0,False,False,,,,
+network_cloud_multiregion,prism_cc_time,Cloud multi-região · PRISM-CC - Time,21.872,21.872,0.004869,0.004869,,100.0,0.02584,21.93455,18.842879256965947,99.71483344768868,0.0,0.0,True,False,,,,
+network_wfcommons_overlay,prism_cc_time,WfCommons overlay multi-site · PRISM-CC - Time,20.49,20.49,0.013103,0.013103,,100.0,0.051475,24.0825,25.455075279261777,85.08252880722516,0.0,0.0,True,False,,,,
+network_wfcommons_overlay,heft_classic,WfCommons overlay multi-site · HEFT coalocado,25.35,25.35,0.054184,0.054184,,0.0,0.051475,24.0825,105.26274890723653,105.26315789473685,5.2631578947368585,5.262748907236525,False,False,,,,
+network_edge_cloud,heft_classic,Edge–Cloud · HEFT coalocado,22.869,22.869,0.032861,0.032861,,0.0,0.031218,21.72555,105.26298930104429,105.26315789473685,5.2631578947368585,5.262989301044274,False,False,,,,
+network_edge_cloud,prism_cc_cost,Edge–Cloud · PRISM-CC - Cost,22.869,22.869,0.032861,0.032861,,0.0,0.031218,21.72555,105.26298930104429,105.26315789473685,5.2631578947368585,5.262989301044274,False,False,,,,
+network_edge_cloud,prism_cc_time,Edge–Cloud · PRISM-CC - Time,22.869,22.869,0.032861,0.032861,,0.0,0.031218,21.72555,105.26298930104429,105.26315789473685,5.2631578947368585,5.262989301044274,False,False,,,,
+network_cloud_multiregion,heft_classic,Cloud multi-região · HEFT coalocado,23.089,23.089,0.0272,0.0272,,0.0,0.02584,21.93455,105.26315789473684,105.26315789473682,5.263157894736836,5.263157894736836,False,False,,,,

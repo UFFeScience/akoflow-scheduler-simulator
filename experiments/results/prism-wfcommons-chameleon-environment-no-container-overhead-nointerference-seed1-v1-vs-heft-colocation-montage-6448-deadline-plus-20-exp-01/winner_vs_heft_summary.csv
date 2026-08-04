@@ -1,0 +1,5 @@
+scenario_id,variant,metric,prism_mean,heft_mean,prism_gain_percent,winner
+wfcommons_chameleon_dss20,prism_cc_time,makespan,1032.144,1032.144,0.0,Empate
+wfcommons_chameleon_dss20,prism_cc_cost,makespan,1032.144,1032.144,0.0,Empate
+wfcommons_chameleon_dss20,prism_cc_time,budget_used,0.0,0.0,0.0,Empate
+wfcommons_chameleon_dss20,prism_cc_cost,budget_used,0.0,0.0,0.0,Empate

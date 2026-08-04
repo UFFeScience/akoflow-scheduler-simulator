@@ -1,0 +1,4 @@
+scenario_id,algorithm,runs,makespan_mean,makespan_median,makespan_stddev,makespan_ci95,budget_used_mean,budget_used_median,budget_used_stddev,budget_used_ci95,interference_seed,utilization_mean,utilization_imbalance,machines_used,interference_time_mean,interference_pairs_mean,interference_per_task,makespan_cv_percent,makespan_gain_percent,budget_gain_percent
+hybrid_communication_trap,heft_classic,1,921.391,921.391,0,0.0,879.905504,879.905504,0,0.0,1.0,0.03460557142857142,0.043274185394188674,14.0,0.763,3790.0,0.00011833126550868486,0.0,,
+hybrid_communication_trap,prism_cc_cost,1,1100.582,1100.582,0,0.0,18.214266,18.214266,0,0.0,1.0,0.28639914285714285,0.21241458089374493,14.0,0.777,2662.0,0.00012050248138957816,0.0,-19.44787826232296,97.92997476238085
+hybrid_communication_trap,prism_cc_time,1,853.804,853.804,0,0.0,558.421355,558.421355,0,0.0,1.0,0.02879807142857143,0.04454733523930998,14.0,0.771,4123.0,0.00011957196029776676,0.0,7.335322355004552,36.536212984070616

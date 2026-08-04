@@ -1,0 +1,3 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+network_hpc_local,heft_classic,HPC local 200 Gbps · HEFT coalocado,149.269,149.269,0.0,0.0,,100.0,0.0,179.1228,0.0,83.33333333333334,0,0,True,True,1,,,
+network_edge_cloud,prism_cc_cost,Edge–Cloud · PRISM-CC - Cost,96.324,96.324,0.120361,0.120361,,100.0,2.005814,154.5168,6.000606237667101,62.33885247429406,0,0,True,True,2,6.000606237667101,20.994480859039285,3.4987266331945586

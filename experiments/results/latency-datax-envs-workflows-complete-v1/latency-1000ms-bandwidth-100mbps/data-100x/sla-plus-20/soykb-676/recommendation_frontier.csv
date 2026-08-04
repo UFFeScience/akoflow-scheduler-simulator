@@ -1,0 +1,3 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+network_hpc_local,heft_classic,HPC local 200 Gbps · HEFT coalocado,7610.372,7610.372,0.0,0.0,,100.0,0.0,9132.4464,0.0,83.33333333333333,0,0,True,True,1,,,
+network_hpc_cloud,prism_cc_time,HPC–Cloud · PRISM-CC - Time,3845.433,3845.433,5.11121,5.11121,,100.0,6.134324,4614.9108,83.3214874206188,83.32626927480375,0,0,True,True,2,83.3214874206188,0.0070640585295791425,8.478075401989361e-05

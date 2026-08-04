@@ -5,6 +5,126 @@ import (
 	"math"
 )
 
+func resourceImageCacheKey(resourceID, image string) string {
+	return resourceID + "\x00" + image
+}
+
+func initialCachedImages(resources []Resource) map[string]bool {
+	out := map[string]bool{}
+	for _, resource := range resources {
+		for _, image := range resource.ImageCache {
+			out[resourceImageCacheKey(resource.ID, image)] = true
+		}
+	}
+	return out
+}
+
+func dynamicContainerOverhead(generated GeneratedSimulation, state beamState, task Task, resourceID string) float64 {
+	if task.Image != "" && state.CachedImages[resourceImageCacheKey(resourceID, task.Image)] {
+		return 0
+	}
+	return generated.Matrices.ContainerOverhead[task.ID][resourceID]
+}
+
+func resourceSupportsTask(resource Resource, task Task) bool {
+	return task.CPU <= resource.CPU && task.Memory <= resource.Memory
+}
+
+func stateAssignmentsForCapacity(state beamState) []Assignment {
+	if !state.Compact {
+		return state.Assignments
+	}
+	out := make([]Assignment, 0, 32)
+	for trace := state.AssignmentTrace; trace != nil; trace = trace.Prev {
+		out = append(out, trace.Assignment)
+	}
+	return out
+}
+
+// capacityConstrainedStart enforces aggregate CPU and memory for overlapping
+// tasks. The common one-core-task case is already guaranteed by exclusive
+// core allocation and takes the constant-time fast path.
+func capacityConstrainedStart(ctx optimizerContext, state beamState, task Task, resource Resource, start, runtime float64) float64 {
+	if ctx.PartitionSafe[resource.ID] {
+		return start
+	}
+	assignments := stateAssignmentsForCapacity(state)
+	for {
+		finish := start + runtime
+		usedCPU, usedMemory := task.CPU, task.Memory
+		nextRelease := math.Inf(1)
+		for _, assignment := range assignments {
+			if assignment.ResourceID != resource.ID ||
+				maxf(start, assignment.StartTime) >= minf(finish, assignment.FinishTime) {
+				continue
+			}
+			other := ctx.Tasks[assignment.TaskID]
+			usedCPU += other.CPU
+			usedMemory += other.Memory
+			if assignment.FinishTime > start {
+				nextRelease = minf(nextRelease, assignment.FinishTime)
+			}
+		}
+		if usedCPU <= resource.CPU && usedMemory <= resource.Memory {
+			return start
+		}
+		if math.IsInf(nextRelease, 1) {
+			return start
+		}
+		start = nextRelease
+	}
+}
+
+func taskInterferenceProfile(ctx optimizerContext, task Task) string {
+	dataMB := 0.0
+	for _, dependency := range ctx.DepsBySource[task.ID] {
+		dataMB += dependency.DataMB
+	}
+	for _, dependency := range ctx.DepsByTarget[task.ID] {
+		dataMB += dependency.DataMB
+	}
+	if dataMB > maxf(1024, task.BaseRuntime*100) {
+		return "network"
+	}
+	if task.Memory > 4*maxf(task.CPU, 0.001) {
+		return "memory"
+	}
+	if dataMB > 0 && task.BaseRuntime <= 0.1 {
+		return "io"
+	}
+	return "cpu"
+}
+
+func profilePairPenalty(left, right string) float64 {
+	if left == right {
+		return 1.25
+	}
+	if (left == "io" && right == "network") || (left == "network" && right == "io") {
+		return 1.1
+	}
+	if (left == "cpu" && right == "memory") || (left == "memory" && right == "cpu") {
+		return 0.75
+	}
+	return 1
+}
+
+func explicitProfilePCC(ctx optimizerContext, task Task, base float64, pairs []PairwiseInterference) (float64, string) {
+	profile := taskInterferenceProfile(ctx, task)
+	if base == 0 || len(pairs) == 0 {
+		return base, profile
+	}
+	weight := 0.0
+	for _, pair := range pairs {
+		other, exists := ctx.Tasks[pair.OtherTaskID]
+		if !exists {
+			weight++
+			continue
+		}
+		weight += profilePairPenalty(profile, taskInterferenceProfile(ctx, other))
+	}
+	return round(base*weight/float64(len(pairs)), 4), profile
+}
+
 // assignmentTrace and the two persistent treaps below let Beam children share
 // their complete history. A child allocates O(log n) index nodes instead of
 // copying O(n) assignments and maps.
@@ -348,13 +468,175 @@ func predecessorTimingForState(deps []Dependency, state beamState, generated Gen
 		}
 		transfer := 0.0
 		if predecessor.ResourceID != resourceID {
-			transfer = dep.DataMB/maxf(generated.Matrices.BandwidthBW[predecessor.ResourceID][resourceID], 0.001) +
-				generated.Matrices.TransferDelay[predecessor.ResourceID][resourceID]
+			transfer = dependencyTransferSeconds(
+				dep, generated.Matrices.BandwidthBW[predecessor.ResourceID][resourceID],
+				generated.Matrices.TransferDelay[predecessor.ResourceID][resourceID],
+			)
 		}
 		floor = maxf(floor, predecessor.FinishTime+transfer)
 		transferTotal += transfer
 	}
 	return floor, transferTotal
+}
+
+const maxAdaptiveLookaheadDepth = 8
+
+// adaptiveTaskLookaheadDepths assigns a structural upper bound to each task.
+// Ordinary tasks inspect one level, critical tasks inspect three levels, and a
+// communication-heavy fork follows its branches up to the nearest join.
+func adaptiveTaskLookaheadDepths(generated GeneratedSimulation, ctx optimizerContext) map[string]int {
+	depths := map[string]int{}
+	averageData := 0.0
+	for _, dependency := range generated.Workflow.Dependencies {
+		averageData += dependency.DataMB
+	}
+	averageData /= maxf(float64(len(generated.Workflow.Dependencies)), 1)
+	for taskID := range ctx.Tasks {
+		dependencies := ctx.DepsBySource[taskID]
+		if len(dependencies) == 0 {
+			depths[taskID] = 0
+			continue
+		}
+		depth := 1
+		if ctx.PriorityRanks[taskID] >= 0.8*ctx.MaxPriorityRank {
+			depth = 3
+		}
+		outgoingData := 0.0
+		for _, dependency := range dependencies {
+			outgoingData += dependency.DataMB
+		}
+		if len(dependencies) > 1 && outgoingData/float64(len(dependencies)) >= averageData {
+			depth = max(depth, nearestJoinDepth(ctx, taskID))
+		}
+		depths[taskID] = min(maxAdaptiveLookaheadDepth, depth)
+	}
+	return depths
+}
+
+func nearestJoinDepth(ctx optimizerContext, sourceTaskID string) int {
+	frontier := []string{sourceTaskID}
+	seen := map[string]bool{sourceTaskID: true}
+	for depth := 1; depth <= maxAdaptiveLookaheadDepth; depth++ {
+		next := []string{}
+		for _, taskID := range frontier {
+			for _, dependency := range ctx.DepsBySource[taskID] {
+				if len(ctx.DepsByTarget[dependency.Target]) > 1 {
+					return depth
+				}
+				if !seen[dependency.Target] {
+					seen[dependency.Target] = true
+					next = append(next, dependency.Target)
+				}
+			}
+		}
+		if len(next) == 0 {
+			return depth
+		}
+		frontier = next
+	}
+	return maxAdaptiveLookaheadDepth
+}
+
+// buildAdaptiveSuccessorDelay caches an optimistic resource-sensitive future
+// cost for every useful depth. Each level includes transfer, latency, image
+// overhead and execution, while choosing the best compatible next resource.
+func buildAdaptiveSuccessorDelay(generated GeneratedSimulation, ctx optimizerContext, depths map[string]int) map[string]map[string][]float64 {
+	out := map[string]map[string][]float64{}
+	type memoKey struct {
+		taskID, resourceID string
+		depth              int
+	}
+	memo := map[memoKey]float64{}
+	var visit func(string, string, int) float64
+	visit = func(taskID, resourceID string, depth int) float64 {
+		if depth <= 0 {
+			return 0
+		}
+		key := memoKey{taskID, resourceID, depth}
+		if value, exists := memo[key]; exists {
+			return value
+		}
+		criticalDelay := 0.0
+		for _, dependency := range ctx.DepsBySource[taskID] {
+			successor, exists := ctx.Tasks[dependency.Target]
+			if !exists {
+				continue
+			}
+			bestDelay := math.Inf(1)
+			for _, targetResource := range generated.Resources {
+				if !resourceSupportsTask(targetResource, successor) {
+					continue
+				}
+				transfer := 0.0
+				if resourceID != targetResource.ID {
+					transfer = dependencyTransferSeconds(
+						dependency, generated.Matrices.BandwidthBW[resourceID][targetResource.ID],
+						generated.Matrices.TransferDelay[resourceID][targetResource.ID],
+					)
+				}
+				delay := transfer + generated.Matrices.ContainerOverhead[successor.ID][targetResource.ID] +
+					generated.Matrices.ET0[successor.ID][targetResource.ID] + visit(successor.ID, targetResource.ID, depth-1)
+				bestDelay = minf(bestDelay, delay)
+			}
+			if !math.IsInf(bestDelay, 1) {
+				criticalDelay = maxf(criticalDelay, bestDelay)
+			}
+		}
+		memo[key] = round(criticalDelay, 3)
+		return memo[key]
+	}
+	for taskID, maxDepth := range depths {
+		out[taskID] = map[string][]float64{}
+		for _, resource := range generated.Resources {
+			values := make([]float64, maxDepth+1)
+			for depth := 1; depth <= maxDepth; depth++ {
+				values[depth] = visit(taskID, resource.ID, depth)
+			}
+			out[taskID][resource.ID] = values
+		}
+	}
+	return out
+}
+
+func adaptiveSuccessorLookaheadFinish(ctx optimizerContext, task Task, candidate Assignment, depth int) float64 {
+	values := ctx.SuccessorDelay[task.ID][candidate.ResourceID]
+	if depth <= 0 || len(values) == 0 {
+		return candidate.FinishTime
+	}
+	depth = min(depth, len(values)-1)
+	return round(candidate.FinishTime+values[depth], 3)
+}
+
+// adaptiveDecisionLookaheadDepth disables speculative work when one resource
+// clearly dominates both finish time and financial cost. Otherwise it uses the
+// structural depth selected from criticality and the DAG's fork/join shape.
+func adaptiveDecisionLookaheadDepth(ctx optimizerContext, task Task, finishes, costs []float64) int {
+	depth := ctx.LookaheadDepth[task.ID]
+	if depth == 0 || len(finishes) < 2 {
+		return depth
+	}
+	best := 0
+	for index := 1; index < len(finishes); index++ {
+		if finishes[index] < finishes[best] ||
+			(finishes[index] == finishes[best] && costs[index] < costs[best]) {
+			best = index
+		}
+	}
+	secondFinish := math.Inf(1)
+	secondCost := math.Inf(1)
+	for index := range finishes {
+		if index == best {
+			continue
+		}
+		secondFinish = minf(secondFinish, finishes[index])
+		secondCost = minf(secondCost, costs[index])
+	}
+	finishClearlyBetter := finishes[best] <= 0.95*secondFinish
+	costNotWorse := costs[best] <= secondCost+1e-9
+	if finishClearlyBetter && costNotWorse {
+		return 0
+	}
+	return depth
 }
 
 func candidatePairwiseInterferenceForState(generated GeneratedSimulation, taskID, resourceID string, state beamState, start, finish float64) (float64, []PairwiseInterference) {

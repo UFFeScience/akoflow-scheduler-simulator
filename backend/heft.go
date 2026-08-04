@@ -230,7 +230,7 @@ func heftGlobalPredecessorTiming(
 		predecessor := assignmentByTask[dep.Source]
 		transfer := 0.0
 		if predecessor.ResourceID != resourceID {
-			transfer = dep.DataMB/maxf(globalBandwidth, 0.001) + globalLatency
+			transfer = dependencyTransferSeconds(dep, globalBandwidth, globalLatency)
 		}
 		transferTotal += transfer
 		predecessorFloor = maxf(predecessorFloor, predecessor.FinishTime+transfer)
@@ -271,8 +271,10 @@ func heftUpwardRanks(generated GeneratedSimulation) (map[string]float64, error) 
 					if left.ID == right.ID {
 						continue
 					}
-					communication += dependency.DataMB/maxf(generated.Matrices.BandwidthBW[left.ID][right.ID], 0.001) +
-						generated.Matrices.TransferDelay[left.ID][right.ID]
+					communication += dependencyTransferSeconds(
+						dependency, generated.Matrices.BandwidthBW[left.ID][right.ID],
+						generated.Matrices.TransferDelay[left.ID][right.ID],
+					)
 					pairs++
 				}
 			}

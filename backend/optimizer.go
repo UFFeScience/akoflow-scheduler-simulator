@@ -27,6 +27,7 @@ type beamState struct {
 	NodeHasBooted       map[string]bool
 	NodeReadyTime       map[string]float64
 	NodeLastActive      map[string]float64
+	CachedImages        map[string]bool
 	StopIntervals       []MachineStopInterval
 	StepTrace           *scheduleStepTrace
 	PartialBudgetUsed   float64
@@ -53,6 +54,7 @@ type optimizerContext struct {
 	Tasks            map[string]Task
 	Resources        map[string]Resource
 	DepsByTarget     map[string][]Dependency
+	DepsBySource     map[string][]Dependency
 	PriorityOrder    []string
 	PriorityRanks    map[string]float64
 	MaxPriorityRank  float64
@@ -65,6 +67,10 @@ type optimizerContext struct {
 	MinTaskCosts     []float64
 	MinCriticalRanks []float64
 	CanonicalHEFT    map[string]Assignment
+	CanonicalState   *beamState
+	SuccessorDelay   map[string]map[string][]float64
+	LookaheadDepth   map[string]int
+	PartitionSafe    map[string]bool
 }
 
 type beamFrontier struct {
@@ -75,6 +81,7 @@ type beamFrontier struct {
 const beamFrontierCount = 11
 const readyTaskBranchLimit = 4
 const pendingPredecessorChunkSize = 64
+const compactBeamTaskThreshold = 100
 
 func optimizeSchedule(generated GeneratedSimulation) (ScheduleOptimizationResponse, error) {
 	optionCount := max(1, min(generated.SLA.OptionCount, maxScheduleOptions))
@@ -108,8 +115,15 @@ func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, erro
 		}
 	}
 	hasBooted, ready, last := initialNodeState(generated.Resources)
-	compact := len(generated.Workflow.Tasks) > 1000
-	ctx := optimizerContext{Tasks: taskMap(generated.Workflow.Tasks), Resources: resourceMap(generated.Resources), DepsByTarget: dependenciesByTarget(generated.Workflow.Dependencies)}
+	// Textual schedule signatures are useful for small, inspectable workflows,
+	// but become quadratic when sorting Beam candidates. Above 100 tasks, use
+	// persistent indexes and the incremental uint64 signature exclusively.
+	compact := len(generated.Workflow.Tasks) > compactBeamTaskThreshold
+	ctx := optimizerContext{
+		Tasks: taskMap(generated.Workflow.Tasks), Resources: resourceMap(generated.Resources),
+		DepsByTarget: dependenciesByTarget(generated.Workflow.Dependencies),
+		DepsBySource: dependenciesBySource(generated.Workflow.Dependencies),
+	}
 	order, err := prismCCPriorityOrder(generated)
 	if err != nil {
 		return nil, err
@@ -120,6 +134,7 @@ func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, erro
 			generated.Experimental.PriorityPolicy == "adaptive_ready")
 	ctx.AdaptiveReady = generated.Experimental != nil &&
 		generated.Experimental.PriorityPolicy == "adaptive_ready"
+	var canonicalHEFTResult SimulationResult
 	if ctx.AdaptiveReady {
 		canonicalHEFT, canonicalErr := scheduleHEFTColocation(generated)
 		if canonicalErr != nil {
@@ -129,9 +144,16 @@ func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, erro
 		for _, assignment := range canonicalHEFT.Assignments {
 			ctx.CanonicalHEFT[assignment.TaskID] = assignment
 		}
+		canonicalHEFTResult = canonicalHEFT
 	}
 	if err := configureOptimizerContext(generated, &ctx); err != nil {
 		return nil, err
+	}
+	ctx.LookaheadDepth = adaptiveTaskLookaheadDepths(generated, ctx)
+	ctx.SuccessorDelay = buildAdaptiveSuccessorDelay(generated, ctx, ctx.LookaheadDepth)
+	if ctx.AdaptiveReady {
+		canonicalState := canonicalBeamState(generated, ctx, canonicalHEFTResult, compact)
+		ctx.CanonicalState = &canonicalState
 	}
 	initialState := beamState{
 		Assignments: []Assignment{}, AssignmentByTask: map[string]Assignment{},
@@ -139,6 +161,7 @@ func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, erro
 		BillingStart: map[string]float64{}, BillingFinish: map[string]float64{},
 		Compact: compact, CoreAvail: coreAvail, CoreIndexes: coreIndexes,
 		NodeHasBooted: hasBooted, NodeReadyTime: ready, NodeLastActive: last,
+		CachedImages:  initialCachedImages(generated.Resources),
 		StopIntervals: []MachineStopInterval{},
 	}
 	if ctx.DynamicReady {
@@ -186,6 +209,18 @@ func beamSearch(generated GeneratedSimulation, beamWidth int) ([]beamState, erro
 }
 
 func configureOptimizerContext(generated GeneratedSimulation, ctx *optimizerContext) error {
+	ctx.PartitionSafe = map[string]bool{}
+	for _, resource := range generated.Resources {
+		perCoreMemory := resource.Memory / float64(max(1, len(resource.Cores)))
+		safe := true
+		for _, task := range ctx.Tasks {
+			if task.CPU > 1 || task.Memory > perCoreMemory {
+				safe = false
+				break
+			}
+		}
+		ctx.PartitionSafe[resource.ID] = safe
+	}
 	ctx.TaskOrdinal = make(map[string]int, len(ctx.PriorityOrder))
 	ctx.TaskIDs = append([]string(nil), ctx.PriorityOrder...)
 	ctx.Successors = make([][]int, len(ctx.PriorityOrder))
@@ -198,7 +233,7 @@ func configureOptimizerContext(generated GeneratedSimulation, ctx *optimizerCont
 		minRuntime := math.Inf(1)
 		minCost := math.Inf(1)
 		for resourceIndex, resource := range generated.Resources {
-			if resourceIndex < 64 && task.CPU <= resource.CPU && task.Memory <= resource.Memory {
+			if resourceIndex < 64 && resourceSupportsTask(resource, task) {
 				ctx.ResourceMasks[ordinal] |= uint64(1) << resourceIndex
 				runtime := generated.Matrices.ET0[taskID][resource.ID]
 				minRuntime = minf(minRuntime, runtime)
@@ -231,7 +266,7 @@ func configureOptimizerContext(generated GeneratedSimulation, ctx *optimizerCont
 	if !ctx.DynamicReady {
 		return nil
 	}
-	ranks, err := heftUpwardRanks(generated)
+	ranks, err := prismCommunicationInterferenceRanks(generated)
 	if err != nil {
 		return err
 	}
@@ -252,7 +287,7 @@ func prismCCPriorityOrder(generated GeneratedSimulation) ([]string, error) {
 		generated.Experimental.PriorityPolicy != "adaptive_ready" {
 		return nil, fmt.Errorf("unsupported PRISM-CC priority policy %q", generated.Experimental.PriorityPolicy)
 	}
-	ranks, err := heftUpwardRanks(generated)
+	ranks, err := prismCommunicationInterferenceRanks(generated)
 	if err != nil {
 		return nil, err
 	}
@@ -267,6 +302,69 @@ func prismCCPriorityOrder(generated GeneratedSimulation) ([]string, error) {
 		return order[i] < order[j]
 	})
 	return order, nil
+}
+
+// prismCommunicationInterferenceRanks extends HEFT's communication-aware
+// upward rank with the expected P_cc exposure of each task profile. HEFT keeps
+// its classic rank; only PRISM uses this continuum-specific priority.
+func prismCommunicationInterferenceRanks(generated GeneratedSimulation) (map[string]float64, error) {
+	if _, err := topologicalOrder(generated); err != nil {
+		return nil, err
+	}
+	ctx := optimizerContext{
+		Tasks:        taskMap(generated.Workflow.Tasks),
+		DepsBySource: dependenciesBySource(generated.Workflow.Dependencies),
+		DepsByTarget: dependenciesByTarget(generated.Workflow.Dependencies),
+	}
+	ranks := map[string]float64{}
+	visiting := map[string]bool{}
+	interferenceRate := 0.0
+	if generated.Experimental != nil && !generated.Experimental.InterferenceDisabled {
+		interferenceRate = generated.Experimental.InterferenceRate
+	}
+	profileRisk := map[string]float64{"cpu": 1.25, "memory": 1.15, "io": 1.1, "network": 1.1}
+	var rank func(string) float64
+	rank = func(taskID string) float64 {
+		if value, exists := ranks[taskID]; exists {
+			return value
+		}
+		if visiting[taskID] {
+			return 0
+		}
+		visiting[taskID] = true
+		task := ctx.Tasks[taskID]
+		computation := 0.0
+		for _, resource := range generated.Resources {
+			computation += generated.Matrices.ET0[taskID][resource.ID]
+		}
+		computation /= float64(max(1, len(generated.Resources)))
+		computation *= 1 + interferenceRate*profileRisk[taskInterferenceProfile(ctx, task)]
+		maxSuccessor := 0.0
+		for _, dependency := range ctx.DepsBySource[taskID] {
+			communication, pairs := 0.0, 0
+			for _, left := range generated.Resources {
+				for _, right := range generated.Resources {
+					if left.ID == right.ID {
+						continue
+					}
+					communication += dependencyTransferSeconds(
+						dependency, generated.Matrices.BandwidthBW[left.ID][right.ID],
+						generated.Matrices.TransferDelay[left.ID][right.ID],
+					)
+					pairs++
+				}
+			}
+			communication /= float64(max(1, pairs))
+			maxSuccessor = maxf(maxSuccessor, communication+rank(dependency.Target))
+		}
+		visiting[taskID] = false
+		ranks[taskID] = round(computation+maxSuccessor, 6)
+		return ranks[taskID]
+	}
+	for _, task := range generated.Workflow.Tasks {
+		rank(task.ID)
+	}
+	return ranks, nil
 }
 
 func initializeReadyState(ctx optimizerContext, state beamState) beamState {
@@ -405,26 +503,180 @@ type adaptiveStateEvaluation struct {
 	BestScore           float64
 }
 
+func prismIncrementalFinancialCost(computeCost, networkCost float64) float64 {
+	return computeCost + networkCost
+}
+
 func adaptiveBeamSearch(generated GeneratedSimulation, ctx optimizerContext, initial beamState, beamWidth, taskCount int) ([]beamState, error) {
-	beam := []beamState{initial}
-	neutral := beamFrontier{WeightTime: 0.5, WeightCost: 0.5}
+	frontiers := beamFrontiers()
+	perFrontierWidth := max(1, min(10, beamWidth/max(1, len(frontiers))))
+	beams := make([][]beamState, len(frontiers))
+	for index := range beams {
+		beams[index] = []beamState{initial}
+	}
+	paretoArchive := []beamState{initial}
 	for stepIndex := 1; stepIndex <= taskCount; stepIndex++ {
-		candidates := expandAdaptiveStatesParallel(generated, ctx, beam, stepIndex, neutral)
-		if len(candidates) == 0 {
+		candidateCount := 0
+		nextBeams := make([][]beamState, len(frontiers))
+		for frontierIndex, frontier := range frontiers {
+			candidates := expandAdaptiveStatesParallel(generated, ctx, beams[frontierIndex], stepIndex, frontier)
+			candidateCount += len(candidates)
+			if len(candidates) == 0 {
+				continue
+			}
+			nextBeams[frontierIndex] = selectIndependentFrontierStates(
+				candidates, perFrontierWidth, frontierIndex, generated,
+			)
+		}
+		pool := []beamState{}
+		for _, beam := range nextBeams {
+			pool = append(pool, beam...)
+		}
+		// The shared archive is a twelfth, objective-neutral search stream.
+		// Every frontier contributes to it, but archived states are expanded
+		// only once instead of being duplicated into all eleven beams.
+		archiveCandidates := expandAdaptiveStatesParallel(
+			generated, ctx, paretoArchive, stepIndex, beamFrontier{WeightTime: 0.5, WeightCost: 0.5},
+		)
+		candidateCount += len(archiveCandidates)
+		pool = append(pool, archiveCandidates...)
+		if len(pool) == 0 {
 			return nil, fmt.Errorf("adaptive Beam produced no state at step %d", stepIndex)
 		}
-		beam = selectAdaptiveBeamStates(candidates, beamWidth, generated, ctx)
-		if len(beam) == 0 {
-			return nil, fmt.Errorf("adaptive Beam pruned every state at step %d", stepIndex)
-		}
+		paretoArchive = partialParetoArchive(pool, generated)
+		beams = nextBeams
 		if stepIndex == 1 || stepIndex%500 == 0 || stepIndex == taskCount {
+			retained := 0
+			for _, beam := range beams {
+				retained += len(beam)
+			}
 			log.Printf(
-				"adaptive Beam step %d/%d: candidates=%d retained=%d capacity=%d",
-				stepIndex, taskCount, len(candidates), len(beam), beamWidth,
+				"independent Beam step %d/%d: candidates=%d retained=%d pareto=%d frontiers=%d width=%d",
+				stepIndex, taskCount, candidateCount, retained, len(paretoArchive),
+				len(frontiers), perFrontierWidth,
 			)
 		}
 	}
-	return dedupeStates(beam), nil
+	finalStates := append([]beamState{}, paretoArchive...)
+	for _, beam := range beams {
+		finalStates = append(finalStates, beam...)
+	}
+	if ctx.CanonicalState != nil {
+		finalStates = append(finalStates, *ctx.CanonicalState)
+	}
+	finalStates = dedupeStates(finalStates)
+	sort.SliceStable(finalStates, func(i, j int) bool {
+		if finalStates[i].OrderDeviated != finalStates[j].OrderDeviated {
+			return !finalStates[i].OrderDeviated
+		}
+		return beamStateLess(finalStates[i], finalStates[j])
+	})
+	if len(finalStates) > beamWidth {
+		finalStates = finalStates[:beamWidth]
+	}
+	return finalStates, nil
+}
+
+func canonicalBeamState(generated GeneratedSimulation, ctx optimizerContext, result SimulationResult, compact bool) beamState {
+	state := beamState{
+		Assignments:      append([]Assignment(nil), result.Assignments...),
+		AssignmentByTask: map[string]Assignment{}, TaskOrdinals: ctx.TaskOrdinal,
+		Compact: compact, PartialMakespan: result.TimingVariables.Makespan,
+		PartialBudgetUsed: result.CostVariables.BUsed, TaskOrderSearch: true,
+		CachedImages: initialCachedImages(generated.Resources),
+	}
+	for _, assignment := range result.Assignments {
+		state.AssignmentByTask[assignment.TaskID] = assignment
+		state.ScheduledTaskHash ^= intPriority(ctx.TaskOrdinal[assignment.TaskID])
+		state.SignatureHash ^= stablePriority(fmt.Sprintf(
+			"%s:%s:%s:%.6f:%.6f", assignment.TaskID, assignment.ResourceID,
+			assignment.CoreID, assignment.StartTime, assignment.FinishTime,
+		))
+		if compact {
+			state.AssignmentTrace = appendAssignmentTrace(state.AssignmentTrace, assignment)
+			state.AssignmentIndex = assignmentIndexInsert(state.AssignmentIndex, ctx.TaskOrdinal[assignment.TaskID], assignment)
+		}
+	}
+	if compact {
+		state.Assignments = nil
+		state.AssignmentByTask = nil
+	}
+	return state
+}
+
+func selectIndependentFrontierStates(states []beamState, width, frontierIndex int, generated GeneratedSimulation) []beamState {
+	allUnique := dedupeStates(states)
+	var canonical *beamState
+	for _, state := range allUnique {
+		if !state.OrderDeviated && (canonical == nil || beamStateLess(state, *canonical)) {
+			copy := state
+			canonical = &copy
+		}
+	}
+	unique := preferPartiallyFeasibleStates(allUnique, generated)
+	sort.SliceStable(unique, func(i, j int) bool {
+		left, right := unique[i], unique[j]
+		if left.FrontierScores[frontierIndex] != right.FrontierScores[frontierIndex] {
+			return left.FrontierScores[frontierIndex] < right.FrontierScores[frontierIndex]
+		}
+		if left.OrderDeviated != right.OrderDeviated {
+			return !left.OrderDeviated
+		}
+		return beamStateLess(left, right)
+	})
+	if len(unique) > width {
+		unique = unique[:width]
+	}
+	if canonical != nil {
+		found := false
+		for _, state := range unique {
+			found = found || stateSignature(state) == stateSignature(*canonical)
+		}
+		if !found && len(unique) > 0 {
+			unique[len(unique)-1] = *canonical
+		}
+	}
+	return unique
+}
+
+func partialParetoArchive(states []beamState, generated GeneratedSimulation) []beamState {
+	unique := preferPartiallyFeasibleStates(dedupeStates(states), generated)
+	archive := make([]beamState, 0, len(unique))
+	for index, candidate := range unique {
+		dominated := false
+		for otherIndex, other := range unique {
+			if index == otherIndex || candidate.ScheduledTaskHash != other.ScheduledTaskHash {
+				continue
+			}
+			noWorse := other.PartialMakespan <= candidate.PartialMakespan &&
+				other.PartialBudgetUsed <= candidate.PartialBudgetUsed
+			strict := other.PartialMakespan < candidate.PartialMakespan ||
+				other.PartialBudgetUsed < candidate.PartialBudgetUsed
+			if noWorse && strict {
+				dominated = true
+				break
+			}
+		}
+		if !dominated {
+			archive = append(archive, candidate)
+		}
+	}
+	maxArchive := beamFrontierCount * 2
+	if len(archive) > maxArchive {
+		sort.SliceStable(archive, func(i, j int) bool {
+			if archive[i].PartialMakespan != archive[j].PartialMakespan {
+				return archive[i].PartialMakespan < archive[j].PartialMakespan
+			}
+			return archive[i].PartialBudgetUsed < archive[j].PartialBudgetUsed
+		})
+		diverse := make([]beamState, 0, maxArchive)
+		for index := 0; index < maxArchive; index++ {
+			position := index * (len(archive) - 1) / (maxArchive - 1)
+			diverse = append(diverse, archive[position])
+		}
+		archive = dedupeStates(diverse)
+	}
+	return archive
 }
 
 func expandAdaptiveStatesParallel(generated GeneratedSimulation, ctx optimizerContext, states []beamState, stepIndex int, frontier beamFrontier) []beamState {
@@ -543,6 +795,28 @@ func markAdaptiveFrontierRelevance(items []adaptiveStateEvaluation) {
 			items[index].BestScore = minf(items[index].BestScore, score)
 			if score < bestScore {
 				bestIndex, bestScore = index, score
+			}
+		}
+		if bestIndex >= 0 {
+			items[bestIndex].State.FrontierMask |= uint16(1) << frontierIndex
+		}
+	}
+}
+
+// markPersistentFrontierIncumbents reserves one continuing path for every
+// time/cost objective. FrontierScores are cumulative, so each lane follows
+// its own best history instead of competing only on the current step's
+// lower bounds. A single state may represent more than one lane when their
+// best paths coincide.
+func markPersistentFrontierIncumbents(items []adaptiveStateEvaluation) {
+	for frontierIndex := range beamFrontiers() {
+		bestIndex := -1
+		for index := range items {
+			if bestIndex < 0 ||
+				items[index].State.FrontierScores[frontierIndex] < items[bestIndex].State.FrontierScores[frontierIndex] ||
+				(items[index].State.FrontierScores[frontierIndex] == items[bestIndex].State.FrontierScores[frontierIndex] &&
+					beamStateLess(items[index].State, items[bestIndex].State)) {
+				bestIndex = index
 			}
 		}
 		if bestIndex >= 0 {
@@ -689,6 +963,10 @@ func selectAdaptiveBeamStates(states []beamState, width int, generated Generated
 			}
 		}
 	}
+	// Keep the incumbent of every cumulative objective lane. In addition,
+	// retain the best lower-bound challengers: they may accept a small loss
+	// now and still improve the completed schedule later.
+	markPersistentFrontierIncumbents(competitive)
 	markAdaptiveFrontierRelevance(competitive)
 	valuable := make([]adaptiveStateEvaluation, 0, len(competitive))
 	for _, item := range competitive {
@@ -800,11 +1078,12 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 		assignment      Assignment
 		candidate       CandidateEvaluation
 		finish, rawCost float64
+		lookaheadFinish float64
 		phi, incBudget  float64
 	}
 	rows := []candidateRow{}
 	for _, resource := range generated.Resources {
-		if task.CPU > resource.CPU || task.Memory > resource.Memory {
+		if !resourceSupportsTask(resource, task) {
 			continue
 		}
 		predecessorFloor, transferTotal := predecessorTimingForState(ctx.DepsByTarget[task.ID], state, generated, resource.ID)
@@ -821,33 +1100,54 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 			if coldBoot || stopBoot {
 				boot = resource.BootOverhead
 			}
-			container := generated.Matrices.ContainerOverhead[task.ID][resource.ID]
+			container := dynamicContainerOverhead(generated, state, task, resource.ID)
 			bootReady := readyFloor
 			if coldBoot {
 				bootReady += boot
 			}
 			start := round(bootReady+container, 3)
 			baseRuntime := generated.Matrices.ET0[task.ID][resource.ID]
+			start = round(capacityConstrainedStart(ctx, state, task, resource, start, baseRuntime), 3)
 			phi, pairwise := candidatePairwiseInterferenceForState(generated, task.ID, resource.ID, state, start, start+baseRuntime)
+			phi, interferenceProfile := explicitProfilePCC(ctx, task, phi, pairwise)
 			effective := round(baseRuntime*(1+phi), 3)
 			finish := round(start+effective, 3)
 			score := ScoreBreakdown{}
-			assignment := Assignment{TaskID: task.ID, ResourceID: resource.ID, CoreID: core.ID, StartTime: start, FinishTime: finish, EffectiveRuntime: effective, TransferDelay: round(transferTotal, 3), BootOverhead: boot, ContainerOverhead: container, PhiN: phi, PredecessorFinishFloor: round(predecessorFloor, 3), Score: score}
+			assignment := Assignment{TaskID: task.ID, ResourceID: resource.ID, CoreID: core.ID, StartTime: start, FinishTime: finish, EffectiveRuntime: effective, TransferDelay: round(transferTotal, 3), BootOverhead: boot, ContainerOverhead: container, PhiN: phi, PredecessorFinishFloor: round(predecessorFloor, 3), Score: score, InterferenceProfile: interferenceProfile}
 			rawCost := incrementalMachineActiveCostForState(state, assignment, resource)
-			candidate := CandidateEvaluation{TaskID: task.ID, ResourceID: resource.ID, CoreID: core.ID, StartTime: start, FinishTime: finish, BaseRuntime: baseRuntime, EffectiveRuntime: effective, InterferenceTime: round(effective-baseRuntime, 3), TransferDelay: round(transferTotal, 3), BootOverhead: boot, ContainerOverhead: container, PredecessorFinishFloor: round(predecessorFloor, 3), RawCost: round(rawCost, 4), PhiN: phi, PairwiseInterference: pairwise, Score: score}
-			rows = append(rows, candidateRow{assignment: assignment, candidate: candidate, finish: finish, rawCost: rawCost, phi: phi, incBudget: rawCost + networkCost})
+			candidate := CandidateEvaluation{TaskID: task.ID, ResourceID: resource.ID, CoreID: core.ID, StartTime: start, FinishTime: finish, BaseRuntime: baseRuntime, EffectiveRuntime: effective, InterferenceTime: round(effective-baseRuntime, 3), TransferDelay: round(transferTotal, 3), BootOverhead: boot, ContainerOverhead: container, PredecessorFinishFloor: round(predecessorFloor, 3), RawCost: round(rawCost, 4), PhiN: phi, PairwiseInterference: pairwise, Score: score, InterferenceProfile: interferenceProfile}
+			rows = append(rows, candidateRow{
+				assignment: assignment, candidate: candidate, finish: finish, rawCost: rawCost,
+				lookaheadFinish: finish, phi: phi,
+				incBudget: prismIncrementalFinancialCost(rawCost, networkCost),
+			})
 		}
 	}
 	if len(rows) == 0 {
 		return []beamState{}
 	}
-	maxFinish, maxRawCost := 0.0, 0.0
+	localFinishes := make([]float64, len(rows))
+	incrementalCosts := make([]float64, len(rows))
+	for index := range rows {
+		localFinishes[index] = rows[index].finish
+		incrementalCosts[index] = rows[index].incBudget
+	}
+	lookaheadDepth := adaptiveDecisionLookaheadDepth(ctx, task, localFinishes, incrementalCosts)
+	for index := range rows {
+		rows[index].lookaheadFinish = adaptiveSuccessorLookaheadFinish(
+			ctx, task, rows[index].assignment, lookaheadDepth,
+		)
+	}
+	maxFinish, maxLookaheadFinish, maxIncrementalCost := 0.0, 0.0, 0.0
 	for _, row := range rows {
 		maxFinish = maxf(maxFinish, row.finish)
-		maxRawCost = maxf(maxRawCost, row.rawCost)
+		maxLookaheadFinish = maxf(maxLookaheadFinish, row.lookaheadFinish)
+		maxIncrementalCost = maxf(maxIncrementalCost, row.incBudget)
 	}
 	for i := range rows {
-		timeScore := rows[i].finish / maxf(maxFinish, 0.001)
+		localTimeScore := rows[i].finish / maxf(maxFinish, 0.001)
+		lookaheadTimeScore := rows[i].lookaheadFinish / maxf(maxLookaheadFinish, 0.001)
+		timeScore := 0.65*localTimeScore + 0.35*lookaheadTimeScore
 		usesAlternativeTaskOrder := ctx.DynamicReady &&
 			(state.OrderDeviated || ctx.TaskOrdinal[task.ID] != stepIndex-1)
 		if usesAlternativeTaskOrder {
@@ -858,16 +1158,21 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 				interferenceRisk = rows[i].phi * generated.Experimental.InterferenceRate
 			}
 			lookaheadScore := criticalUrgencyPenalty + interferenceRisk
-			timeScore = 0.65*timeScore + 0.35*lookaheadScore
+			timeScore = 0.75*timeScore + 0.25*lookaheadScore
 		}
 		costScore := 0.0
-		if maxRawCost != 0 {
-			costScore = rows[i].rawCost / maxRawCost
+		if maxIncrementalCost != 0 {
+			// Financial network transfer is part of C_fin, not merely a
+			// posterior budget accounting term.
+			costScore = rows[i].incBudget / maxIncrementalCost
 		}
 		score := ScoreBreakdown{
 			TimeScore: round(timeScore, 5), CostScore: round(costScore, 5),
 			InterferenceScore: round(rows[i].phi, 5),
-			TotalScore:        round(0.5*timeScore+0.5*costScore, 5),
+			TotalScore: round(
+				0.5*timeScore+0.5*costScore+rows[i].phi,
+				5,
+			),
 		}
 		rows[i].assignment.Score = score
 		rows[i].candidate.Score = score
@@ -943,6 +1248,11 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 		nodeHasBooted := copyBoolMap(state.NodeHasBooted)
 		nodeReady := copyFloatMap(state.NodeReadyTime)
 		nodeLast := copyFloatMap(state.NodeLastActive)
+		cachedImages := state.CachedImages
+		if task.Image != "" && !state.CachedImages[resourceImageCacheKey(row.assignment.ResourceID, task.Image)] {
+			cachedImages = copyBoolMap(state.CachedImages)
+			cachedImages[resourceImageCacheKey(row.assignment.ResourceID, task.Image)] = true
+		}
 		intervals := append([]MachineStopInterval{}, state.StopIntervals...)
 		updateNodeState(row.assignment, ctx.Resources[row.assignment.ResourceID], nodeHasBooted, nodeReady, nodeLast, &intervals)
 		partialBudget := round(state.PartialBudgetUsed+row.incBudget, 4)
@@ -1007,13 +1317,15 @@ func expandState(generated GeneratedSimulation, ctx optimizerContext, state beam
 		} else if ctx.DynamicReady && ctx.TaskOrdinal[task.ID] != stepIndex-1 {
 			orderDeviated = true
 		}
-		nextStates = append(nextStates, beamState{Assignments: assignments, AssignmentByTask: byTask, AssignmentTrace: trace, AssignmentIndex: index, TaskOrdinals: state.TaskOrdinals, SelectedIntervals: selectedIntervals, BillingStart: billingStart, BillingFinish: billingFinish, Compact: state.Compact, SignatureHash: signatureHash, CoreAvail: coreAvail, CoreIndexes: coreIndexes, NodeHasBooted: nodeHasBooted, NodeReadyTime: nodeReady, NodeLastActive: nodeLast, StopIntervals: intervals, StepTrace: stepTrace, PartialBudgetUsed: partialBudget, PartialMakespan: partialMakespan, PartialScore: partialScore, PartialInterference: partialInterference, RemainingMinCost: remainingMinCost, ScheduledTaskHash: scheduledTaskHash, FrontierScores: frontierScores, PendingPredChunks: nextReadyState.PendingPredChunks, ReadyTaskBits: nextReadyState.ReadyTaskBits, TaskOrderSearch: state.TaskOrderSearch, OrderDeviated: orderDeviated})
+		nextStates = append(nextStates, beamState{Assignments: assignments, AssignmentByTask: byTask, AssignmentTrace: trace, AssignmentIndex: index, TaskOrdinals: state.TaskOrdinals, SelectedIntervals: selectedIntervals, BillingStart: billingStart, BillingFinish: billingFinish, Compact: state.Compact, SignatureHash: signatureHash, CoreAvail: coreAvail, CoreIndexes: coreIndexes, NodeHasBooted: nodeHasBooted, NodeReadyTime: nodeReady, NodeLastActive: nodeLast, CachedImages: cachedImages, StopIntervals: intervals, StepTrace: stepTrace, PartialBudgetUsed: partialBudget, PartialMakespan: partialMakespan, PartialScore: partialScore, PartialInterference: partialInterference, RemainingMinCost: remainingMinCost, ScheduledTaskHash: scheduledTaskHash, FrontierScores: frontierScores, PendingPredChunks: nextReadyState.PendingPredChunks, ReadyTaskBits: nextReadyState.ReadyTaskBits, TaskOrderSearch: state.TaskOrderSearch, OrderDeviated: orderDeviated})
 	}
 	return nextStates
 }
 
 func beamFrontierScore(score ScoreBreakdown, frontier beamFrontier) float64 {
-	return frontier.WeightTime*score.TimeScore + frontier.WeightCost*score.CostScore
+	// P_cc is an explicit, unweighted penalty shared by every objective
+	// frontier, as defined by the PRISM-CC cost function.
+	return frontier.WeightTime*score.TimeScore + frontier.WeightCost*score.CostScore + score.InterferenceScore
 }
 
 func appendStepTrace(prev *scheduleStepTrace, step ScheduleStep) *scheduleStepTrace {

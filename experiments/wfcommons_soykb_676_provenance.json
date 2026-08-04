@@ -1,0 +1,17 @@
+{
+  "workflow_id": "wfcommons_soykb_676",
+  "application": "soykb",
+  "source_url": "https://raw.githubusercontent.com/wfcommons/WfInstances/main/pegasus/soykb/soykb-chameleon-50fastq-20ch-001.json",
+  "source_sha256": "e742b1622571105659a61e61dbb1c9b6ebd6e4179dbc894e7d28b14d352629c3",
+  "source_schema_version": "1.5",
+  "workflow_name": "soykb-0",
+  "task_count": 676,
+  "dependency_count": 1674,
+  "file_count": 1361,
+  "observed_makespan_seconds": 54029.0,
+  "normalization": {
+    "formula": "peak_gflops = cores * GHz * 8 FLOP/cycle",
+    "c3d_standard_16_reference_gflops": 422.4,
+    "et0_formula": "observed_runtime_seconds * source_peak_gflops / 422.4"
+  }
+}

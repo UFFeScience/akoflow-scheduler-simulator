@@ -215,6 +215,14 @@ func dependenciesByTarget(deps []Dependency) map[string][]Dependency {
 	return out
 }
 
+func dependenciesBySource(deps []Dependency) map[string][]Dependency {
+	out := map[string][]Dependency{}
+	for _, dep := range deps {
+		out[dep.Source] = append(out[dep.Source], dep)
+	}
+	return out
+}
+
 func initialNodeState(resources []Resource) (map[string]bool, map[string]float64, map[string]float64) {
 	hasBooted, ready, last := map[string]bool{}, map[string]float64{}, map[string]float64{}
 	for _, resource := range resources {
@@ -231,8 +239,10 @@ func predecessorTiming(deps []Dependency, assignmentByTask map[string]Assignment
 		predecessor := assignmentByTask[dep.Source]
 		transfer := 0.0
 		if predecessor.ResourceID != resourceID {
-			transfer = dep.DataMB/generated.Matrices.BandwidthBW[predecessor.ResourceID][resourceID] +
-				generated.Matrices.TransferDelay[predecessor.ResourceID][resourceID]
+			transfer = dependencyTransferSeconds(
+				dep, generated.Matrices.BandwidthBW[predecessor.ResourceID][resourceID],
+				generated.Matrices.TransferDelay[predecessor.ResourceID][resourceID],
+			)
 		}
 		transferTotal += transfer
 		predecessorFloor = maxf(predecessorFloor, predecessor.FinishTime+transfer)

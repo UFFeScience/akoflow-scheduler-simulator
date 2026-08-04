@@ -1,0 +1,32 @@
+{
+  "matrix_root": "latency-datax-envs-workflows-complete-v1",
+  "rows": 14,
+  "expected_rows": 1764,
+  "network_profiles": [
+    {
+      "latency_ms": 100,
+      "bandwidth_mbps": 500
+    },
+    {
+      "latency_ms": 1000,
+      "bandwidth_mbps": 100
+    },
+    {
+      "latency_ms": 10000,
+      "bandwidth_mbps": 10
+    }
+  ],
+  "data_scales": [
+    1,
+    10,
+    100
+  ],
+  "sla_margins": [
+    1.2,
+    0.95,
+    0.9,
+    0.8
+  ],
+  "seed": 1,
+  "aws_reference": "https://aws.amazon.com/ec2/pricing/on-demand/"
+}

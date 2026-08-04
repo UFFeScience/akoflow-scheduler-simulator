@@ -15,12 +15,7 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 		req.ResourceSpecs = specs
 		req.ClusterMachines = 1
 		req.CloudMachines = 0
-		workflowFile := montageWorkflowYAML
-		if req.ExperimentWorkflowID == montageDSS20WorkflowID {
-			workflowFile = montageDSS20WorkflowYAML
-		} else if req.ExperimentWorkflowID == imageDataflow8WorkflowID {
-			workflowFile = imageDataflow8WorkflowYAML
-		}
+		workflowFile := experimentWorkflowYAMLFile(req.ExperimentWorkflowID)
 		workflowYAML, err := readExperimentText(workflowFile)
 		if err != nil {
 			return GeneratedSimulation{}, err
@@ -37,6 +32,8 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 			runtimeErr = applyImageDataflow8ExperimentData(&workflow)
 		} else if req.ExperimentWorkflowID == montageDSS20WorkflowID {
 			runtimeErr = applyMontageDSS20ExperimentData(&workflow)
+		} else if _, exists := wfcommonsWorkflowDatasets[req.ExperimentWorkflowID]; exists {
+			runtimeErr = applyWfcommonsExperimentData(req.ExperimentWorkflowID, &workflow)
 		} else {
 			runtimeErr = applyMontageExperimentRuntimes(&workflow)
 		}
@@ -113,6 +110,10 @@ func generateSimulation(req SimulationRequest) (GeneratedSimulation, error) {
 			}
 			if isRealNetworkStressScenario(req.ExperimentScenarioID) {
 				transferDelay[left.ID][right.ID] = realNetworkStressLatencySeconds(left, right)
+			} else if isNetworkCriticalScenario(req.ExperimentScenarioID) {
+				transferDelay[left.ID][right.ID] = networkCriticalLatencySeconds(
+					req.ExperimentScenarioID, left, right,
+				)
 			} else if req.ExperimentScenarioID == "hybrid_communication_trap" ||
 				req.ExperimentScenarioID == "hybrid_heft_network_trap" {
 				transferDelay[left.ID][right.ID] = communicationTrapLatencySeconds(left.ID, right.ID)

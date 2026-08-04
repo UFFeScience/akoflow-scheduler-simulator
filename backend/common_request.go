@@ -64,15 +64,12 @@ func validateRequest(r SimulationRequest) error {
 			return err
 		}
 	}
-	if r.ExperimentWorkflowID != "" &&
-		r.ExperimentWorkflowID != "montage_050d" &&
-		r.ExperimentWorkflowID != montageDSS20WorkflowID &&
-		r.ExperimentWorkflowID != imageDataflow8WorkflowID {
+	if r.ExperimentWorkflowID != "" && !experimentWorkflowSupported(r.ExperimentWorkflowID) {
 		return fmt.Errorf("unsupported experiment workflow: %s", r.ExperimentWorkflowID)
 	}
 	maxTaskCount := 100
-	if r.ExperimentWorkflowID == montageDSS20WorkflowID {
-		maxTaskCount = 6448
+	if r.ExperimentWorkflowID != "" {
+		maxTaskCount = experimentWorkflowTaskCount(r.ExperimentWorkflowID)
 	}
 	if r.TaskCount < 3 || r.TaskCount > maxTaskCount {
 		return fmt.Errorf("task_count must be between 3 and %d", maxTaskCount)

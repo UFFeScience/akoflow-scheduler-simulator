@@ -1,0 +1,17 @@
+{
+  "workflow_id": "wfcommons_srasearch_104",
+  "application": "srasearch",
+  "source_url": "https://raw.githubusercontent.com/wfcommons/WfInstances/main/pegasus/srasearch/srasearch-chameleon-50a-002.json",
+  "source_sha256": "6d0c2413bd192c77c4ab459f37724f15502c8ae95f2351c3ff958918d6c8d513",
+  "source_schema_version": "1.5",
+  "workflow_name": "workflow-test",
+  "task_count": 104,
+  "dependency_count": 152,
+  "file_count": 210,
+  "observed_makespan_seconds": 12339.0,
+  "normalization": {
+    "formula": "peak_gflops = cores * GHz * 8 FLOP/cycle",
+    "c3d_standard_16_reference_gflops": 422.4,
+    "et0_formula": "observed_runtime_seconds * source_peak_gflops / 422.4"
+  }
+}

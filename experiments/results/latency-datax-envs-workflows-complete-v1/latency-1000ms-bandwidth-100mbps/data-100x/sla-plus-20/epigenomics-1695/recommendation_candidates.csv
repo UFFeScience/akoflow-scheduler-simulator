@@ -1,0 +1,22 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+network_hpc_cloud,prism_cc_cost,HPC–Cloud · PRISM-CC - Cost,199.215,199.215,0.0,0.0,,100.0,1.236074,448.11,0.0,44.45671821650934,0,0,True,True,1,,,
+network_edge_cloud,prism_cc_cost,Edge–Cloud · PRISM-CC - Cost,99.625,99.625,0.124499,0.124499,,100.0,1.977265,421.1988,6.296525756537439,23.652726456010797,0,0,True,True,2,6.296525756537439,20.80399176049854,3.3040429857526687
+network_edge_cloud,prism_cc_time,Edge–Cloud · PRISM-CC - Time,96.324,96.324,1.064454,1.064454,,100.0,1.977265,421.1988,53.83466556076196,22.869011022823425,0,0,True,True,3,47.53813980422452,0.7837154331873712,0.016486034927217022
+network_fog_hpc_cloud,prism_cc_cost,Fog–HPC–Cloud · PRISM-CC - Cost,437.929,437.929,0.0,0.0,,100.0,1.341853,455.1,0.0,96.2269830806416,0,0,True,False,,,,
+network_hpc_cloud,prism_cc_time,HPC–Cloud · PRISM-CC - Time,199.215,199.215,0.0,0.0,,100.0,1.236074,448.11,0.0,44.45671821650934,0,0,True,False,,,,
+network_hpc_local,heft_classic,HPC local 200 Gbps · HEFT coalocado,460.261,460.261,0.0,0.0,,100.0,0.0,552.3132,0.0,83.33333333333334,0,0,True,False,,,,
+network_hpc_local,prism_cc_cost,HPC local 200 Gbps · PRISM-CC - Cost,438.081,438.081,0.0,0.0,,100.0,0.0,552.3132,0.0,79.31749594251956,0,0,True,False,,,,
+network_hpc_local,prism_cc_time,HPC local 200 Gbps · PRISM-CC - Time,438.081,438.081,0.0,0.0,,100.0,0.0,552.3132,0.0,79.31749594251956,0,0,True,False,,,,
+network_hpc_multisite,heft_classic,HPC multi-site 500 Mbps WAN · HEFT coalocado,460.261,460.261,0.0,0.0,,100.0,0.0,552.3132,0.0,83.33333333333334,0,0,True,False,,,,
+network_hpc_multisite,prism_cc_cost,HPC multi-site 500 Mbps WAN · PRISM-CC - Cost,438.081,438.081,0.0,0.0,,100.0,0.0,552.3132,0.0,79.31749594251956,0,0,True,False,,,,
+network_hpc_multisite,prism_cc_time,HPC multi-site 500 Mbps WAN · PRISM-CC - Time,438.081,438.081,0.0,0.0,,100.0,0.0,552.3132,0.0,79.31749594251956,0,0,True,False,,,,
+network_wfcommons_overlay,prism_cc_cost,WfCommons overlay multi-site · PRISM-CC - Cost,709.541,709.541,0.454086,0.454086,,100.0,33.980297,879.5424,1.3363214571079234,80.67160832723926,0,0,True,False,,,,
+network_wfcommons_overlay,prism_cc_time,WfCommons overlay multi-site · PRISM-CC - Time,709.541,709.541,0.454086,0.454086,,100.0,33.980297,879.5424,1.3363214571079234,80.67160832723926,0,0,True,False,,,,
+network_cloud_multiregion,prism_cc_cost,Cloud multi-região · PRISM-CC - Cost,497.136,497.136,0.281107,0.281107,,100.0,6.905269,516.2556,4.0709058546452,96.29648569429564,0,0,True,False,,,,
+network_cloud_multiregion,prism_cc_time,Cloud multi-região · PRISM-CC - Time,363.291,363.291,0.584746,0.584746,,100.0,6.905269,516.2556,8.468113262495638,70.37037467487036,0,0,True,False,,,,
+network_wfcommons_overlay,heft_classic,WfCommons overlay multi-site · HEFT coalocado,732.952,732.952,28.316914,28.316914,,100.0,33.980297,879.5424,83.33333284285303,83.33333333333333,0,0,True,False,,,,
+network_cloud_multiregion,heft_classic,Cloud multi-região · HEFT coalocado,430.213,430.213,5.754391,5.754391,,100.0,6.905269,516.2556,83.33333574694919,83.33333333333334,0,0,True,False,,,,
+network_edge_cloud,heft_classic,Edge–Cloud · HEFT coalocado,350.999,350.999,1.647721,1.647721,,100.0,1.977265,421.1988,83.33334176248505,83.33333333333333,0,0,True,False,,,,
+network_fog_hpc_cloud,heft_classic,Fog–HPC–Cloud · HEFT coalocado,379.25,379.25,1.118211,1.118211,,100.0,1.341853,455.1,83.33334575396859,83.33333333333333,0,0,True,False,,,,
+network_fog_hpc_cloud,prism_cc_time,Fog–HPC–Cloud · PRISM-CC - Time,379.25,379.25,1.118211,1.118211,,100.0,1.341853,455.1,83.33334575396859,83.33333333333333,0,0,True,False,,,,
+network_hpc_cloud,heft_classic,HPC–Cloud · HEFT coalocado,373.425,373.425,1.030062,1.030062,,100.0,1.236074,448.11,83.3333603004351,83.33333333333333,0,0,True,False,,,,

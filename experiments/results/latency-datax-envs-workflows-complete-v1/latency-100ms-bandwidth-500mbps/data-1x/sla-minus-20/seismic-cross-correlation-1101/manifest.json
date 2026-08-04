@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-08-02T21:54:52Z",
+  "structural_seed": 42,
+  "interference_seeds": [
+    1
+  ],
+  "scenarios": [
+    "network_hpc_local",
+    "network_hpc_multisite",
+    "network_cloud_multiregion",
+    "network_hpc_cloud",
+    "network_edge_cloud",
+    "network_fog_hpc_cloud",
+    "network_wfcommons_overlay"
+  ],
+  "algorithms": [
+    "prism_cc_time",
+    "prism_cc_cost",
+    "heft_colocation"
+  ],
+  "workflow_id": "wfcommons_seismology_1101",
+  "task_count": 1101,
+  "interference_rate": 0,
+  "selected_activities": 550,
+  "sla_margin": 1.2,
+  "budget_margin": 0.8,
+  "deadline_margin": 0.8,
+  "scenario_slas": {
+    "network_cloud_multiregion": {
+      "budget_limit": 0.016895,
+      "deadline_limit": 10.548
+    },
+    "network_edge_cloud": {
+      "budget_limit": 0.016422,
+      "deadline_limit": 10.372
+    },
+    "network_fog_hpc_cloud": {
+      "budget_limit": 0,
+      "deadline_limit": 1.0368
+    },
+    "network_hpc_cloud": {
+      "budget_limit": 0,
+      "deadline_limit": 1.0368
+    },
+    "network_hpc_local": {
+      "budget_limit": 0,
+      "deadline_limit": 0.7512
+    },
+    "network_hpc_multisite": {
+      "budget_limit": 0,
+      "deadline_limit": 0.7512
+    },
+    "network_wfcommons_overlay": {
+      "budget_limit": 0.038268,
+      "deadline_limit": 12.356
+    }
+  },
+  "reference_policy": "Per-scenario heft_colocation mean multiplied by explicit margins: 0.80x budget and 0.80x deadline",
+  "calibration": "Per-scenario mean of the selected HEFT baseline runs",
+  "heft_mode": "colocation",
+  "prism_cc_priority": "adaptive_ready",
+  "beam_width": 120,
+  "recommendation_count": 100,
+  "data_scale": 1,
+  "container_overhead_disabled": true,
+  "file_transfer_parallelism": 1,
+  "network_latency_override_ms": 100,
+  "network_bandwidth_override_mbps": 500
+}

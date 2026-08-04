@@ -1,0 +1,22 @@
+scenario_id,algorithm,recommendation,makespan_mean,makespan_p95,cost_mean,cost_p95,makespan_cv_percent,strict_feasibility_percent,budget_limit,deadline_limit,cost_sla_percent,makespan_sla_percent,required_deadline_margin_percent,required_budget_margin_percent,robust_feasible,pareto,frontier_order,extra_cost_from_previous,time_saved_from_previous,seconds_saved_per_extra_dollar
+network_hpc_multisite,prism_cc_cost,HPC multi-site 500 Mbps WAN · PRISM-CC - Cost,150.538,150.538,0.0,0.0,,100.0,0.0,180.7884,0.0,83.26751052611783,0,0,True,True,1,,,
+network_wfcommons_overlay,prism_cc_cost,WfCommons overlay multi-site · PRISM-CC - Cost,496.67,496.67,1.074828,1.074828,,100.0,1.577444,609.3708,68.13731580962619,81.50538227299371,0,0,True,True,2,68.13731580962619,1.7621282531241178,0.02586142750394595
+network_hpc_cloud,prism_cc_time,HPC–Cloud · PRISM-CC - Time,100.549,100.549,0.172925,0.172925,,100.0,0.240847,134.8128,71.79869377654694,74.58416411498018,0,0,True,True,3,3.661377966920753,6.921218158013531,1.8903315146767894
+network_hpc_local,heft_classic,HPC local 200 Gbps · HEFT coalocado,150.657,150.657,0.0,0.0,,100.0,0.0,180.7884,0.0,83.33333333333334,0,0,True,False,,,,
+network_hpc_local,prism_cc_cost,HPC local 200 Gbps · PRISM-CC - Cost,150.542,150.542,0.0,0.0,,100.0,0.0,180.7884,0.0,83.26972305745281,0,0,True,False,,,,
+network_hpc_local,prism_cc_time,HPC local 200 Gbps · PRISM-CC - Time,150.542,150.542,0.0,0.0,,100.0,0.0,180.7884,0.0,83.26972305745281,0,0,True,False,,,,
+network_hpc_multisite,heft_classic,HPC multi-site 500 Mbps WAN · HEFT coalocado,150.657,150.657,0.0,0.0,,100.0,0.0,180.7884,0.0,83.33333333333334,0,0,True,False,,,,
+network_hpc_multisite,prism_cc_time,HPC multi-site 500 Mbps WAN · PRISM-CC - Time,150.538,150.538,0.0,0.0,,100.0,0.0,180.7884,0.0,83.26751052611783,0,0,True,False,,,,
+network_hpc_cloud,prism_cc_cost,HPC–Cloud · PRISM-CC - Cost,125.48,125.48,0.123727,0.123727,,100.0,0.240847,134.8128,51.37161766598712,93.07721521991976,0,0,True,False,,,,
+network_fog_hpc_cloud,prism_cc_cost,Fog–HPC–Cloud · PRISM-CC - Cost,135.079,135.079,0.13305,0.13305,,100.0,0.236641,137.568,56.22440743573599,98.19071295650151,0,0,True,False,,,,
+network_wfcommons_overlay,prism_cc_time,WfCommons overlay multi-site · PRISM-CC - Time,496.67,496.67,1.074828,1.074828,,100.0,1.577444,609.3708,68.13731580962619,81.50538227299371,0,0,True,False,,,,
+network_cloud_multiregion,prism_cc_cost,Cloud multi-região · PRISM-CC - Cost,206.844,206.844,0.243284,0.243284,,100.0,0.341962,208.6992,71.14357735654839,99.1110651118931,0,0,True,False,,,,
+network_edge_cloud,prism_cc_cost,Edge–Cloud · PRISM-CC - Cost,148.789,148.789,0.216798,0.216798,,100.0,0.293926,180.2484,73.75938161305906,82.54664119071236,0,0,True,False,,,,
+network_edge_cloud,prism_cc_time,Edge–Cloud · PRISM-CC - Time,146.841,146.841,0.2308,0.2308,,100.0,0.293926,180.2484,78.52316569476672,81.46591037701306,0,0,True,False,,,,
+network_cloud_multiregion,prism_cc_time,Cloud multi-região · PRISM-CC - Time,161.878,161.878,0.270527,0.270527,,100.0,0.341962,208.6992,79.1102520163059,77.56522305787469,0,0,True,False,,,,
+network_fog_hpc_cloud,prism_cc_time,Fog–HPC–Cloud · PRISM-CC - Time,109.981,109.981,0.190528,0.190528,,100.0,0.236641,137.568,80.51352048039014,79.94664456850428,0,0,True,False,,,,
+network_edge_cloud,heft_classic,Edge–Cloud · HEFT coalocado,150.207,150.207,0.244938,0.244938,,100.0,0.293926,180.2484,83.33321992610385,83.33333333333333,0,0,True,False,,,,
+network_cloud_multiregion,heft_classic,Cloud multi-região · HEFT coalocado,173.916,173.916,0.284968,0.284968,,100.0,0.341962,208.6992,83.33323585661564,83.33333333333333,0,0,True,False,,,,
+network_wfcommons_overlay,heft_classic,WfCommons overlay multi-site · HEFT coalocado,507.809,507.809,1.314537,1.314537,,100.0,1.577444,609.3708,83.3333544645642,83.33333333333333,0,0,True,False,,,,
+network_hpc_cloud,heft_classic,HPC–Cloud · HEFT coalocado,112.344,112.344,0.200706,0.200706,,100.0,0.240847,134.8128,83.33340253355864,83.33333333333333,0,0,True,False,,,,
+network_fog_hpc_cloud,heft_classic,Fog–HPC–Cloud · HEFT coalocado,114.64,114.64,0.197201,0.197201,,100.0,0.236641,137.568,83.33340376350674,83.33333333333333,0,0,True,False,,,,

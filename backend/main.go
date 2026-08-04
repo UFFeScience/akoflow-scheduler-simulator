@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime/pprof"
+	"time"
 )
 
 type errorResponse struct {
@@ -17,13 +19,15 @@ type errorResponse struct {
 var simulations = map[string]SimulationResult{}
 
 func main() {
+	cpuProfile := flag.String("cpuprofile", "", "write a CPU profile to this file")
+	cpuProfileSeconds := flag.Int("cpuprofile-seconds", 0, "stop CPU profiling after this many seconds")
 	experimentOutput := flag.String("experiment-output", "", "run the complete experimental protocol and write CSV results to this directory")
 	experimentRepetitions := flag.Int("experiment-repetitions", 30, "number of paired interference seeds")
 	experimentBeamWidth := flag.Int("experiment-beam-width", minBeamWidth, "beam width used by the experimental protocol")
 	experimentRecommendations := flag.Int("experiment-recommendations", 100, "maximum PRISM-CC recommendations exported per algorithm, environment, and seed")
 	experimentWorkers := flag.Int("experiment-workers", 0, "parallel environment/seed jobs (default: min(4, GOMAXPROCS))")
 	experimentPRISMCCPriority := flag.String("experiment-prism-priority", "topological_order", "PRISM-CC task priority: topological_order, upward_rank, ready_lookahead, or adaptive_ready")
-	experimentWorkflow := flag.String("experiment-workflow", "montage_050d", "experiment workflow: montage_050d, montage_dss_20d, or image_dataflow_8")
+	experimentWorkflow := flag.String("experiment-workflow", "montage_050d", "experiment workflow ID, including imported wfcommons_* datasets")
 	experimentHEFTMode := flag.String("experiment-heft-mode", "classic_no_colocation", "HEFT baseline: classic_no_colocation or colocation")
 	experimentScenarios := flag.String("experiment-scenarios", "", "comma-separated experiment scenarios (default: all)")
 	experimentInterferenceRate := flag.Float64("experiment-interference-rate", 0.20, "controlled software interference penalty per overlapping task")
@@ -32,9 +36,30 @@ func main() {
 	experimentBudgetMargin := flag.Float64("experiment-budget-margin", experimentSLAMargin, "budget multiplier over the per-scenario mean HEFT cost")
 	experimentDeadlineMargin := flag.Float64("experiment-deadline-margin", experimentSLAMargin, "deadline multiplier over the per-scenario mean HEFT makespan")
 	experimentDataScale := flag.Float64("experiment-data-scale", 1, "multiplier applied to every workflow dependency file size")
+	experimentNetworkLatencyMS := flag.Float64("experiment-network-latency-ms", 0, "override every inter-resource link latency in milliseconds; 0 keeps scenario values")
+	experimentNetworkBandwidthMbps := flag.Float64("experiment-network-bandwidth-mbps", 0, "override every inter-resource link bandwidth in Mbps; 0 keeps scenario values")
 	experimentExportSchedules := flag.Bool("experiment-export-schedules", false, "export complete schedule JSON files that can be imported by the frontend")
 	experimentDisableContainerOverhead := flag.Bool("experiment-disable-container-overhead", false, "set every task/resource container overhead to zero")
 	flag.Parse()
+	if *cpuProfile != "" {
+		profileFile, err := os.Create(*cpuProfile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer profileFile.Close()
+		if err := pprof.StartCPUProfile(profileFile); err != nil {
+			log.Fatal(err)
+		}
+		if *cpuProfileSeconds > 0 {
+			go func() {
+				time.Sleep(time.Duration(*cpuProfileSeconds) * time.Second)
+				pprof.StopCPUProfile()
+				log.Printf("CPU profile completed after %ds", *cpuProfileSeconds)
+			}()
+		} else {
+			defer pprof.StopCPUProfile()
+		}
+	}
 	if *experimentOutput != "" {
 		if err := runExperimentalProtocol(ExperimentRunOptions{
 			OutputDirectory: *experimentOutput, Repetitions: *experimentRepetitions,
@@ -51,6 +76,8 @@ func main() {
 			BudgetMargin:             *experimentBudgetMargin,
 			DeadlineMargin:           *experimentDeadlineMargin,
 			DataScale:                *experimentDataScale,
+			NetworkLatencyMS:         *experimentNetworkLatencyMS,
+			NetworkBandwidthMbps:     *experimentNetworkBandwidthMbps,
 			ExportSchedules:          *experimentExportSchedules,
 			DisableContainerOverhead: *experimentDisableContainerOverhead,
 		}); err != nil {

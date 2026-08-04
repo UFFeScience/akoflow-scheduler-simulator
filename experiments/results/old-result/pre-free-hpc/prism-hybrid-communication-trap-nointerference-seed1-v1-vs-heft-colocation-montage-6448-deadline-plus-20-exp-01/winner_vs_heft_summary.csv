@@ -1,0 +1,5 @@
+scenario_id,variant,metric,prism_mean,heft_mean,prism_gain_percent,winner
+hybrid_communication_trap,prism_cc_time,makespan,853.804,921.391,7.335322355004552,PRISM-CC
+hybrid_communication_trap,prism_cc_cost,makespan,1100.582,921.391,-19.44787826232296,HEFT
+hybrid_communication_trap,prism_cc_time,budget_used,558.421355,879.905504,36.536212984070616,PRISM-CC
+hybrid_communication_trap,prism_cc_cost,budget_used,18.214266,879.905504,97.92997476238085,PRISM-CC

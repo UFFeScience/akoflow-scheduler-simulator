@@ -79,9 +79,10 @@ type Task struct {
 }
 
 type Dependency struct {
-	Source string  `json:"source"`
-	Target string  `json:"target"`
-	DataMB float64 `json:"data_mb"`
+	Source    string  `json:"source"`
+	Target    string  `json:"target"`
+	DataMB    float64 `json:"data_mb"`
+	FileCount int     `json:"file_count,omitempty"`
 }
 
 type SLA struct {
@@ -141,6 +142,7 @@ type CandidateEvaluation struct {
 	RawCost                float64                `json:"raw_cost"`
 	PhiN                   float64                `json:"phi_n"`
 	PairwiseInterference   []PairwiseInterference `json:"pairwise_interference"`
+	InterferenceProfile    string                 `json:"interference_profile,omitempty"`
 	Score                  ScoreBreakdown         `json:"score"`
 }
 
@@ -166,6 +168,7 @@ type Assignment struct {
 	PhiN                   float64        `json:"phi_n"`
 	Score                  ScoreBreakdown `json:"score"`
 	PredecessorFinishFloor float64        `json:"predecessor_finish_floor"`
+	InterferenceProfile    string         `json:"interference_profile,omitempty"`
 }
 
 type MachineStopInterval struct {

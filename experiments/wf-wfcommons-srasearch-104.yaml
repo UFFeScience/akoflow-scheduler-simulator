@@ -1,0 +1,730 @@
+name: wfcommons-srasearch-104
+spec:
+  runtime: "k8s1"
+  namespace: "akoflow"
+  image: wfcommons/srasearch:latest
+  activities:
+    - name: bowtie2-buildid0000001
+      run: "bowtie2-build reference.fna reference"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: fasterq-dumpid0000002
+      run: "fasterq-dump --split-files SRR3177817"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000003
+      run: "bowtie2 SRR3177817"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000002
+
+    - name: fasterq-dumpid0000004
+      run: "fasterq-dump --split-files SRR3150813"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000005
+      run: "bowtie2 SRR3150813"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000004
+
+    - name: fasterq-dumpid0000006
+      run: "fasterq-dump --split-files SRR3152125"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000007
+      run: "bowtie2 SRR3152125"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000006
+
+    - name: fasterq-dumpid0000008
+      run: "fasterq-dump --split-files SRR1521488"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000009
+      run: "bowtie2 SRR1521488"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000008
+
+    - name: fasterq-dumpid0000010
+      run: "fasterq-dump --split-files SRR1518960"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000011
+      run: "bowtie2 SRR1518960"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000010
+
+    - name: fasterq-dumpid0000012
+      run: "fasterq-dump --split-files SRR1919631"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000013
+      run: "bowtie2 SRR1919631"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000012
+
+    - name: fasterq-dumpid0000014
+      run: "fasterq-dump --split-files SRR1518573"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000015
+      run: "bowtie2 SRR1518573"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000014
+
+    - name: fasterq-dumpid0000016
+      run: "fasterq-dump --split-files SRR3150514"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000017
+      run: "bowtie2 SRR3150514"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000016
+
+    - name: fasterq-dumpid0000018
+      run: "fasterq-dump --split-files SRR3150513"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000019
+      run: "bowtie2 SRR3150513"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000018
+
+    - name: fasterq-dumpid0000020
+      run: "fasterq-dump --split-files SRR3152124"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000021
+      run: "bowtie2 SRR3152124"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000020
+
+    - name: fasterq-dumpid0000022
+      run: "fasterq-dump --split-files SRR3150548"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000023
+      run: "bowtie2 SRR3150548"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000022
+
+    - name: fasterq-dumpid0000024
+      run: "fasterq-dump --split-files SRR3177980"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000025
+      run: "bowtie2 SRR3177980"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000024
+
+    - name: fasterq-dumpid0000026
+      run: "fasterq-dump --split-files SRR3152056"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000027
+      run: "bowtie2 SRR3152056"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000026
+
+    - name: fasterq-dumpid0000028
+      run: "fasterq-dump --split-files SRR3152098"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000029
+      run: "bowtie2 SRR3152098"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000028
+
+    - name: fasterq-dumpid0000030
+      run: "fasterq-dump --split-files SRR3150521"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000031
+      run: "bowtie2 SRR3150521"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000030
+
+    - name: fasterq-dumpid0000032
+      run: "fasterq-dump --split-files SRR1103366"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000033
+      run: "bowtie2 SRR1103366"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000032
+
+    - name: fasterq-dumpid0000034
+      run: "fasterq-dump --split-files SRR1103622"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000035
+      run: "bowtie2 SRR1103622"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000034
+
+    - name: fasterq-dumpid0000036
+      run: "fasterq-dump --split-files SRR3177977"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000037
+      run: "bowtie2 SRR3177977"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000036
+
+    - name: fasterq-dumpid0000038
+      run: "fasterq-dump --split-files SRR1763667"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000039
+      run: "bowtie2 SRR1763667"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000038
+
+    - name: fasterq-dumpid0000040
+      run: "fasterq-dump --split-files SRR3136937"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000041
+      run: "bowtie2 SRR3136937"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000040
+
+    - name: fasterq-dumpid0000042
+      run: "fasterq-dump --split-files SRR3150339"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000043
+      run: "bowtie2 SRR3150339"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000042
+
+    - name: fasterq-dumpid0000044
+      run: "fasterq-dump --split-files SRR3151976"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000045
+      run: "bowtie2 SRR3151976"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000044
+
+    - name: fasterq-dumpid0000046
+      run: "fasterq-dump --split-files SRR3151969"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000047
+      run: "bowtie2 SRR3151969"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000046
+
+    - name: fasterq-dumpid0000048
+      run: "fasterq-dump --split-files SRR1922801"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000049
+      run: "bowtie2 SRR1922801"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000048
+
+    - name: fasterq-dumpid0000050
+      run: "fasterq-dump --split-files SRR3152043"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000051
+      run: "bowtie2 SRR3152043"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000050
+
+    - name: fasterq-dumpid0000052
+      run: "fasterq-dump --split-files SRR1922805"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000053
+      run: "bowtie2 SRR1922805"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000052
+
+    - name: fasterq-dumpid0000054
+      run: "fasterq-dump --split-files SRR1763632"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000055
+      run: "bowtie2 SRR1763632"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000054
+
+    - name: fasterq-dumpid0000056
+      run: "fasterq-dump --split-files SRR2006801"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000057
+      run: "bowtie2 SRR2006801"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000056
+
+    - name: fasterq-dumpid0000058
+      run: "fasterq-dump --split-files SRR3152077"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000059
+      run: "bowtie2 SRR3152077"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000058
+
+    - name: fasterq-dumpid0000060
+      run: "fasterq-dump --split-files SRR1917732"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000061
+      run: "bowtie2 SRR1917732"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000060
+
+    - name: fasterq-dumpid0000062
+      run: "fasterq-dump --split-files SRR1518629"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000063
+      run: "bowtie2 SRR1518629"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000062
+
+    - name: fasterq-dumpid0000064
+      run: "fasterq-dump --split-files SRR3150357"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000065
+      run: "bowtie2 SRR3150357"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000064
+
+    - name: fasterq-dumpid0000066
+      run: "fasterq-dump --split-files SRR3150532"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000067
+      run: "bowtie2 SRR3150532"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000066
+
+    - name: fasterq-dumpid0000068
+      run: "fasterq-dump --split-files SRR3150504"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000069
+      run: "bowtie2 SRR3150504"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000068
+
+    - name: fasterq-dumpid0000070
+      run: "fasterq-dump --split-files SRR3177786"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000071
+      run: "bowtie2 SRR3177786"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000070
+
+    - name: fasterq-dumpid0000072
+      run: "fasterq-dump --split-files SRR1922817"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000073
+      run: "bowtie2 SRR1922817"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000072
+
+    - name: fasterq-dumpid0000074
+      run: "fasterq-dump --split-files SRR3150856"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000075
+      run: "bowtie2 SRR3150856"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000074
+
+    - name: fasterq-dumpid0000076
+      run: "fasterq-dump --split-files SRR3150385"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000077
+      run: "bowtie2 SRR3150385"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000076
+
+    - name: fasterq-dumpid0000078
+      run: "fasterq-dump --split-files SRR3150549"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000079
+      run: "bowtie2 SRR3150549"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000078
+
+    - name: fasterq-dumpid0000080
+      run: "fasterq-dump --split-files SRR3177874"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000081
+      run: "bowtie2 SRR3177874"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000080
+
+    - name: fasterq-dumpid0000082
+      run: "fasterq-dump --split-files SRR3150404"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000083
+      run: "bowtie2 SRR3150404"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000082
+
+    - name: fasterq-dumpid0000084
+      run: "fasterq-dump --split-files SRR2095925"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000085
+      run: "bowtie2 SRR2095925"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000084
+
+    - name: fasterq-dumpid0000086
+      run: "fasterq-dump --split-files SRR1518974"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000087
+      run: "bowtie2 SRR1518974"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000086
+
+    - name: fasterq-dumpid0000088
+      run: "fasterq-dump --split-files SRR3177864"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000089
+      run: "bowtie2 SRR3177864"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000088
+
+    - name: fasterq-dumpid0000090
+      run: "fasterq-dump --split-files SRR3150389"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000091
+      run: "bowtie2 SRR3150389"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000090
+
+    - name: fasterq-dumpid0000092
+      run: "fasterq-dump --split-files SRR1518451"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000093
+      run: "bowtie2 SRR1518451"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000092
+
+    - name: fasterq-dumpid0000094
+      run: "fasterq-dump --split-files SRR3148169"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000095
+      run: "bowtie2 SRR3148169"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000094
+
+    - name: fasterq-dumpid0000096
+      run: "fasterq-dump --split-files SRR3150435"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000097
+      run: "bowtie2 SRR3150435"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000096
+
+    - name: fasterq-dumpid0000098
+      run: "fasterq-dump --split-files SRR1518994"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000099
+      run: "bowtie2 SRR1518994"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000098
+
+    - name: fasterq-dumpid0000100
+      run: "fasterq-dump --split-files SRR3177853"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+
+    - name: bowtie2id0000101
+      run: "bowtie2 SRR3177853"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2-buildid0000001
+        - fasterq-dumpid0000100
+
+    - name: mergeid0000102
+      run: "merge results-l1-j1.tar.gz SRR3177817.bam.bai SRR3177817.bam SRR3150813.bam.bai SRR3150813.bam SRR3152125.bam.bai SRR3152125.bam SRR1521488.bam SRR1521488.bam.bai SRR1518960.bam.bai SRR1518960.bam SRR1919631.bam.bai SRR1919631.bam SRR1518573.bam SRR1518573.bam.bai SRR3150514.bam SRR3150514.bam.bai SRR3150513.bam.bai SRR3150513.bam SRR3152124.bam.bai SRR3152124.bam SRR3150548.bam SRR3150548.bam.bai SRR3177980.bam.bai SRR3177980.bam SRR3152056.bam.bai SRR3152056.bam SRR3152098.bam SRR3152098.bam.bai SRR3150521.bam.bai SRR3150521.bam SRR1103366.bam.bai SRR1103366.bam SRR1103622.bam SRR1103622.bam.bai SRR3177977.bam SRR3177977.bam.bai SRR1763667.bam SRR1763667.bam.bai SRR3136937.bam SRR3136937.bam.bai SRR3150339.bam SRR3150339.bam.bai SRR3151976.bam.bai SRR3151976.bam SRR3151969.bam SRR3151969.bam.bai SRR1922801.bam SRR1922801.bam.bai SRR3152043.bam SRR3152043.bam.bai"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2id0000003
+        - bowtie2id0000005
+        - bowtie2id0000007
+        - bowtie2id0000009
+        - bowtie2id0000011
+        - bowtie2id0000013
+        - bowtie2id0000015
+        - bowtie2id0000017
+        - bowtie2id0000019
+        - bowtie2id0000021
+        - bowtie2id0000023
+        - bowtie2id0000025
+        - bowtie2id0000027
+        - bowtie2id0000029
+        - bowtie2id0000031
+        - bowtie2id0000033
+        - bowtie2id0000035
+        - bowtie2id0000037
+        - bowtie2id0000039
+        - bowtie2id0000041
+        - bowtie2id0000043
+        - bowtie2id0000045
+        - bowtie2id0000047
+        - bowtie2id0000049
+        - bowtie2id0000051
+
+    - name: mergeid0000103
+      run: "merge results-l1-j2.tar.gz SRR1922805.bam SRR1922805.bam.bai SRR1763632.bam.bai SRR1763632.bam SRR2006801.bam SRR2006801.bam.bai SRR3152077.bam SRR3152077.bam.bai SRR1917732.bam.bai SRR1917732.bam SRR1518629.bam.bai SRR1518629.bam SRR3150357.bam SRR3150357.bam.bai SRR3150532.bam.bai SRR3150532.bam SRR3150504.bam SRR3150504.bam.bai SRR3177786.bam.bai SRR3177786.bam SRR1922817.bam.bai SRR1922817.bam SRR3150856.bam.bai SRR3150856.bam SRR3150385.bam.bai SRR3150385.bam SRR3150549.bam SRR3150549.bam.bai SRR3177874.bam.bai SRR3177874.bam SRR3150404.bam.bai SRR3150404.bam SRR2095925.bam.bai SRR2095925.bam SRR1518974.bam SRR1518974.bam.bai SRR3177864.bam.bai SRR3177864.bam SRR3150389.bam.bai SRR3150389.bam SRR1518451.bam SRR1518451.bam.bai SRR3148169.bam.bai SRR3148169.bam SRR3150435.bam.bai SRR3150435.bam SRR1518994.bam SRR1518994.bam.bai SRR3177853.bam.bai SRR3177853.bam"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - bowtie2id0000053
+        - bowtie2id0000055
+        - bowtie2id0000057
+        - bowtie2id0000059
+        - bowtie2id0000061
+        - bowtie2id0000063
+        - bowtie2id0000065
+        - bowtie2id0000067
+        - bowtie2id0000069
+        - bowtie2id0000071
+        - bowtie2id0000073
+        - bowtie2id0000075
+        - bowtie2id0000077
+        - bowtie2id0000079
+        - bowtie2id0000081
+        - bowtie2id0000083
+        - bowtie2id0000085
+        - bowtie2id0000087
+        - bowtie2id0000089
+        - bowtie2id0000091
+        - bowtie2id0000093
+        - bowtie2id0000095
+        - bowtie2id0000097
+        - bowtie2id0000099
+        - bowtie2id0000101
+
+    - name: mergeid0000104
+      run: "merge results.tar.gz results-l1-j1.tar.gz results-l1-j2.tar.gz"
+      memoryLimit: 256Mi
+      cpuLimit: 1.0
+      dependsOn:
+        - mergeid0000102
+        - mergeid0000103

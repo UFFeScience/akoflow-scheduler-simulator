@@ -107,6 +107,16 @@ func generateResources(req SimulationRequest) ([]Resource, map[string]map[string
 			if left.ID == right.ID {
 				bandwidth[left.ID][right.ID] = 10000
 			} else if len(req.ResourceSpecs) > 0 {
+				if isNetworkCriticalScenario(req.ExperimentScenarioID) {
+					bandwidth[left.ID][right.ID] = networkCriticalBandwidthMBps(
+						req.ExperimentScenarioID, left, right,
+					)
+					continue
+				}
+				if req.ExperimentScenarioID == "wfcommons_chameleon_dss20" {
+					bandwidth[left.ID][right.ID] = round(minf(left.Bandwidth, right.Bandwidth), 2)
+					continue
+				}
 				if isRealNetworkStressScenario(req.ExperimentScenarioID) {
 					bandwidth[left.ID][right.ID] = realNetworkStressBandwidthMBps(left, right)
 					continue
@@ -131,6 +141,80 @@ func generateResources(req SimulationRequest) ([]Resource, map[string]map[string
 		}
 	}
 	return resources, bandwidth, nil
+}
+
+func isNetworkCriticalScenario(scenarioID string) bool {
+	return strings.HasPrefix(scenarioID, "network_")
+}
+
+func networkCriticalTier(resource Resource) string {
+	if strings.HasPrefix(resource.ID, "edge-") {
+		return "edge"
+	}
+	if resource.Kind == "cloud" {
+		return "cloud"
+	}
+	return "hpc"
+}
+
+func networkCriticalBandwidthMBps(scenarioID string, left, right Resource) float64 {
+	if scenarioID == "network_hpc_multisite" || scenarioID == "network_wfcommons_overlay" {
+		if left.Location == right.Location {
+			if scenarioID == "network_wfcommons_overlay" {
+				return gigabitsPerSecondToMegabytesPerSecond(10)
+			}
+			return gigabitsPerSecondToMegabytesPerSecond(200)
+		}
+		return megabitsPerSecondToMegabytesPerSecond(500)
+	}
+	leftTier, rightTier := networkCriticalTier(left), networkCriticalTier(right)
+	if leftTier != rightTier {
+		return megabitsPerSecondToMegabytesPerSecond(500)
+	}
+	switch leftTier {
+	case "hpc":
+		return gigabitsPerSecondToMegabytesPerSecond(200)
+	case "cloud":
+		if left.Location != right.Location {
+			return megabitsPerSecondToMegabytesPerSecond(500)
+		}
+		return gigabitsPerSecondToMegabytesPerSecond(10)
+	default:
+		return megabitsPerSecondToMegabytesPerSecond(500)
+	}
+}
+
+func networkCriticalLatencySeconds(scenarioID string, left, right Resource) float64 {
+	if scenarioID == "network_hpc_multisite" || scenarioID == "network_wfcommons_overlay" {
+		if left.Location == right.Location {
+			if scenarioID == "network_wfcommons_overlay" {
+				return 0.0005
+			}
+			return 0.001
+		}
+		return 0.020
+	}
+	leftTier, rightTier := networkCriticalTier(left), networkCriticalTier(right)
+	if leftTier == rightTier {
+		switch leftTier {
+		case "hpc":
+			return 0.001
+		case "cloud":
+			if left.Location != right.Location {
+				return 0.100
+			}
+			return 0.002
+		default:
+			return 0.010
+		}
+	}
+	if (leftTier == "cloud" && rightTier == "edge") || (leftTier == "edge" && rightTier == "cloud") {
+		return 0.120
+	}
+	if (leftTier == "hpc" && rightTier == "edge") || (leftTier == "edge" && rightTier == "hpc") {
+		return 0.040
+	}
+	return 0.080
 }
 
 func realNetworkStressTier(resource Resource) string {
